@@ -12,7 +12,11 @@
   not substitute a different data source.
 - **Human checkpoints pending:** none yet
 - **Open FLAGs:** C1-01 (egress policy blocks `api.energy-charts.info` — needs
-  Network access widened in the cloud environment settings)
+  Network access widened in the cloud environment settings). **Retried and still
+  blocked as of 2026-09-28 C1b — 2 cycles lost so far.** Human already pinged
+  once at C1; do not re-ping for this same wait. If this reaches ~6 consecutive
+  blocked cycles (~2 days of no progress), a single escalation ping is
+  justified — say so plainly and include the blocked-cycle count.
 - **Sealed holdout (2025):** SEALED — do not touch until Checkpoint C (C16) is
   approved here
 - **ENTSOE_API_KEY:** obtained by the user 2026-09-28. NOT yet configured for
@@ -131,3 +135,58 @@ explicitly rather than patching it silently.
 **Next:** C1b — rerun the fetch and build the manifest once the host is
 allowed. Then C2 (data contract tests, hourly aggregation, per-zone plots) which
 ends at **Checkpoint A**.
+
+### C1b — 2026-09-28 (scheduled cycle) — STILL BLOCKED, no new work
+
+Checked the one thing this cycle exists to check: **`api.energy-charts.info` is
+still denied by the cloud environment's egress policy.** FLAG C1-01 stands
+unchanged, so there is no manifest, and per the C1b instruction no C2 work was
+started and no second push notification was sent.
+
+What was verified this cycle (fresh container — no venv, empty cache):
+- `.venv` rebuilt from the committed `requirements.txt`; **all 44 C1 unit tests
+  pass**, including the sealed-holdout tripwire asserting the C16 unseal marker
+  is still absent from this file. The committed C1 data layer is healthy.
+- `python -m data.fetch_prices --zones DE-LU --years 2024` reproduces the C1
+  failure **byte-identically** (`ProxyError ... Tunnel connection failed: 403
+  Forbidden`), exits 1, and caches nothing. The flag-don't-swallow path works.
+- The agent proxy's own status endpoint again records
+  `connect_rejected` / "gateway answered 403 to CONNECT (policy denial)" for
+  `api.energy-charts.info:443`. `pypi.org` and `github.com` reach fine from the
+  same session, so this remains host-specific policy, not a broken tunnel.
+- `python -m data.build_manifest` correctly refuses on an empty cache rather
+  than writing an empty manifest.
+
+**Deliberately did NOT run the full 54-pair fetch.** With the gateway refusing
+CONNECT on policy, all 54 pairs would burn ~55 minutes in the client's 5/15/45s
+backoff and put 162 rejected CONNECTs against the host, for no information
+beyond what the single pair and the proxy's own denial record already establish.
+One pair was run through the real client instead. When the host is allowed, the
+full pull must still be run in full.
+
+**Also confirmed for C7 (probe only, no request sent):**
+`web-api.tp.entsoe.eu:443` is denied by the same policy, exactly as C1
+predicted. So widening Network access needs to cover **both** hosts, not just
+Energy-Charts — otherwise C7 will stall the same way even once
+`ENTSOE_API_KEY` is configured.
+
+*Human action needed (unchanged, now covering both hosts):* widen **Network
+access** for this cloud environment — the environment menu in the session title
+bar → Edit — either to a broader access level or by adding
+`api.energy-charts.info` **and** `web-api.tp.entsoe.eu` to the allowed domains.
+Access levels are documented at
+https://code.claude.com/docs/en/claude-code-on-the-web.
+
+**Noted for whoever runs C1b next, not changed this cycle (out of scope):**
+`data/build_manifest.py` prints "no cached price files found" but exits **0**.
+`fetch_prices` exits 1 so an `&&` chain still stops, but a bare
+`build_manifest` run that builds nothing reporting success is a trap worth
+closing — it belongs with the C1 data layer, not C2. Relatedly, decide whether
+`data/manifest/fetch_failures.json` should be gitignored: it is currently
+tracked-eligible, and this cycle's single-pair probe wrote an `n_failures=1`
+version that would have been misleading if committed as though it were a
+full-run record, so it was deleted rather than committed.
+
+**Next:** still C1b — rerun `python -m data.fetch_prices` (all 54 pairs) then
+`python -m data.build_manifest` once the host is allowed. Then C2, which ends at
+**Checkpoint A**.
