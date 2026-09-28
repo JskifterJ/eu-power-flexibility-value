@@ -1,0 +1,83 @@
+# Data sources, date ranges and the sealed-holdout declaration.
+#
+# All dates are UTC calendar dates, interpreted as [start, end] inclusive of
+# whole days: the fetch window for a year Y is [Y-01-01T00:00Z, Y+1-01-01T00:00Z).
+
+schema_version: 1
+
+# ---------------------------------------------------------------------------
+# Splits (PLAN.md "Training/test split")
+# ---------------------------------------------------------------------------
+splits:
+  train:
+    years: [2019, 2020, 2021, 2022, 2023]
+    note: >
+      Exogenous (ENTSO-E forecast) features only from 2022 onward — no archived
+      D-1 forecast vintages exist earlier. Price-history features span the whole
+      window.
+  validate:
+    years: [2024]
+    note: Visible. May be used to iterate on models.
+  holdout:
+    years: [2025]
+    sealed: true
+    note: >
+      SEALED. Do not fetch, load, read, feature-engineer from, train on, or
+      compute any metric against these years until PROGRESS.md records that
+      Checkpoint C (C16) has been explicitly approved by the human. Enforced in
+      code by data/holdout.py; the approval marker string is below.
+
+# The exact line that must be present in PROGRESS.md before any sealed year may
+# be touched. Written only by a human, never by an agent cycle.
+holdout_unseal_marker: "CHECKPOINT C APPROVED: 2025 holdout unsealed"
+
+# Years to fetch in ordinary (non-holdout) cycles. Deliberately stops at 2024:
+# 2025 is sealed, and 2026 is outside the study window (the main hourly backtest
+# ends 2025-09-30, the day before the SDAC 15-minute go-live).
+fetch_years: [2019, 2020, 2021, 2022, 2023, 2024]
+
+# ---------------------------------------------------------------------------
+# Structural dates
+# ---------------------------------------------------------------------------
+structural_dates:
+  sdac_15min_golive: "2025-10-01"   # market time unit 60min -> 15min
+  main_backtest_end: "2025-09-30"   # last day of the main hourly backtest
+  day_ahead_gate_closure_local: "12:00"  # CET/CEST, D-1; see features.yaml
+
+# ---------------------------------------------------------------------------
+# Sources
+# ---------------------------------------------------------------------------
+sources:
+  energy_charts:
+    base_url: "https://api.energy-charts.info"
+    price_endpoint: "/price"
+    requires_key: false
+    licence: "CC BY 4.0"
+    attribution: "Data: Energy-Charts (Fraunhofer ISE), CC BY 4.0"
+    # Politeness: the API is free and unauthenticated. One request per
+    # (zone, year), never re-requested once cached (see CLAUDE.md).
+    request:
+      timeout_seconds: 120
+      sleep_between_requests_seconds: 2.0
+      max_retries: 3                 # transport/5xx errors only, exponential backoff
+      retry_backoff_seconds: [5, 15, 45]
+    cache_dir: "data/raw/energy_charts/price"
+  entsoe:
+    base_url: "https://web-api.tp.entsoe.eu/api"
+    requires_key: true
+    key_env_var: "ENTSOE_API_KEY"
+    licence: "ENTSO-E Transparency Platform reuse conditions — attribution required"
+    attribution: "Data: ENTSO-E Transparency Platform"
+    first_used_in_cycle: "C7"
+
+# ---------------------------------------------------------------------------
+# Time-handling contract (asserted in tests from C2)
+# ---------------------------------------------------------------------------
+time:
+  internal_timezone: UTC
+  expected_rows_per_utc_day_hourly: 24
+  # UTC days always have 24 hours. Local-clock DST days (23h/25h) are a
+  # presentation/feature concern only; the DST whitelist in C2 exists to assert
+  # that a *local-calendar* day's row count is one of {23, 24, 25} and matches
+  # the transition calendar, rather than silently reindexing.
+  dst_transition_local_day_lengths: [23, 24, 25]

@@ -1,0 +1,101 @@
+# Feature specification.
+#
+# Every feature declares the latest timestamp of information it may contain
+# relative to the target hour, so a single leakage guard (C3) can compare each
+# feature's information cut-off against day-ahead gate closure. `available_at`
+# is the UTC instant at which a value for target day D is knowable:
+#   gate_closure(D) = 12:00 Europe/Brussels on D-1 (11:00Z winter, 10:00Z summer)
+# Anything a feature needs that is published after gate_closure(D) is a leak.
+
+schema_version: 1
+
+target:
+  name: price_eur_mwh
+  source: energy_charts
+  resolution: PT60M
+  note: Day-ahead price for the target hour, UTC-stamped.
+
+# ---------------------------------------------------------------------------
+# Tier B and Tier A both use these (price history only).
+# ---------------------------------------------------------------------------
+price_history:
+  - name: price_lag_24h
+    lag_hours: 24
+    note: Same hour, D-1. Known at gate closure only if the D-1 auction result is
+      published before it — it is (D-1 prices are published on D-2). Safe.
+  - name: price_lag_48h
+    lag_hours: 48
+  - name: price_lag_72h
+    lag_hours: 72
+  - name: price_lag_168h
+    lag_hours: 168
+    note: Same hour, one week back. Also the naive baseline.
+  - name: price_daily_mean_lag_24h
+    lag_hours: 24
+    aggregate: mean_over_utc_day
+  - name: price_daily_min_lag_24h
+    lag_hours: 24
+    aggregate: min_over_utc_day
+  - name: price_daily_max_lag_24h
+    lag_hours: 24
+    aggregate: max_over_utc_day
+
+calendar:
+  - name: hour_of_day_local
+    note: >
+      Local wall-clock hour derived from the UTC timestamp via the zone's
+      local_tz. An explicit feature column ONLY — never used for resampling or
+      alignment (CLAUDE.md).
+  - name: hour_of_day_utc
+  - name: day_of_week
+  - name: is_weekend
+  - name: month
+  - name: is_public_holiday
+    status: deferred
+    note: Needs a sourced per-zone holiday calendar; not implemented in C1.
+
+# ---------------------------------------------------------------------------
+# Tier A only, from C7/C8 — requires ENTSOE_API_KEY.
+# ---------------------------------------------------------------------------
+exogenous:
+  - name: load_forecast_da
+    source: entsoe
+    document: "Art. 6.1.B day-ahead total load forecast"
+    available_from: "2022-01-01"
+    leakage_status: safe
+    note: Published at latest 2h before day-ahead gate closure.
+  - name: wind_forecast_da
+    source: entsoe
+    document: "Art. 14.1.D day-ahead generation forecast for wind"
+    available_from: "2022-01-01"
+    leakage_status: FLAGGED
+    note: >
+      The Art. 14 D-1 forecast is published at 18:00 on D-1 — AFTER day-ahead
+      gate closure — and is revised intraday, so the archived vintage is not
+      what a bidder had. Used only alongside the mandatory degradation
+      sensitivity in C8 (as-published vs persistence-degraded), and the caveat
+      is stated in the write-up's Limits section.
+  - name: solar_forecast_da
+    source: entsoe
+    document: "Art. 14.1.D day-ahead generation forecast for solar"
+    available_from: "2022-01-01"
+    leakage_status: FLAGGED
+    note: Same caveat as wind_forecast_da.
+  - name: residual_load_forecast
+    derived_from: [load_forecast_da, wind_forecast_da, solar_forecast_da]
+    leakage_status: FLAGGED
+    note: load - wind - solar. Drives the C14 fundamentals chapter.
+
+# ---------------------------------------------------------------------------
+# Explicitly excluded (post-audit). Do not add these without flagging.
+# ---------------------------------------------------------------------------
+excluded:
+  - name: open_meteo_weather
+    reason: >
+      Open-Meteo "historical weather" is reanalysis (actuals), not a forecast
+      vintage. Using it as a model input is trained-in leakage. Permitted only
+      as an explicitly labelled "perfect weather foresight" sensitivity run.
+  - name: agsi_gas_storage
+    reason: >
+      Weak, sign-unstable relationship to power price; rejected in the
+      pre-build audit as a gas-price proxy. Replaced by a stated limitation.

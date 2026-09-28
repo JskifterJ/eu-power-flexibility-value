@@ -1,0 +1,84 @@
+# Bidding zones in scope, tiered per PLAN.md.
+#
+# `bzn` is the Energy-Charts API bidding-zone code (query parameter `bzn` on
+# https://api.energy-charts.info/price). `entsoe_domain` is the ENTSO-E
+# Transparency Platform EIC area code, used from C7 onwards for Tier-A
+# exogenous features only.
+#
+# `local_tz` is the IANA zone used ONLY to derive the explicit local
+# hour-of-day feature column. It is never used for resampling, alignment or
+# aggregation — all internal timestamps are UTC (see CLAUDE.md).
+
+schema_version: 1
+
+zones:
+  DE-LU:
+    tier: A
+    bzn: DE-LU
+    entsoe_domain: "10Y1001A1001A82H"
+    local_tz: Europe/Berlin
+    regime: thermal-RES-mixed
+    notes: >
+      Largest continental zone. DE-AT-LU split into DE-LU on 2018-10-01, so the
+      2019+ window used here is structurally consistent.
+  ES:
+    tier: A
+    bzn: ES
+    entsoe_domain: "10YES-REE------0"
+    local_tz: Europe/Madrid
+    regime: solar-dominated
+    notes: >
+      Iberian market. The 2022-06 to 2023-12 "Iberian exception" gas price cap
+      is a known structural intervention — must be called out in the write-up,
+      not silently modelled through.
+  NO2:
+    tier: A
+    bzn: NO2
+    entsoe_domain: "10YNO-2--------T"
+    local_tz: Europe/Oslo
+    regime: hydro-dominated
+    notes: >
+      Reservoir hydro with strong interconnection (NordLink, NSL). No reservoir
+      level data is used, which is a stated limitation.
+  FR:
+    tier: B
+    bzn: FR
+    entsoe_domain: "10YFR-RTE------C"
+    local_tz: Europe/Paris
+    regime: nuclear-dominated
+  NL:
+    tier: B
+    bzn: NL
+    entsoe_domain: "10YNL----------L"
+    local_tz: Europe/Amsterdam
+    regime: gas-RES-mixed
+  BE:
+    tier: B
+    bzn: BE
+    entsoe_domain: "10YBE----------2"
+    local_tz: Europe/Brussels
+    regime: gas-nuclear-mixed
+  IT-North:
+    tier: B
+    bzn: IT-North
+    entsoe_domain: "10Y1001A1001A73I"
+    local_tz: Europe/Rome
+    regime: gas-dominated
+    notes: >
+      Italian zonal market; zone boundaries were reconfigured on 2021-01-01
+      (IT-North itself persists, but neighbouring zone definitions changed).
+  DK1:
+    tier: B
+    bzn: DK1
+    entsoe_domain: "10YDK-1--------W"
+    local_tz: Europe/Copenhagen
+    regime: wind-dominated
+  PL:
+    tier: B
+    bzn: PL
+    entsoe_domain: "10YPL-AREA-----S"
+    local_tz: Europe/Warsaw
+    regime: coal-dominated
+    notes: >
+      Moved from a market-coupling-lite regime to SDAC implicit allocation in
+      2021-06 (day-ahead coupling go-live) — a structural break to flag.
