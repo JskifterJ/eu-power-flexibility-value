@@ -13,11 +13,12 @@
 - **Human checkpoints pending:** none yet
 - **Open FLAGs:** C1-01 (egress policy blocks `api.energy-charts.info` **and**
   `web-api.tp.entsoe.eu` — needs Network access widened in the cloud environment
-  settings). **Retried and still blocked as of 2026-09-29 10:01 UTC C1b — 4
+  settings). **Retried and still blocked as of 2026-09-29 18:02 UTC C1b — 5
   consecutive blocked cycles so far.** Human already pinged once at C1; do not re-ping for
   this same wait. If this reaches ~6 consecutive blocked cycles (~2 days of no
   progress), a single escalation ping is justified — say so plainly and include
-  the blocked-cycle count.
+  the blocked-cycle count. **The next blocked cycle is the 6th and should send
+  that single escalation ping.**
 - **Sealed holdout (2025):** SEALED — do not touch until Checkpoint C (C16) is
   approved here
 - **ENTSOE_API_KEY:** obtained by the user 2026-09-28. NOT yet configured for
@@ -287,6 +288,75 @@ would burn ~55 minutes of backoff and put 162 rejected CONNECTs against the host
 for no information beyond what one pair plus the proxy's own denial record
 already establish. When the host is allowed, the full pull must still be run in
 full.
+
+*Human action needed (unchanged):* the environment's network policy is denying
+`api.energy-charts.info` and `web-api.tp.entsoe.eu`. Change **Network access**
+in the cloud environment's settings (the environment menu in the session title
+bar → Edit): either a broader access level, or add both hosts to the allowed
+domains. Access levels are described at
+https://code.claude.com/docs/en/claude-code-on-the-web. Nothing in C1-C6 can
+proceed without the first host; C7 needs the second.
+
+**Next:** still C1b — rerun `python -m data.fetch_prices` (all 54 pairs) then
+`python -m data.build_manifest` once the hosts are allowed. Then C2, which ends
+at **Checkpoint A**.
+
+### C1b — 2026-09-29 18:02 UTC (scheduled cycle) — STILL BLOCKED, no new work
+
+Fifth consecutive blocked cycle. **`api.energy-charts.info` is still denied by
+the cloud environment's egress policy**, so FLAG C1-01 stands unchanged, there
+is still no manifest, and per the standing C1b instruction no C2 work was
+started and no push notification was sent (5 blocked cycles; escalation
+threshold is ~6, so the *next* blocked cycle should send the single escalation
+ping).
+
+Verified this cycle (fresh container — no venv, empty cache):
+- `.venv` rebuilt from the committed `requirements.txt`; **all 44 C1 unit tests
+  pass**, including the sealed-holdout tripwire asserting the C16 unseal marker
+  is still absent from this file.
+- `python -m data.fetch_prices --zones DE-LU --years 2024` reproduces the
+  failure byte-identically for the fifth cycle running (`ProxyError ... Tunnel
+  connection failed: 403 Forbidden`), exits 1, and caches nothing.
+- The agent proxy's status endpoint records, for this cycle's probes,
+  `connect_rejected` / "gateway answered 403 to CONNECT (policy denial)" for
+  **both** `api.energy-charts.info:443` (18:01:29Z, and again at 18:01:44Z /
+  18:01:49Z / 18:02:04Z through the client's three retries) and
+  `web-api.tp.entsoe.eu:443` (18:01:35Z). A `github.com` control probe from the
+  same session tunnels fine (HTTP 400 from the origin, i.e. CONNECT succeeded),
+  so this remains host-specific policy, not a broken tunnel. No mirror, scraper
+  or alternative source was tried.
+- `python -m data.build_manifest` refuses on the empty cache (`EXIT=3`) rather
+  than writing an empty manifest.
+- `ENTSOE_API_KEY` is still **not set** in this environment. Not blocking
+  anything before C7, recorded here only so the C7 precondition stays visible.
+
+**Deliberately did NOT run the full 54-pair fetch**, for the same reason as the
+previous three cycles: with the gateway refusing CONNECT on policy, all 54 pairs
+would burn ~55 minutes of backoff and put 162 rejected CONNECTs against the host
+for no information beyond what one pair plus the proxy's own denial record
+already establish. When the host is allowed, the full pull must still be run in
+full.
+
+**Closed the standing `fetch_failures.json` recommendation.** Three consecutive
+cycles recommended gitignoring `data/manifest/fetch_failures.json` and each left
+it for "a cycle actually touching the data layer", while each in the meantime
+hand-deleted a misleading `n_failures=1` probe artefact. That is a trap that
+only gets more likely the longer the block lasts, so this cycle added the single
+`.gitignore` line. Scope note, stated plainly: this is one line of repo hygiene,
+not C2 work and not a change to any test, data contract or fetch/manifest code
+path — `tests/`, `data/` and `config/` are untouched this cycle.
+
+**Repo-state note (no history was lost, but worth knowing).** This container's
+fresh clone arrived on a **detached HEAD** at `d11ec8a` with the local `master`
+ref stale at the C0 commit `d257e20`; `origin/master` was already `d11ec8a`.
+Checking out `master` therefore silently reverted the working tree to the C0
+state, including `PROGRESS.md`. Resolved with `git fetch origin` and a verified
+`git merge --ff-only origin/master` (local `master` confirmed a strict ancestor
+first), so all four prior commits are intact and this cycle commits on `master`.
+**If a future cycle finds itself on a detached HEAD, fetch and verify against
+`origin/master` before committing** — committing from the detached state would
+have stranded the work, and reverting the tree without noticing would have
+looked in the diff like a deliberate rewrite of `PROGRESS.md` history.
 
 *Human action needed (unchanged):* the environment's network policy is denying
 `api.energy-charts.info` and `web-api.tp.entsoe.eu`. Change **Network access**
