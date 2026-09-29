@@ -11,12 +11,13 @@
   pinged once about this), and stop — do not start C2 without a manifest, and do
   not substitute a different data source.
 - **Human checkpoints pending:** none yet
-- **Open FLAGs:** C1-01 (egress policy blocks `api.energy-charts.info` — needs
-  Network access widened in the cloud environment settings). **Retried and still
-  blocked as of 2026-09-28 C1b — 2 cycles lost so far.** Human already pinged
-  once at C1; do not re-ping for this same wait. If this reaches ~6 consecutive
-  blocked cycles (~2 days of no progress), a single escalation ping is
-  justified — say so plainly and include the blocked-cycle count.
+- **Open FLAGs:** C1-01 (egress policy blocks `api.energy-charts.info` **and**
+  `web-api.tp.entsoe.eu` — needs Network access widened in the cloud environment
+  settings). **Retried and still blocked as of 2026-09-29 C1b — 3 consecutive
+  blocked cycles so far.** Human already pinged once at C1; do not re-ping for
+  this same wait. If this reaches ~6 consecutive blocked cycles (~2 days of no
+  progress), a single escalation ping is justified — say so plainly and include
+  the blocked-cycle count.
 - **Sealed holdout (2025):** SEALED — do not touch until Checkpoint C (C16) is
   approved here
 - **ENTSOE_API_KEY:** obtained by the user 2026-09-28. NOT yet configured for
@@ -181,7 +182,9 @@ https://code.claude.com/docs/en/claude-code-on-the-web.
 `data/build_manifest.py` prints "no cached price files found" but exits **0**.
 `fetch_prices` exits 1 so an `&&` chain still stops, but a bare
 `build_manifest` run that builds nothing reporting success is a trap worth
-closing — it belongs with the C1 data layer, not C2. Relatedly, decide whether
+closing — it belongs with the C1 data layer, not C2. *[Corrected in the
+2026-09-29 C1b entry below: this claim was wrong — it already exits 3.]*
+Relatedly, decide whether
 `data/manifest/fetch_failures.json` should be gitignored: it is currently
 tracked-eligible, and this cycle's single-pair probe wrote an `n_failures=1`
 version that would have been misleading if committed as though it were a
@@ -190,3 +193,62 @@ full-run record, so it was deleted rather than committed.
 **Next:** still C1b — rerun `python -m data.fetch_prices` (all 54 pairs) then
 `python -m data.build_manifest` once the host is allowed. Then C2, which ends at
 **Checkpoint A**.
+
+### C1b — 2026-09-29 (scheduled cycle) — STILL BLOCKED, no new work
+
+Third consecutive blocked cycle. Checked the one thing this cycle exists to
+check: **`api.energy-charts.info` is still denied by the cloud environment's
+egress policy.** FLAG C1-01 stands unchanged, there is still no manifest, and
+per the standing C1b instruction no C2 work was started and no second push
+notification was sent (3 blocked cycles, escalation threshold is ~6).
+
+Verified this cycle (fresh container — no venv, empty cache):
+- `.venv` rebuilt from the committed `requirements.txt`; **all 44 C1 unit tests
+  pass**, including the sealed-holdout tripwire asserting the C16 unseal marker
+  is still absent from this file. The committed C1 data layer is healthy.
+- `python -m data.fetch_prices --zones DE-LU --years 2024` reproduces the
+  failure **byte-identically** for the third cycle running (`ProxyError ...
+  Tunnel connection failed: 403 Forbidden`), exits 1, and caches nothing.
+- The agent proxy's own status endpoint records, for this cycle's probes:
+  `connect_rejected` / "gateway answered 403 to CONNECT (policy denial)" for
+  **both** `api.energy-charts.info:443` and `web-api.tp.entsoe.eu:443`.
+  `github.com` tunnels fine from the same session, so this remains
+  host-specific policy, not a broken tunnel. No mirror, scraper or alternative
+  source was tried, and `config/data.yaml` still names Energy-Charts as the
+  only price source.
+- `python -m data.build_manifest` refuses on an empty cache rather than writing
+  an empty manifest.
+
+**Correction to the previous C1b handover note:** it recorded that
+`data/build_manifest.py` "prints 'no cached price files found' but exits 0".
+That is wrong — it returns **3** on an empty cache (`data/build_manifest.py:46`),
+and 2 on a config-load failure. Measured directly this cycle:
+`build_manifest EXIT=3`. There is no trap to close and no code change was made.
+The earlier note most likely misread the `&&`-chain behaviour it was describing.
+
+**Still open (unchanged, deliberately not decided this cycle):** whether
+`data/manifest/fetch_failures.json` should be gitignored. This cycle's
+single-pair probe again wrote an `n_failures=1` version that would misrepresent
+a full 54-pair run if committed, so it was again deleted rather than committed.
+Recommendation for whoever unblocks this: gitignore it — `PROGRESS.md` is the
+durable FLAG record per `CLAUDE.md`, so the JSON is a per-invocation artefact,
+while `data/manifest/` otherwise holds the committed Checkpoint A manifest.
+Left as a one-line change for a cycle that is actually touching the data layer.
+
+**Deliberately did NOT run the full 54-pair fetch**, for the same reason as last
+cycle: with the gateway refusing CONNECT on policy, all 54 pairs would burn
+~55 minutes in the client's 5/15/45s backoff and put 162 rejected CONNECTs
+against the host for no information beyond what one pair plus the proxy's own
+denial record already establish. When the host is allowed, the full pull must
+still be run in full.
+
+*Human action needed (unchanged):* widen **Network access** for this cloud
+environment — the cloud environment menu in the session title bar → Edit —
+either to a broader access level or by adding `api.energy-charts.info` **and**
+`web-api.tp.entsoe.eu` to the allowed domains. Access levels are documented at
+https://code.claude.com/docs/en/claude-code-on-the-web. Nothing in C1-C6 can
+proceed without the first host; C7 needs the second.
+
+**Next:** still C1b — rerun `python -m data.fetch_prices` (all 54 pairs) then
+`python -m data.build_manifest` once the hosts are allowed. Then C2, which ends
+at **Checkpoint A**.
