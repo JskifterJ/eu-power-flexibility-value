@@ -107,7 +107,8 @@ hidden:
    all nine zones: one unbroken hourly series, uniform 3600s deltas, no interior
    gaps, no NaN, spanning `2018-12-31T23:00Z .. 2024-12-31T22:00Z`.
 
-**Requirement for C2's loader:** build the continuous UTC series by
+**Requirement for C2's loader (satisfied in C2 — see `docs/data_contracts.md`):**
+build the continuous UTC series by
 concatenating the per-year files and de-duplicating on timestamp — do *not*
 reindex or fill per-year to 8760. The first hour of UTC year `Y` is in file `Y`;
 the last hour of UTC year `Y` is in file `Y+1`.

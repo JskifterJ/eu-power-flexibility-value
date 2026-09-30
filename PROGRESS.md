@@ -2,27 +2,34 @@
 
 ## Current status
 
-- **Next cycle to run:** C2 — data contract tests (expected row count per
-  (zone, day) incl. the DST whitelist; resolution-change detection at
-  2025-10-01; gap report), hourly aggregation with the method documented, and
-  a price plot per zone. **C2 ends at CHECKPOINT A: stop, push-notify, and
-  wait for human review of the manifest + plots before any modelling.**
-  Before starting, read NOTE C1-02 below — it tells C2's loader how to stitch
-  the per-year cache files into one continuous UTC series.
-- **Human checkpoints pending:** Checkpoint A, at the end of C2 (next cycle).
-- **Open FLAGs:** none. **FLAG C1-01 is RESOLVED** as of 2026-09-30 13:20 UTC —
-  the cloud environment's network policy now allows `api.energy-charts.info`
-  (and `web-api.tp.entsoe.eu`). The full 54-pair price pull ran clean and the
-  manifest is built. See NOTE C1-02 for a documented, non-blocking data-layer
-  observation.
-- **Sealed holdout (2025):** SEALED — do not touch until Checkpoint C (C16) is
-  approved here. Guard verified armed this cycle (marker absent, `grep -cF` = 0).
-- **ENTSOE_API_KEY:** **now SET in this environment** (verified 2026-09-30).
-  The C7 precondition is satisfied; no action needed before then.
-- **Repo-state note:** the detached-HEAD trap did **not** recur this cycle — the
-  container arrived on `master`, clean, level with `origin/master`. Keep
-  fetching and verifying against `origin/master` before committing anyway; it
-  recurred three cycles running before this one.
+- **Next cycle to run:** **AWAITING HUMAN — CHECKPOINT A.** C2 is complete and
+  stops here by design. Do **not** start C3 (walk-forward harness + naive model,
+  DE-LU) until a human has reviewed the Checkpoint A artefacts listed in the C2
+  log entry below and recorded approval here. A scheduled cycle that fires while
+  this line still says AWAITING HUMAN should verify nothing has changed, append a
+  one-line note that it checked and is still waiting, send no push notification,
+  and stop.
+- **Human checkpoints pending:** **Checkpoint A — open, awaiting review.**
+  Artefacts ready: `data/manifest/prices_manifest.csv` (unchanged from C1),
+  `data/manifest/contract_report.{csv,json}`, `data/manifest/dst_whitelist.csv`,
+  and 11 figures in `docs/figures/`. Three decisions are requested — see
+  "Checkpoint A: what needs a human" in the C2 entry.
+- **Open FLAGs:** none. Two non-blocking NOTEs raised this cycle (C2-01
+  `raw_sha256` is not reproducible by construction; C2-02 the raw cache does not
+  survive a container, so every cycle re-pulls). Neither blocks any work.
+- **Sealed holdout (2025):** SEALED — do not touch until the human records
+  approval of Checkpoint C (C16) here, using the marker string defined in
+  `config/data.yaml` -> `holdout_unseal_marker` (never reproduced in this file).
+  Guard verified armed this cycle, before and after the work: marker count 0,
+  `holdout_is_unsealed()` = `False`. No 2025 data was fetched, loaded or computed
+  against at any point in C2.
+- **ENTSOE_API_KEY:** set in this environment (verified C1b). C7 precondition
+  satisfied; not needed before then, and not used this cycle.
+- **Repo-state note:** the detached-HEAD trap **did** recur this cycle — the
+  container arrived on a detached HEAD at `6227d69`. Reattached with
+  `git checkout -B master 6227d69` and re-pointed at `origin/master` before any
+  work. Keep checking `git rev-parse --abbrev-ref HEAD` at the start of every
+  cycle; this is now 4 recurrences out of 9 containers.
 
 ## Log
 
@@ -653,3 +660,228 @@ DST whitelist, resolution-change detection at the 2025-10-01 15-min cutover,
 gap report), documented hourly aggregation, and a price plot per zone. Then
 **stop at CHECKPOINT A** and push-notify for human review of the manifest and
 plots before any modelling begins.
+
+### C2 — 2026-09-30 17:55-18:30 UTC (scheduled cycle) — COMPLETE, **CHECKPOINT A REACHED**
+
+Scope per PLAN.md C2: data contract tests (per-(zone, day) row counts against a
+DST whitelist, resolution-change detection at the 2025-10-01 cutover, gap
+report), documented hourly aggregation, and a price plot per zone. Then stop at
+Checkpoint A. All of that is done; nothing from C3 was started.
+
+**Container state on arrival.** Detached HEAD at `6227d69` (4th recurrence),
+reattached to `master` before touching anything. `.venv` absent, rebuilt from the
+committed `requirements.txt`. **`data/raw/` was empty** — the raw cache is
+gitignored and the container is ephemeral, so C1's 9.0 MB of cached price files
+did not survive. See NOTE C2-02.
+
+**The 54-pair pull was re-run, and it reproduced C1 exactly.** Re-fetching was
+not a violation of "never re-download cached data": the cache was empty, so there
+was nothing cached to re-download, and C2 cannot check contracts on data that
+isn't there. `downloaded=54 already_cached=0 flagged=0`, EXIT=0, no 404s, no
+retries, no schema rejections. The manifest was then rebuilt and diffed against
+C1's committed copy: **all 25 data columns identical across all 54 rows** —
+`n_points`, `raw_bytes`, `first/last_ts_utc`, every price statistic, every
+negative-hour count. The committed `prices_manifest.{csv,json}` were therefore
+restored to C1's versions rather than re-committed with fresh provenance stamps,
+so the Checkpoint A artefact the human reviews is stable and diff-free.
+
+**Built this cycle:**
+- `data/prices.py` — the stitching loader NOTE C1-02 specified. It does **not**
+  reuse `read_cached_year`: that trims each file to its own UTC year, which would
+  leave a one-hour hole at *every* year boundary, since `Y-12-31T23:00Z` lives in
+  file `Y+1`. It parses each file untruncated, concatenates, sorts, and
+  de-duplicates on timestamp — collapsing a duplicate only when the two files
+  agree on the price, and raising if they disagree. Never reindexes, never fills.
+  The holdout guard is applied per year before any file is opened.
+- `data/contracts.py` — the seven contracts (table below), the derived DST
+  whitelist, resolution segmentation/change detection, the gap report, and
+  `payload_fingerprint` (see NOTE C2-01).
+- `data/aggregate.py` — sub-hourly -> hourly by one documented method.
+- `data/build_contracts.py`, `data/plot_prices.py` — the two CLIs.
+- `tests/test_c2_contracts.py` — **42 new tests**, all offline and synthetic.
+- `docs/data_contracts.md` — the layer documented; `docs/data_layer.md` got a
+  one-line pointer marking its "requirement for C2's loader" satisfied.
+- `requirements.txt` — matplotlib added.
+
+**Test suite: 86 passing (44 from C1, 42 new).**
+
+**Result: all nine zones pass all seven contracts.** Each zone is one contiguous
+hourly series, `2018-12-31T23:00Z .. 2024-12-31T22:00Z`, 52,608 points:
+
+| contract | result, all 9 zones |
+|---|---|
+| index tz-aware UTC, monotonic, no duplicates | pass; 0 duplicates |
+| every fully-covered UTC day = 24 rows | pass; **2,191 days checked**, 0 violations |
+| every fully-covered local day = DST-derived count | pass; **2,192 days checked**, 0 violations |
+| every non-24h local day is a tz-database transition date | pass; **12 DST days** seen per zone |
+| no gaps | pass; `n_missing_intervals` = 0, `max_gap_hours` = 0.0 |
+| no NaN prices | pass; 0 |
+| only permitted resolution change is 3600s->900s at the cutover | pass; 0 changes (series ends 2024) |
+
+**The DST whitelist is derived, not hardcoded.** `dst_transition_days(tz, years)`
+walks the tz database, so it cannot drift from reality, and it fails in *both*
+directions: a 23-hour local day on the last Sunday in March passes, a 23-hour
+local day on an ordinary Tuesday is a violation (there is a test for exactly
+that). This is the assertion that stops an hour of silently dropped real data
+from being excused as "probably DST". All nine zones are CET/CEST and share one
+transition calendar — asserted by a test, so adding a non-CET zone later fails
+loudly instead of silently reusing the wrong calendar. 126 rows committed to
+`data/manifest/dst_whitelist.csv`.
+
+**UTC days and local days are deliberately separate contracts.** A UTC day always
+holds 24 hourly intervals, so a deviation is unambiguously a defect; a local day
+holds 23/24/25 and needs the whitelist. Day completeness is decided from expected
+interval *timestamps*, not by assuming the first and last day are partial — for
+these CET zones the local-day view is complete at both ends and those days are
+still checked (hence 2,192 local vs 2,191 UTC days).
+
+**Gaps and resolution changes are not allowed to be confused.** A missing hour and
+a market-time-unit change both appear as an odd delta. `detect_resolution_changes`
+ignores runs shorter than two intervals and merges same-resolution neighbours, so
+hourly / missing-hour / hourly reports a **gap**, not a 3600s->3600s "change" —
+that was a genuine bug in this cycle's first draft, caught by its own test.
+`gap_report` measures each step against the resolution in force either side of it,
+so a legitimate cutover contributes zero missing intervals.
+
+**The 2025-10-01 cutover instant is local midnight, not UTC midnight**
+(`2025-09-30T22:00Z` for a CEST zone) — it is a market *day*. Only one change,
+3600s->900s at that instant, is permitted; anything else is a violation.
+**No 2025 data was touched to test this.** The detector is exercised on synthetic
+hand-built indices; the real series ends 2024-12-31 and reports 0 changes.
+
+**Hourly aggregation — the method, on the record.** The hourly price is the
+**unweighted arithmetic mean** of the sub-hourly prices whose interval starts in
+that UTC hour. Sub-hourly intervals are equal length, so that is the correct
+duration-weighted average. **It is not a VWAP and cannot be**: a volume-weighted
+price needs cleared volume per interval, and the Energy-Charts `/price` payload
+carries prices only. `to_hourly` accepts an explicit `volume` argument so the
+machinery exists if a volume source is ever added, but nothing in this repo
+supplies one — the write-up must say "duration-weighted mean of 15-minute prices",
+never "VWAP". Partial hours raise by default rather than being averaged. Grouping
+is on the UTC hour; local time is never a resampling key.
+*For the write-up's Limits section:* aggregating 15-minute prices to hourly
+destroys within-hour spread, so a battery's realisable value is **higher** at
+native 15-minute granularity than an aggregated hourly series implies. Aggregated
+post-cutover results understate flexibility value and must never be pooled with
+pre-cutover hourly results as though they were the same measurement.
+
+**Independent cross-check of C1's manifest, and a clean reconciliation.** The
+negative-hour counts recomputed from the stitched series match C1's per-year
+manifest everywhere except three cells: DE-LU 2022 (69 -> 70), NL 2022 (85 -> 86),
+BE 2022 (112 -> 113). All three are the *same single hour*, `2022-12-31T23:00Z`,
+which was negative in exactly those three zones (-5.17, -3.61, -4.39 EUR/MWh).
+That hour is absent from the manifest's 2022 row because it lives in file 2023 —
+precisely and only the discrepancy NOTE C1-02 predicts. Every other (zone, year)
+pair agrees exactly. This is a good sign for both artefacts: the manifest and the
+stitched series differ in exactly the documented way and nowhere else.
+
+**Figures (11, in `docs/figures/`, 1.8 MB total).** One per zone — daily mean with
+the intraday min-max band behind it, plus a one-week hourly inset so the raw shape
+is visible; a nine-panel small-multiples overview on a shared y-axis; and
+negative-price hours per zone-year. The overview's y-axis is **clipped to
+[-124, 850] EUR/MWh with the clipping stated on the figure itself** (36 daily
+extremes fall outside): FR's 2,987.78 EUR/MWh 2022 print otherwise squashes all
+nine panels into the bottom eighth of the frame. True extremes are in the
+manifest. Daily aggregation is on the UTC date and drops the partial boundary days
+so the left edge is not a one-hour "day".
+
+**NOTE C2-01 — the manifest's `raw_sha256` cannot be reproduced, by construction.
+Not a defect in the data; a limit on what that column can be used for.** The
+re-pull produced 54 files with byte-identical *sizes* and *contents* but 54
+different `raw_sha256` values. Cause: the column hashes the cached file, and this
+project writes a `_fetch_meta.fetched_at_utc` stamp into that file before hashing
+it. So `raw_sha256` identifies a *file*, not a *payload*, and can never match
+across re-fetches — it cannot serve as the data-integrity check it looks like.
+Rather than change `data/manifest.py` mid-checkpoint (it produces the artefact the
+human is about to review), C2 added `payload_sha256` to the contract report:
+sha256 over the `(UTC epoch, price)` pairs at fixed 6-decimal precision,
+reproducible across pulls. **A human decision is requested** on whether
+`data/manifest.py` should switch `raw_sha256` to hash the payload rather than the
+file. Proposed, not done.
+
+**NOTE C2-02 — the raw cache does not survive a container, so every cycle re-pulls
+54 files (~9 MB).** `data/raw/` is gitignored (correctly — CLAUDE.md forbids
+committing bulk raw data) and containers are ephemeral, so C1's cache was gone.
+This is not currently harmful: the pull takes ~4 minutes, is polite (2s between
+requests), and reproduced byte-identically. But it means "never re-download cached
+data" is effectively unenforceable across cycles, and ~15 more cycles implies ~15
+more full pulls against a free, unauthenticated Fraunhofer ISE endpoint. **A human
+decision is requested** between: (a) leave it — it is polite and provably
+reproducible; (b) commit a compact derived artefact (all nine zones, hourly, 2019
+-2024 is ~1.2 MB as compressed parquet) so cycles load from the repo and only fetch
+what is missing; (c) configure a persistent cache volume if the platform offers
+one. Option (b) touches the "no bulk raw data" rule and is the kind of call that
+should not be made by an unattended cycle. Proposed, not done.
+
+**Files under `tests/` — declared, per CLAUDE.md.** One file was **added**:
+`tests/test_c2_contracts.py`. That is C2's own mandate in PLAN.md ("data contract
+tests"), and adding a new test file is not what the rule guards against. **No
+existing test was edited, and no existing assertion was weakened or deleted** —
+`tests/test_c1_data_layer.py` and `tests/conftest.py` are untouched
+(`git diff --stat` confirms). Where this cycle's tests failed, the *code* was
+fixed: the resolution-change merge bug described above was a real defect in new
+code, found by a new test, and fixed in `data/contracts.py`.
+
+**One C1 file was modified, and it is a pure refactor:** `data/energy_charts.py`
+gained `parse_payload(payload, context)` — the untruncated parse — and
+`payload_to_frame` now calls it before applying its per-UTC-year window. Behaviour
+is unchanged (all 44 C1 tests pass unmodified, before and after). This was needed
+because the stitching loader must see the whole file, not one UTC year.
+`data/holdout.py`, `data/config.py`, `data/manifest.py` and everything under
+`config/` were **not** touched.
+
+**Sealed holdout.** Verified armed before the work and again before committing:
+marker count in this file 0, `holdout_is_unsealed()` = `False`, `sealed_years()` =
+`{2025}`, `fetch_years` = 2019-2024. The C1b warning was heeded — the marker
+string is not reproduced anywhere in this entry, only referred to by its config
+key. No 2025 data was fetched, loaded, or computed against. The synthetic indices
+dated 2025 in the cutover tests are hand-built timestamps with made-up prices, not
+sealed data; `data/prices.py` has a test asserting it refuses a sealed year even
+when a 2025 file is sitting in the cache.
+
+---
+
+## CHECKPOINT A — ready for review
+
+**What to look at, roughly in this order:**
+1. `docs/figures/prices_all_zones.png` — the nine series at a glance. Sanity-check
+   against market history: the 2022 crisis in every zone, NO2's 2020 hydro glut
+   near zero, IT-North's 0.00 EUR/MWh floor, ES's flatter solar-shaped profile.
+2. `docs/figures/negative_hours.png` — negative hours per zone-year. The
+   2023->2024 jump almost everywhere, ES's first negative hours in 2024, IT-North
+   at zero throughout, and the 2022 dip (high gas priced out negatives).
+3. `data/manifest/prices_manifest.csv` — 54 rows, unchanged from C1. The mean and
+   negative-hour tables are in the C1b entry above.
+4. `data/manifest/contract_report.csv` — nine rows, `ok = True` on all of them.
+5. `docs/figures/prices_<ZONE>.png` — any zone you want to look at closely.
+
+**The one thing worth verifying independently:** these prices have not been
+checked against a second source. Picking two or three cells from the manifest
+(say DE-LU 2022 mean 235.5 EUR/MWh, NO2 2020 mean 9.3 EUR/MWh) and comparing them
+against ENTSO-E, a market report, or memory is the highest-value five minutes of
+this checkpoint — everything downstream inherits these numbers.
+
+**Checkpoint A: what needs a human (three decisions, none blocking C3):**
+1. **NOTE C2-01** — should `data/manifest.py` hash the payload rather than the
+   file, so `raw_sha256` becomes reproducible? (C2 added a reproducible
+   `payload_sha256` alongside it either way.)
+2. **NOTE C2-02** — cache persistence: leave the per-cycle re-pull as is, commit a
+   compact derived hourly artefact, or use a persistent volume?
+3. **Carried over from C1b, still proposed and not done** — hardening
+   `data/holdout.py`. Its unseal test is a plain substring check against this
+   file, which is context-blind: the C1b cycle mechanically opened the seal just
+   by *describing* the marker in prose, and caught it pre-commit. Options: require
+   the marker alone on its own line, and/or require a human signature + date
+   alongside it. `data/holdout.py` is the leakage-contract file, so CLAUDE.md
+   forbids an agent cycle changing it without review. This is that review request.
+
+**To approve and continue:** replace the "Next cycle to run" line at the top of
+this file with C3, and note the approval here. C3 is the walk-forward harness plus
+the naive model on DE-LU, with the three leakage tests written before the real
+model.
+
+**Next (after approval):** C3 — walk-forward harness + naive (same hour last week)
+model, DE-LU only, and the leakage assertions: (i) shifting the feature matrix
+forward one day must degrade metrics, (ii) a deliberately future-timestamped
+feature must be caught by a gate-closure guard, (iii) target permutation must
+destroy skill.

@@ -135,16 +135,31 @@ def validate_payload(payload: Any, context: str) -> dict[str, Any]:
     return payload
 
 
+def parse_payload(payload: dict[str, Any], context: str) -> pd.DataFrame:
+    """Decoded payload -> UTC-indexed price frame, with **no** windowing applied.
+
+    This is the whole of what the source returned. Callers that want one UTC
+    calendar year use :func:`payload_to_frame`; callers stitching a continuous
+    multi-year series (see :mod:`data.prices`) need the untruncated form,
+    because the final UTC hour of year ``Y`` is only ever present in file
+    ``Y+1`` — see the request-window convention in ``docs/data_layer.md``.
+    """
+    validate_payload(payload, context)
+    index = pd.to_datetime(payload["unix_seconds"], unit="s", utc=True)
+    frame = pd.DataFrame({PRICE_COLUMN: pd.Series(payload["price"], dtype="float64")})
+    frame.index = pd.DatetimeIndex(index, name="timestamp_utc")
+    frame.attrs["unit"] = payload.get("unit", EXPECTED_UNIT)
+    frame.attrs["license_info"] = payload.get("license_info", "")
+    return frame
+
+
 def payload_to_frame(payload: dict[str, Any], year: int, context: str) -> pd.DataFrame:
     """Decoded payload -> UTC-indexed frame truncated to calendar year ``year``.
 
     Points outside the year are dropped by *timestamp*, never by value, and the
     count of dropped points is returned on ``frame.attrs['n_out_of_window']``.
     """
-    validate_payload(payload, context)
-    index = pd.to_datetime(payload["unix_seconds"], unit="s", utc=True)
-    frame = pd.DataFrame({PRICE_COLUMN: pd.Series(payload["price"], dtype="float64")})
-    frame.index = pd.DatetimeIndex(index, name="timestamp_utc")
+    frame = parse_payload(payload, context)
 
     start = pd.Timestamp(year=year, month=1, day=1, tz="UTC")
     end = pd.Timestamp(year=year + 1, month=1, day=1, tz="UTC")
