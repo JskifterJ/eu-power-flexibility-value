@@ -80,18 +80,45 @@ is exactly 8760 / 8784 hourly intervals — UTC years have no DST discontinuity.
 Local-clock 23h/25h days are a feature/presentation concern, handled by the C2
 DST whitelist assertions, never by reindexing or filling here.
 
-## Request-window convention (to verify in C2)
+## Request-window convention (resolved at C1b, 2026-09-30)
 
 A year `Y` is requested as `start=Y-01-01&end=Y-12-31` and the parsed result is
 then truncated to `[Y-01-01T00:00Z, Y+1-01-01T00:00Z)`. The request never names
 a date outside `Y`, which is what keeps the holdout guard simple — a fetch of
 2024 cannot ask the API for 2025.
 
-Whether the API treats `end` as inclusive of the whole day is **not assumed**.
-If it is exclusive, coverage will land near 8736/8760 and `last_ts_utc` will
-read `Y-12-30T23:00Z`; the manifest surfaces both, and `build_manifest` prints a
-"rows with gaps" report to stderr. C2 resolves this explicitly rather than
-patching it silently.
+**Observed answer, from the completed 54-pair pull:** `end` is inclusive of the
+whole day, but the window is interpreted in the bidding zone's **local** time,
+not UTC. Energy-Charts returns exactly one full *local* year:
+`[Y-01-01T00:00 local, Y-12-31T23:00 local]` = 8760 points (8784 in a leap
+year). All nine zones in scope are CET/CEST, so in UTC every raw file spans
+`[Y-1-12-31T23:00Z, Y-12-31T22:00Z]`.
+
+Two consequences, both benign and both surfaced by the manifest rather than
+hidden:
+
+1. Per-UTC-year truncation drops exactly the one leading point that belongs to
+   `Y-1` — hence `n_out_of_window_dropped == 1` on all 54 rows — and the final
+   UTC hour of year `Y` (`Y-12-31T23:00Z`) is absent from row `Y` because it was
+   never in the `Y` window. It is present in file `Y+1`. So
+   `coverage_ratio == 8759/8760 == 0.999886` uniformly is an artefact of
+   per-UTC-year windowing, **not** missing data.
+2. The union of a zone's cached files is contiguous and gap-free. Verified for
+   all nine zones: one unbroken hourly series, uniform 3600s deltas, no interior
+   gaps, no NaN, spanning `2018-12-31T23:00Z .. 2024-12-31T22:00Z`.
+
+**Requirement for C2's loader:** build the continuous UTC series by
+concatenating the per-year files and de-duplicating on timestamp — do *not*
+reindex or fill per-year to 8760. The first hour of UTC year `Y` is in file `Y`;
+the last hour of UTC year `Y` is in file `Y+1`.
+
+**Holdout interaction — read before "completing" 2024.** The last hour of UTC
+2024, `2024-12-31T23:00Z`, lives only in the 2025 file, and 2025 is SEALED.
+The usable UTC span therefore ends at **`2024-12-31T22:00Z`** and a cycle must
+**never** fetch 2025 to close that one-hour tail. This costs one hour out of
+~52,600 and is irrelevant to the hourly backtest, whose window ends 2025-09-30
+anyway. `data/holdout.py` already refuses the fetch; this note exists so no
+future cycle mistakes the tail for a bug worth "fixing".
 
 Points returned outside the requested year are dropped **by timestamp, never by
 value**, and counted in `n_out_of_window_dropped`.

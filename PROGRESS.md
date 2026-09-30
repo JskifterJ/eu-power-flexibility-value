@@ -2,34 +2,27 @@
 
 ## Current status
 
-- **Next cycle to run:** C1b — retry the Energy-Charts price pull and build the
-  manifest. All C1 code is written, tested and committed; only the network pull
-  is outstanding. **First: `git fetch origin` and verify against `origin/master`
-  — this container has arrived on a detached HEAD with stale refs three cycles
-  running (see the repo-state notes in the last three log entries).** Then run
-  `python -m data.fetch_prices` then `python -m data.build_manifest`. If
-  `api.energy-charts.info` is still blocked by the environment's egress policy
-  (see FLAG C1-01 below), append a short note, **do NOT send another push
-  notification — the human has now been pinged twice (C1, and the C1b
-  escalation on 2026-09-30 02:02 UTC), and both pings for this wait are
-  spent** — and stop. Do not start C2 without a manifest, and do not
-  substitute a different data source.
-- **Human checkpoints pending:** none yet
-- **Open FLAGs:** C1-01 (egress policy blocks `api.energy-charts.info` **and**
-  `web-api.tp.entsoe.eu` — needs Network access widened in the cloud environment
-  settings). **Retried and still blocked as of 2026-09-30 10:02 UTC C1b — 7
-  consecutive blocked cycles (~2.5 days of zero progress).** The escalation
-  ping designated for the 6th cycle **was sent on 2026-09-30 02:02 UTC**. Both
-  pings for this wait are now spent (C1 + the C1b escalation): **do not ping
-  again for this same block.** Keep retrying once per cycle and logging briefly; the
-  situation only changes when a human widens Network access.
+- **Next cycle to run:** C2 — data contract tests (expected row count per
+  (zone, day) incl. the DST whitelist; resolution-change detection at
+  2025-10-01; gap report), hourly aggregation with the method documented, and
+  a price plot per zone. **C2 ends at CHECKPOINT A: stop, push-notify, and
+  wait for human review of the manifest + plots before any modelling.**
+  Before starting, read NOTE C1-02 below — it tells C2's loader how to stitch
+  the per-year cache files into one continuous UTC series.
+- **Human checkpoints pending:** Checkpoint A, at the end of C2 (next cycle).
+- **Open FLAGs:** none. **FLAG C1-01 is RESOLVED** as of 2026-09-30 13:20 UTC —
+  the cloud environment's network policy now allows `api.energy-charts.info`
+  (and `web-api.tp.entsoe.eu`). The full 54-pair price pull ran clean and the
+  manifest is built. See NOTE C1-02 for a documented, non-blocking data-layer
+  observation.
 - **Sealed holdout (2025):** SEALED — do not touch until Checkpoint C (C16) is
-  approved here
-- **ENTSOE_API_KEY:** obtained by the user 2026-09-28. NOT yet configured for
-  the cloud environment (cloud sessions can't read local files/env vars) —
-  needs to be added via claude.ai/code environment settings before C7. If C7
-  is reached before this is set, flag it here and continue with Tier-B /
-  Energy-Charts-only work instead of blocking.
+  approved here. Guard verified armed this cycle (marker absent, `grep -cF` = 0).
+- **ENTSOE_API_KEY:** **now SET in this environment** (verified 2026-09-30).
+  The C7 precondition is satisfied; no action needed before then.
+- **Repo-state note:** the detached-HEAD trap did **not** recur this cycle — the
+  container arrived on `master`, clean, level with `origin/master`. Keep
+  fetching and verifying against `origin/master` before committing anyway; it
+  recurred three cycles running before this one.
 
 ## Log
 
@@ -506,3 +499,157 @@ Nothing in C1-C6 can proceed without the first host; C7 needs the second.
 **Next:** still C1b — rerun `python -m data.fetch_prices` (all 54 pairs) then
 `python -m data.build_manifest` once the hosts are allowed. Then C2, which ends
 at **Checkpoint A**.
+
+### C1b — 2026-09-30 13:17-13:30 UTC (scheduled cycle) — UNBLOCKED, C1 COMPLETE
+
+**The egress block is over after 7 blocked cycles (~2.5 days).**
+`api.energy-charts.info` now answers (HTTP 200) and `web-api.tp.entsoe.eu`
+tunnels (HTTP 401, i.e. CONNECT succeeded — 401 is just the missing-key
+response to a bare probe). **FLAG C1-01 is RESOLVED.** Separately,
+`ENTSOE_API_KEY` is now **set** in this environment, so the C7 precondition is
+also satisfied. Thanks — both of those were human-side changes to the cloud
+environment settings, and both landed.
+
+C1's remaining work — the pull and the manifest — ran to completion this cycle.
+**C1 is now fully done.**
+
+**What ran:**
+- `.venv` rebuilt from the committed `requirements.txt` (fresh container, no
+  venv). **All 44 C1 unit tests pass**, before and after the pull.
+- Holdout guard verified armed *before* touching anything: the unseal marker
+  (the exact string defined in `config/data.yaml` -> `holdout_unseal_marker`;
+  deliberately **not** reproduced verbatim anywhere in this file, see the
+  warning at the end of this entry) is **absent** here (`grep -cF` = 0),
+  `holdout_is_unsealed()` returns `False`, `sealed_years()` = `{2025}`, and
+  `fetch_years` = 2019-2024 with no overlap. **2025 remains SEALED and was
+  never requested.**
+- `python -m data.fetch_prices` — the full **54-pair** pull (9 zones x 6 years),
+  as the previous six entries said it must be run when the host was allowed.
+  Result: `downloaded=54 already_cached=0 flagged=0`, **EXIT=0**.
+  `fetch_failures.json` records `n_failures: 0`. No 404s, no empty payloads, no
+  schema rejections, no retries needed.
+- `python -m data.build_manifest` — **EXIT=0**, 54 rows written to
+  `data/manifest/prices_manifest.csv` (18 KB) and `.json` (52 KB), tagged with
+  git SHA `0388dac`, config hash `47583ac06601f0a2`, CC BY 4.0 licence and the
+  Energy-Charts attribution.
+- `data/raw/` is 9.0 MB and **gitignored** (`.gitignore:4`), as is
+  `fetch_failures.json` (`.gitignore:15`). Only the manifest artefacts are
+  committed — no bulk raw data, no keys.
+
+**Data quality — the pull is clean.** Across all 54 (zone, year) pairs:
+`n_gap_intervals` = 0, `n_nan` = 0, `resolution_seconds` = 3600 uniformly,
+`n_distinct_deltas` = 1. An independent check over the raw cache confirms each
+zone is **one contiguous hourly series, `2018-12-31T23:00Z .. 2024-12-31T22:00Z`,
+uniform 3600s deltas, no interior gaps.**
+
+Mean day-ahead price, EUR/MWh (the Checkpoint A table in miniature):
+
+| zone     | 2019 | 2020 | 2021  | 2022  | 2023  | 2024  |
+|----------|------|------|-------|-------|-------|-------|
+| BE       | 39.3 | 31.9 | 104.1 | 244.6 |  97.3 |  70.3 |
+| DE-LU    | 37.7 | 30.5 |  96.9 | 235.5 |  95.2 |  78.5 |
+| DK1      | 38.5 | 25.0 |  88.1 | 219.1 |  86.8 |  70.7 |
+| ES       | 47.7 | 34.0 | 111.9 | 167.5 |  87.1 |  63.0 |
+| FR       | 39.4 | 32.2 | 109.2 | 275.9 |  96.9 |  58.0 |
+| IT-North | 51.2 | 37.8 | 125.2 | 307.8 | 127.8 | 107.4 |
+| NL       | 41.2 | 32.2 | 103.0 | 241.9 |  95.8 |  77.3 |
+| NO2      | 39.3 |  9.3 |  75.1 | 211.3 |  79.4 |  50.1 |
+| PL       | 53.5 | 46.7 |  87.0 | 166.7 | 111.7 |  96.3 |
+
+Negative-price hours per zone-year:
+
+| zone     | 2019 | 2020 | 2021 | 2022 | 2023 | 2024 |
+|----------|------|------|------|------|------|------|
+| BE       |  71 | 136 | 159 | 112 | 221 | 404 |
+| DE-LU    | 211 | 298 | 139 |  69 | 300 | 457 |
+| DK1      | 132 | 192 |  87 |  38 | 281 | 375 |
+| ES       |   0 |   0 |   0 |   0 |   0 | 247 |
+| FR       |  27 | 102 |  64 |   4 | 147 | 352 |
+| IT-North |   0 |   0 |   0 |   0 |   0 |   0 |
+| NL       |   3 |  97 |  70 |  85 | 315 | 458 |
+| NO2      |   0 |   5 |   5 |   0 | 174 | 206 |
+| PL       |   0 |   0 |   0 |   0 |  43 | 197 |
+
+These are **not** yet verified against an independent source — that is
+Checkpoint A's job — but they line up with known market history: the 2022
+crisis peak in every zone; NO2's 2020 Nordic hydro glut at 9.3 EUR/MWh;
+IT-North with a 0.00 EUR/MWh floor and zero negative hours throughout (MGP had
+no negative prices in this window); ES with zero negative hours until 2024,
+then 247 as solar penetration bit; and the sharp 2023->2024 rise in negative
+hours almost everywhere. FR's 2987.78 EUR/MWh maximum sits in the 2022
+nuclear-outage period. Extremes: DE-LU / NL / BE / DK1 all touch the
+-500 EUR/MWh region; DE-LU and DK1 peak at 936.28.
+
+**NOTE C1-02 — request-window convention, resolved. Not a defect; C2 must
+know it.** Every one of the 54 rows reports `coverage_ratio` = 0.999886
+(8759/8760) with `n_out_of_window_dropped` = 1 and `last_ts_utc` =
+`Y-12-31T22:00Z`. This is **not missing data**. `docs/data_layer.md` had left
+this question open as "to verify in C2"; the pull answers it:
+
+- Energy-Charts interprets `start`/`end` as whole days in the **zone's local
+  time**, returning exactly one full *local* year (8760 / 8784 points). All
+  nine zones are CET/CEST, so each raw file spans `Y-1-12-31T23:00Z ..
+  Y-12-31T22:00Z` in UTC.
+- Truncating to the UTC calendar year therefore drops exactly the one leading
+  point belonging to `Y-1` (hence `n_out_of_window_dropped` = 1), and the final
+  UTC hour of year `Y` is absent from row `Y` because it was never in the `Y`
+  window — **it is present in file `Y+1`**. The per-year rows understate
+  coverage by exactly one hour by construction.
+- **C2's loader must concatenate the per-year files and de-duplicate on
+  timestamp — it must not reindex or fill per-year to 8760.** The first hour of
+  UTC year `Y` is in file `Y`; the last hour of UTC year `Y` is in file `Y+1`.
+- **Holdout interaction, flagged deliberately:** the last hour of UTC 2024
+  (`2024-12-31T23:00Z`) lives *only* in the 2025 file, and 2025 is SEALED. The
+  usable UTC span therefore ends at **`2024-12-31T22:00Z`**. A future cycle
+  must **never** fetch 2025 to close that one-hour tail. It costs 1 hour out of
+  ~52,600, the hourly backtest window ends 2025-09-30 regardless, and
+  `data/holdout.py` already refuses the fetch. This note exists so the tail is
+  not mistaken for a bug worth "fixing".
+
+`docs/data_layer.md` has been updated with the resolved convention and the C2
+requirement. **No file under `tests/`, `config/`, or `data/*.py` was touched
+this cycle** — the only code-adjacent edit is that documentation section
+(`git diff --name-only` confirms `docs/data_layer.md` is the sole modification).
+
+**Scope discipline:** C1b was scoped as the pull plus the manifest, and stops
+there. C2 was deliberately **not** started even though budget remained, per the
+standing rule against running ahead into a later cycle's work — and C2 ends at
+Checkpoint A, which needs its own full cycle. No push notification was sent:
+this is a routine cycle, not a checkpoint, and the unblocking is good news
+rather than something needing a human decision. The human will be pinged at
+the end of C2 for Checkpoint A.
+
+**WARNING FOR EVERY FUTURE CYCLE — do not quote the unseal marker verbatim in
+`PROGRESS.md`.** This cycle tripped that wire and caught it pre-commit. While
+writing the log entry above, this session reproduced the unseal marker string
+literally (inside backticks, in a sentence *asserting the marker was absent*).
+`data/holdout.py` tests membership with a plain `marker in
+PROGRESS.md_text` — backticks, surrounding prose and negating context are
+invisible to it. The result: `grep -cF` went 0 -> 1 and
+`holdout_is_unsealed()` flipped to **`True`**, i.e. the 2025 seal was
+**mechanically open**, purely from a cycle describing the guard.
+
+Caught by re-checking the guard immediately after the write, **before any
+commit, push, fetch or model touched a sealed year**. The verbatim string was
+removed, and the state is confirmed restored: `grep -cF` = **0**,
+`holdout_is_unsealed()` = **`False`**, and the 44-test suite (which includes
+the tripwire test asserting the marker is absent) passes. No sealed data was
+fetched, loaded, or computed against at any point — the whole episode lived
+inside an uncommitted working-tree edit to a prose file.
+
+Two things follow, and they are worth more than the incident cost:
+1. **Refer to the marker indirectly** — as "the string in `config/data.yaml` ->
+   `holdout_unseal_marker`" — never by reproducing it. The same applies to
+   commit messages and any other file the guard reads.
+2. The guard's substring test is doing its job but is **context-blind**, which
+   is a real design observation for the human: a hardening option (e.g.
+   requiring the marker alone on its own line, plus a human signature/date) is
+   worth considering at Checkpoint A. **Proposed, not done** — `data/holdout.py`
+   is the leakage-contract file, and CLAUDE.md forbids an agent cycle changing
+   it without human review. Flagged here for that review; no code was changed.
+
+**Next:** **C2** — data contract tests (per-(zone, day) row counts against the
+DST whitelist, resolution-change detection at the 2025-10-01 15-min cutover,
+gap report), documented hourly aggregation, and a price plot per zone. Then
+**stop at CHECKPOINT A** and push-notify for human review of the manifest and
+plots before any modelling begins.
