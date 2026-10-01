@@ -19,6 +19,7 @@ import pandas as pd
 import pytest
 
 from data import config as config_mod
+from data import contracts as contracts_mod
 from data import energy_charts as ec
 from data import holdout as holdout_mod
 from data import manifest as manifest_mod
@@ -83,13 +84,45 @@ def test_repo_progress_file_does_not_yet_unseal_the_holdout():
 def test_guard_opens_only_when_the_exact_marker_is_present(tmp_path):
     marker = holdout_mod.unseal_marker()
     almost = tmp_path / "almost.md"
-    almost.write_text("### C16\n- checkpoint c approved, holdout unsealed maybe\n")
+    almost.write_text(
+        "### C16\n- checkpoint c approved, holdout unsealed maybe\n", encoding="utf-8"
+    )
     with pytest.raises(holdout_mod.SealedHoldoutError):
         holdout_mod.assert_not_sealed(2025, "test", progress_path=almost)
 
     approved = tmp_path / "approved.md"
-    approved.write_text(f"### C16 — human review\n{marker}\n")
+    # Explicit encoding: holdout_is_unsealed() reads as UTF-8, and Path.write_text
+    # without one uses the platform locale encoding (cp1252 on Windows), which
+    # cannot round-trip the em-dash below — this broke only on a Windows runner.
+    approved.write_text(f"### C16 — human review\n{marker}\n", encoding="utf-8")
     holdout_mod.assert_not_sealed(2025, "test", progress_path=approved)
+
+
+def test_guard_stays_shut_when_the_marker_is_only_quoted_in_prose(tmp_path):
+    """Checkpoint A hardening: the marker must stand alone on its own line.
+
+    Before this hardening, holdout_is_unsealed() was a plain substring search,
+    so a cycle writing a log entry that *mentions* the marker string — exactly
+    what this test file and PROGRESS.md itself both have reason to do — could
+    unseal the holdout by accident. This is that near-miss, made permanent.
+    """
+    marker = holdout_mod.unseal_marker()
+    quoted_in_prose = tmp_path / "quoted.md"
+    quoted_in_prose.write_text(
+        "### C2 checkpoint\n"
+        f"The unseal marker is the exact string {marker!r}, which only a human "
+        "writes, on its own line, after Checkpoint C.\n",
+        encoding="utf-8",
+    )
+    assert holdout_mod.holdout_is_unsealed(progress_path=quoted_in_prose) is False
+    with pytest.raises(holdout_mod.SealedHoldoutError):
+        holdout_mod.assert_not_sealed(2025, "test", progress_path=quoted_in_prose)
+
+    # Same marker, but with leading/trailing whitespace on its own line, still
+    # counts — the check strips the line before comparing.
+    padded = tmp_path / "padded.md"
+    padded.write_text(f"### C16\n   {marker}   \n")
+    assert holdout_mod.holdout_is_unsealed(progress_path=padded) is True
 
 
 # ---------------------------------------------------------------------------
@@ -312,8 +345,12 @@ def test_manifest_row_counts_negatives_nans_and_coverage(tmp_path):
     assert row["price_min"] == -14.0
     assert row["first_ts_utc"].startswith("2023-01-01T00:00:00")
     assert row["last_ts_utc"].startswith("2023-12-31T23:00:00")
-    assert row["raw_sha256"] == ec.sha256_file(path)
-    assert len(row["raw_sha256"]) == 64
+    # Checkpoint A fix (NOTE C2-01): payload_sha256 hashes the (epoch, price)
+    # data via the same function as the C2 contract report, not the cached
+    # file, so it is reproducible across re-fetches of identical data.
+    frame = ec.read_cached_year("DE-LU", 2023, cfg)
+    assert row["payload_sha256"] == contracts_mod.payload_fingerprint(frame)
+    assert len(row["payload_sha256"]) == 64
 
 
 def test_manifest_flags_a_gap_rather_than_filling_it(tmp_path):

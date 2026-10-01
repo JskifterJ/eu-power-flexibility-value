@@ -136,15 +136,21 @@ prices to hourly destroys within-hour spread, so a battery's realisable value is
 Aggregated post-cutover results understate flexibility value and must never be
 pooled with pre-cutover hourly results as if they were the same measurement.
 
-## `payload_sha256` vs the manifest's `raw_sha256`
+## `payload_sha256`
 
-The manifest's `raw_sha256` hashes the cached **file**, and that file embeds the
-`_fetch_meta.fetched_at_utc` stamp this project writes. So it changes on every
-re-fetch even when the data is identical, and cannot serve as a cross-run
-integrity check. `contracts.payload_fingerprint` hashes only the `(UTC epoch,
-price)` pairs at fixed 6-decimal precision, and is reported as `payload_sha256`
-per zone. Two pulls of the same (zone, span) agree iff the source really returned
-the same prices.
+`contracts.payload_fingerprint` hashes only the `(UTC epoch, price)` pairs at
+fixed 6-decimal precision, reported as `payload_sha256` per zone here and in
+the manifest. Two pulls of the same (zone, span) agree iff the source really
+returned the same prices.
+
+**History (Checkpoint A, NOTE C2-01, fixed):** the manifest originally had its
+own `raw_sha256` column that hashed the cached **file** instead. That file
+embeds the `_fetch_meta.fetched_at_utc` stamp this project writes, so the
+column changed on every re-fetch even when the data was identical — useless as
+an integrity check, and confusingly named besides, since nothing about it was
+reproducibly "raw". The manifest now calls this same `payload_fingerprint`
+function and reports it under the same `payload_sha256` name as here, so the
+two artefacts can never drift apart again.
 
 ## Running it
 

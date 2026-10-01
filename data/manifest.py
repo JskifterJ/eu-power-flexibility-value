@@ -4,7 +4,7 @@ The manifest is the artefact a human eyeballs at Checkpoint A (C2) and the thing
 that makes "never re-download cached data" and "notice when a source changes
 under you" mechanical rather than remembered. One row per (zone, year):
 counts, coverage against the expected number of intervals, price summary stats,
-negative-hour count, and the sha256 of the raw cached file.
+negative-hour count, and a reproducible sha256 of the price payload.
 
 It is a *description*, not a model input — nothing here is fitted, and it is
 built only over non-sealed years (the loader it calls refuses sealed ones).
@@ -22,12 +22,12 @@ import numpy as np
 import pandas as pd
 
 from data.config import REPO_ROOT, config_hash, load_data_config, load_zones
+from data.contracts import payload_fingerprint
 from data.energy_charts import (
     PRICE_COLUMN,
     cache_path,
     cached_years,
     read_cached_year,
-    sha256_file,
 )
 
 MANIFEST_DIR = REPO_ROOT / "data" / "manifest"
@@ -60,7 +60,7 @@ COLUMNS = [
     "n_negative",
     "n_zero",
     "raw_bytes",
-    "raw_sha256",
+    "payload_sha256",
     "fetched_at_utc",
     "api_url",
 ]
@@ -151,7 +151,12 @@ def summarise_year(zone_key: str, year: int, config: dict[str, Any] | None = Non
         "n_negative": int((finite < 0).sum()),
         "n_zero": int((finite == 0).sum()),
         "raw_bytes": path.stat().st_size,
-        "raw_sha256": sha256_file(path),
+        # Checkpoint A decision (PROGRESS.md NOTE C2-01, approved): hash the
+        # (UTC epoch, price) payload via the same function the C2 contract
+        # report uses, not the cached file — the file embeds a fetched_at_utc
+        # stamp that made the old raw_sha256 change on every re-fetch even when
+        # the data was identical, which is useless as an integrity check.
+        "payload_sha256": payload_fingerprint(frame),
         "fetched_at_utc": meta.get("fetched_at_utc", ""),
         "api_url": meta.get("url", ""),
     }

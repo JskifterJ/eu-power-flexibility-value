@@ -132,7 +132,8 @@ One row per `(zone, year)`: identity (`zone`, `tier`, `bzn`, `year`); shape
 `n_out_of_window_dropped`, `first_ts_utc`, `last_ts_utc`); price summary
 (`price_min`, `price_p01`, `price_mean`, `price_median`, `price_p99`,
 `price_max`, `price_std`, `n_negative`, `n_zero`); provenance (`raw_bytes`,
-`raw_sha256`, `fetched_at_utc`, `api_url`).
+`payload_sha256` — a reproducible hash of the `(UTC epoch, price)` pairs, see
+`docs/data_contracts.md`, not of the cached file — `fetched_at_utc`, `api_url`).
 
 The JSON form adds `generated_at_utc`, `git_sha`, `config_hash`,
 `sealed_holdout_years`, source and licence attribution.

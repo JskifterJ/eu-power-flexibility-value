@@ -111,11 +111,13 @@ def expected_intervals_for_utc_day(resolution_seconds: int = HOURLY_SECONDS) -> 
 def payload_fingerprint(frame: pd.DataFrame, column: str = PRICE_COLUMN) -> str:
     """A reproducible sha256 over the (UTC epoch, price) pairs themselves.
 
-    Distinct from the manifest's ``raw_sha256``, which hashes the cached *file* —
-    and that file embeds the ``_fetch_meta.fetched_at_utc`` stamp this project
-    writes, so it changes on every re-fetch even when the data is identical. This
-    hash covers only the data, at fixed 6-decimal precision, so two pulls of the
-    same (zone, span) agree iff the source really returned the same prices.
+    Covers only the data, at fixed 6-decimal precision, so two pulls of the same
+    (zone, span) agree iff the source really returned the same prices. This is
+    also what the manifest's ``payload_sha256`` column calls (PROGRESS.md NOTE
+    C2-01): the manifest originally hashed the cached *file* instead, which
+    embeds the ``_fetch_meta.fetched_at_utc`` stamp this project writes, so that
+    column changed on every re-fetch even when the data was identical. Both
+    places now call this one function, so they can never drift apart again.
     """
     lines = (
         f"{int(ts.timestamp())},{'nan' if pd.isna(v) else format(float(v), '.6f')}"

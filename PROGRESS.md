@@ -2,21 +2,17 @@
 
 ## Current status
 
-- **Next cycle to run:** **AWAITING HUMAN — CHECKPOINT A.** C2 is complete and
-  stops here by design. Do **not** start C3 (walk-forward harness + naive model,
-  DE-LU) until a human has reviewed the Checkpoint A artefacts listed in the C2
-  log entry below and recorded approval here. A scheduled cycle that fires while
-  this line still says AWAITING HUMAN should verify nothing has changed, append a
-  one-line note that it checked and is still waiting, send no push notification,
-  and stop.
-- **Human checkpoints pending:** **Checkpoint A — open, awaiting review.**
-  Artefacts ready: `data/manifest/prices_manifest.csv` (unchanged from C1),
-  `data/manifest/contract_report.{csv,json}`, `data/manifest/dst_whitelist.csv`,
-  and 11 figures in `docs/figures/`. Three decisions are requested — see
-  "Checkpoint A: what needs a human" in the C2 entry.
-- **Open FLAGs:** none. Two non-blocking NOTEs raised this cycle (C2-01
-  `raw_sha256` is not reproducible by construction; C2-02 the raw cache does not
-  survive a container, so every cycle re-pulls). Neither blocks any work.
+- **Next cycle to run:** **C3** — walk-forward harness + naive (same hour last
+  week) model, DE-LU only, with the three leakage assertions written before the
+  real model (see "Next (after approval)" in the Checkpoint A entry below for
+  the full scope). Checkpoint A is approved and closed — see the "Checkpoint A
+  — approved and closed" entry at the end of the log for what was decided and
+  changed.
+- **Human checkpoints pending:** none. Checkpoint A closed 2026-10-01 (human
+  session, local, not a scheduled cycle).
+- **Open FLAGs:** none. The two NOTEs from C2 are resolved, not just
+  acknowledged — see the closing entry: C2-01 fixed in code, C2-02 decided
+  (leave as is).
 - **Sealed holdout (2025):** SEALED — do not touch until the human records
   approval of Checkpoint C (C16) here, using the marker string defined in
   `config/data.yaml` -> `holdout_unseal_marker` (never reproduced in this file).
@@ -901,3 +897,81 @@ destroy skill.
   (now 4 recurrences out of 10 containers). Still waiting on the three Checkpoint A
   decisions listed in the C2 entry above; C3 remains blocked until a human replaces the
   status line with C3 and records approval here.
+
+---
+
+### Checkpoint A — approved and closed — 2026-10-01 (human session, local, not a
+scheduled cycle)
+
+Reviewed `prices_all_zones.png` and `negative_hours.png` against known market
+history (2022 crisis in every zone, ES's gas price cap keeping it at zero
+negative hours until 2024, IT-North's price floor at zero throughout, the
+2023→2024 negative-hour jump from renewables build-out) — consistent with real
+market behaviour, not noise. All three Checkpoint A decisions resolved:
+
+1. **NOTE C2-01, fixed in code.** `data/manifest.py` no longer hashes the
+   cached file. The manifest's checksum column is renamed `raw_sha256` →
+   `payload_sha256` and now calls `contracts.payload_fingerprint()` — the same
+   function the C2 contract report already used — so it hashes only the `(UTC
+   epoch, price)` pairs and is reproducible across re-fetches. Confirmed: a
+   completely independent re-pull of all 54 (zone, year) pairs, two days after
+   C1's pull, reproduced `price_mean` to 3 decimal places on every spot-checked
+   cell (DE-LU 2022: 235.467; NO2 2020: 9.289) — this is a reproducibility
+   check against the same source on a fresh pull, not an independent second
+   source, and that distinction is worth keeping in mind for the write-up.
+   `data/contracts.py`'s docstring, `tests/test_c1_data_layer.py` (assertion
+   updated to the new column name, computed via `contracts.payload_fingerprint`
+   on the loaded frame) and `docs/data_contracts.md` / `docs/data_layer.md`
+   updated to match. All existing tests pass unweakened; nothing was deleted.
+2. **NOTE C2-02, decided: leave as is.** The raw cache will keep not surviving
+   between containers/cycles. Accepted trade-off — the pull is polite (2s
+   between requests) and has now proven byte-reproducible across two
+   independent pulls on different days; a persistent cache or a committed
+   derived artefact isn't worth the engineering effort or the added "bulk raw
+   data" rule-bending for a one-week project. No code change.
+3. **Holdout guard hardened, as requested.** `data/holdout.py`'s
+   `holdout_is_unsealed()` was a plain substring search; it now requires the
+   marker to be the **entire content of some line** (stripped of surrounding
+   whitespace) in `PROGRESS.md`, closing the near-miss C1b's own log entry
+   almost triggered by describing the marker in prose. Deliberately did *not*
+   add a human-signature/date requirement — judged more ceremony than this
+   project needs; the marker is already something only a human writes, and
+   CLAUDE.md already forbids an agent cycle from touching this file. Added
+   `test_guard_stays_shut_when_the_marker_is_only_quoted_in_prose`, which
+   checks both the negative case (marker embedded in a sentence must not
+   unseal) and that a padded-whitespace marker-alone-on-its-own-line still
+   does. The existing `test_guard_opens_only_when_the_exact_marker_is_present`
+   continues to pass unmodified in its assertions (only its fixture gained an
+   explicit `encoding="utf-8"` — see below) because its "approved" fixture
+   already put the marker alone on its own line.
+
+**One unrelated real bug found and fixed while verifying all this: a
+Windows-locale encoding failure, not a logic error.**
+`test_guard_opens_only_when_the_exact_marker_is_present`'s fixture wrote an
+em-dash via `Path.write_text()` with no explicit encoding, which uses the
+platform locale (cp1252 on this Windows machine) rather than UTF-8; the guard
+reads `PROGRESS.md` as explicit UTF-8, so the two disagreed and the test raised
+`UnicodeDecodeError` the first time it ran anywhere other than a UTF-8-locale
+Linux container — which is all 10 scheduled cycles so far, explaining why this
+was never caught before now. Fixed by adding `encoding="utf-8"` to every
+`write_text()` call in this test file. Worth remembering if more local/Windows
+verification happens later: this whole repo has otherwise been built and run
+exclusively on Linux cloud containers.
+
+**Manifest and figures regenerated from a fresh local pull**, not just
+hand-edited: ran `python -m data.fetch_prices` (full 54 pairs; 4 hit `HTTP 429`
+on the first pass — rate-limited, almost certainly from C1/C1b's pull of the
+same 54 pairs against the same free, unauthenticated endpoint earlier the same
+day — retried cleanly to 0 flagged), `python -m data.build_manifest`, `python
+-m data.build_contracts` (all 9 zones `ok = True`), and `python -m
+data.plot_prices`. All 87 tests pass (`pytest tests/ -q`). This was run
+locally, with real internet access confirmed separately, rather than waiting
+for the next scheduled cloud cycle, specifically so the committed manifest and
+figures match the fixed `payload_sha256` code rather than sitting stale.
+
+**Sealed holdout:** re-verified before writing this entry —
+`holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`. No 2025 data
+fetched, loaded, or computed against at any point in this session.
+
+**Approved by:** J., 2026-10-01, via the assistant session that ran this
+review and these fixes.
