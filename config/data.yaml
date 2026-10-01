@@ -43,6 +43,17 @@ structural_dates:
   sdac_15min_golive: "2025-10-01"   # market time unit 60min -> 15min
   main_backtest_end: "2025-09-30"   # last day of the main hourly backtest
   day_ahead_gate_closure_local: "12:00"  # CET/CEST, D-1; see features.yaml
+  # Added in C3, needed by the gate-closure leakage guard (forecast/timing.py).
+  # Nothing above was changed or weakened; these only name constants the guard
+  # already depended on implicitly.
+  day_ahead_gate_closure_tz: "Europe/Brussels"
+  # Conservative upper bound on SDAC day-ahead results publication (~12:42-13:00
+  # CET on D-1). The guard's correctness depends ONLY on the ordering
+  #   gate_closure(D) < publication(D) < gate_closure(D+1),
+  # not on the exact minute: prices for delivery day D become public AFTER gate
+  # closure for day D, so at gate closure for D a bidder knows every hour of
+  # market days <= D-1 and no hour of day D.
+  day_ahead_results_published_local: "13:00"
 
 # ---------------------------------------------------------------------------
 # Sources

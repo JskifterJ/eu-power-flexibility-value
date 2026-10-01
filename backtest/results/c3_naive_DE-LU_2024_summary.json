@@ -1,0 +1,226 @@
+{
+  "cycle": "C3",
+  "generated_at_utc": "2026-10-01T18:37:13+00:00",
+  "git_sha": "17249e9b1e1e16de0be17f71de24f0bacc637a22",
+  "config_hash": "d524f72059bc6d85",
+  "zone": "DE-LU",
+  "evaluation_years": [
+    2024
+  ],
+  "spec": {
+    "refit_every_days": 1,
+    "min_train_days": 365,
+    "train_window_days": null
+  },
+  "price_series": {
+    "zone": "DE-LU",
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "n_points": 52608,
+    "n_duplicate_timestamps": 0,
+    "first_ts_utc": "2018-12-31T23:00:00+00:00",
+    "last_ts_utc": "2024-12-31T22:00:00+00:00"
+  },
+  "feature_build": {
+    "zone": "DE-LU",
+    "n_rows": 52608,
+    "first_target_utc": "2018-12-31T23:00:00+00:00",
+    "last_target_utc": "2024-12-31T22:00:00+00:00",
+    "price_columns": [
+      "price_lag_24h",
+      "price_lag_48h",
+      "price_lag_72h",
+      "price_lag_168h",
+      "price_daily_mean_lag_24h",
+      "price_daily_min_lag_24h",
+      "price_daily_max_lag_24h"
+    ],
+    "calendar_columns": [
+      "hour_of_day_local",
+      "hour_of_day_utc",
+      "day_of_week",
+      "is_weekend",
+      "month"
+    ],
+    "deferred_columns": [
+      "is_public_holiday"
+    ],
+    "daily_aggregate_source": {
+      "price_daily_mean_lag_24h": "latest fully public UTC calendar day (mean); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_min_lag_24h": "latest fully public UTC calendar day (min); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_max_lag_24h": "latest fully public UTC calendar day (max); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)"
+    },
+    "n_incomplete_utc_days": 2,
+    "mask": {
+      "total_masked": 6,
+      "masked_per_column": {
+        "price_lag_24h": 6
+      },
+      "first_masked_per_column": {
+        "price_lag_24h": "2019-10-27T22:00:00+00:00"
+      }
+    }
+  },
+  "walk_forward": {
+    "model": "naive_last_week",
+    "zone": "DE-LU",
+    "spec": {
+      "refit_every_days": 1,
+      "min_train_days": 365,
+      "train_window_days": null
+    },
+    "n_folds": 366,
+    "n_rows": 8784,
+    "n_predicted": 8784,
+    "first_target_day": "2024-01-01",
+    "last_target_day": "2024-12-31",
+    "n_skipped_days": 0,
+    "skipped_days": [],
+    "skipped_reason": {}
+  },
+  "scores": {
+    "naive_last_week": {
+      "n": 8784,
+      "n_scored": 8784,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 32.799417,
+      "rmse": 55.218934,
+      "bias": -1.520724
+    },
+    "train_mean": {
+      "n": 8784,
+      "n_scored": 8784,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 37.881563,
+      "rmse": 55.974372,
+      "bias": 18.079666
+    }
+  },
+  "skill_vs_train_mean": 0.134159,
+  "diagnostics": {
+    "day_shift": {
+      "model": "naive_last_week",
+      "zone": "DE-LU",
+      "aligned_mae": 32.799417,
+      "degrades_for_every_shift": true,
+      "results": [
+        {
+          "shift_days": 0,
+          "n": 8784,
+          "n_scored": 8784,
+          "n_missing_prediction": 0,
+          "coverage": 1.0,
+          "mae": 32.799417,
+          "rmse": 55.218934,
+          "bias": -1.520724
+        },
+        {
+          "shift_days": 1,
+          "n": 8784,
+          "n_scored": 8784,
+          "n_missing_prediction": 0,
+          "coverage": 1.0,
+          "mae": 36.658879,
+          "rmse": 57.608359,
+          "bias": -1.809951
+        },
+        {
+          "shift_days": -1,
+          "n": 8784,
+          "n_scored": 8760,
+          "n_missing_prediction": 24,
+          "coverage": 0.997268,
+          "mae": 36.038725,
+          "rmse": 59.119247,
+          "bias": -1.355862
+        }
+      ]
+    },
+    "future_feature_guard": {
+      "declared": [
+        {
+          "kind": "after_gate_closure",
+          "column": "price_lead_24h",
+          "detail": "feature embeds information published after the bidding deadline for its own target day",
+          "n_rows": 52584,
+          "first_timestamp": "2018-12-31T23:00:00+00:00",
+          "worst_lateness_seconds": 172800.0
+        }
+      ],
+      "undeclared": [
+        {
+          "kind": "undeclared",
+          "column": "price_lead_24h",
+          "detail": "feature column has no declared information time \u2014 the guard fails closed rather than assuming it is safe",
+          "n_rows": 52584,
+          "first_timestamp": null,
+          "worst_lateness_seconds": null
+        }
+      ]
+    },
+    "target_permutation": {
+      "hours": {
+        "model": "naive_last_week",
+        "zone": "DE-LU",
+        "mode": "hours",
+        "seed": 11,
+        "real": {
+          "n": 8784,
+          "n_scored": 8784,
+          "n_missing_prediction": 0,
+          "coverage": 1.0,
+          "mae": 32.799417,
+          "rmse": 55.218934,
+          "bias": -1.520724
+        },
+        "permuted": {
+          "n": 8784,
+          "n_scored": 8784,
+          "n_missing_prediction": 0,
+          "coverage": 1.0,
+          "mae": 75.095903,
+          "rmse": 114.653032,
+          "bias": -18.645384
+        },
+        "real_skill_vs_train_mean": 0.134159,
+        "permuted_skill_vs_train_mean": -0.129777,
+        "destroys_skill": true
+      },
+      "days": {
+        "model": "naive_last_week",
+        "zone": "DE-LU",
+        "mode": "days",
+        "seed": 11,
+        "real": {
+          "n": 8784,
+          "n_scored": 8784,
+          "n_missing_prediction": 0,
+          "coverage": 1.0,
+          "mae": 32.799417,
+          "rmse": 55.218934,
+          "bias": -1.520724
+        },
+        "permuted": {
+          "n": 8784,
+          "n_scored": 8784,
+          "n_missing_prediction": 0,
+          "coverage": 1.0,
+          "mae": 73.908928,
+          "rmse": 115.421457,
+          "bias": -19.932425
+        },
+        "real_skill_vs_train_mean": 0.134159,
+        "permuted_skill_vs_train_mean": -0.104643,
+        "destroys_skill": true
+      }
+    }
+  }
+}

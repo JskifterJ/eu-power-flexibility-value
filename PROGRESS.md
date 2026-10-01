@@ -2,30 +2,32 @@
 
 ## Current status
 
-- **Next cycle to run:** **C3** — walk-forward harness + naive (same hour last
-  week) model, DE-LU only, with the three leakage assertions written before the
-  real model (see "Next (after approval)" in the Checkpoint A entry below for
-  the full scope). Checkpoint A is approved and closed — see the "Checkpoint A
-  — approved and closed" entry at the end of the log for what was decided and
-  changed.
+- **Next cycle to run:** **C4** — LEAR (per-hour LASSO, in-fold scaling / asinh
+  transform, in-fold IC/CV selection), DE-LU, walk-forward on 2024 (validation)
+  only. It plugs into C3's harness as a `Model` and needs a documented policy for
+  the NaN cells C3's gate-closure mask creates (LASSO cannot take NaN). C3 is done
+  — see the C3 entry at the end of the log.
 - **Human checkpoints pending:** none. Checkpoint A closed 2026-10-01 (human
   session, local, not a scheduled cycle).
-- **Open FLAGs:** none. The two NOTEs from C2 are resolved, not just
-  acknowledged — see the closing entry: C2-01 fixed in code, C2-02 decided
-  (leave as is).
+- **Open FLAGs:** none. C2's two NOTEs are resolved (C2-01 fixed in code, C2-02
+  decided: leave as is). **One open decision request, non-blocking: NOTE C3-01** —
+  the daily-aggregate feature names in `config/features.yaml` say `lag_24h` but the
+  only leak-free window is the last fully-public UTC day (`D-2`); rename them or
+  keep the names and rely on `docs/forecast_harness.md`? See the C3 entry. C4 is
+  not blocked by it.
 - **Sealed holdout (2025):** SEALED — do not touch until the human records
   approval of Checkpoint C (C16) here, using the marker string defined in
   `config/data.yaml` -> `holdout_unseal_marker` (never reproduced in this file).
-  Guard verified armed this cycle, before and after the work: marker count 0,
-  `holdout_is_unsealed()` = `False`. No 2025 data was fetched, loaded or computed
-  against at any point in C2.
+  Guard verified armed in C3, before and after the work: marker-alone-on-a-line
+  count 0, `holdout_is_unsealed()` = `False`. No 2025 data has been fetched, loaded
+  or computed against at any point, in C2 or C3.
 - **ENTSOE_API_KEY:** set in this environment (verified C1b). C7 precondition
-  satisfied; not needed before then, and not used this cycle.
-- **Repo-state note:** the detached-HEAD trap **did** recur this cycle — the
-  container arrived on a detached HEAD at `6227d69`. Reattached with
-  `git checkout -B master 6227d69` and re-pointed at `origin/master` before any
+  satisfied; not needed before then, and not read in C2 or C3.
+- **Repo-state note:** the detached-HEAD trap **did** recur in C3 — the container
+  arrived on a detached HEAD at `17249e9`. Reattached with
+  `git checkout -B master 17249e9` and re-pointed at `origin/master` before any
   work. Keep checking `git rev-parse --abbrev-ref HEAD` at the start of every
-  cycle; this is now 4 recurrences out of 9 containers.
+  cycle; this is now 5 recurrences out of 11 containers.
 
 ## Log
 
@@ -975,3 +977,174 @@ fetched, loaded, or computed against at any point in this session.
 
 **Approved by:** J., 2026-10-01, via the assistant session that ran this
 review and these fixes.
+
+---
+
+### C3 — 2026-10-01 (scheduled cycle) — walk-forward harness + naive model, DE-LU
+
+**Done, as scoped in PLAN.md C3.** The harness, the naive floor, and — written
+before any real model exists — the three leakage assertions, plus the gate-closure
+guard they test. 50 new offline tests (137 total, all passing). Full design notes
+in `docs/forecast_harness.md`.
+
+**New modules.** `forecast/timing.py` (market days, gate closure, publication
+instants), `forecast/features.py` (the feature matrix, built from
+`config/features.yaml`, with an information time attached to every cell),
+`forecast/leakage.py` (the gate-closure guard + availability mask),
+`forecast/models.py` (the `Model` protocol, `NaiveLastWeek`, `TrainMeanBaseline`),
+`backtest/walk_forward.py` (folds + three per-fold guards),
+`backtest/metrics.py` (MAE/RMSE/rMAE/skill only — C12 owns the full layer),
+`backtest/diagnostics.py` (PLAN's three probes as library functions, so later
+cycles re-run them instead of re-deriving them), `backtest/run_c3_naive.py` (CLI).
+
+**The rule the whole layer rests on, stated once.** Bids for delivery day `D` close
+at 12:00 Europe/Brussels on `D-1`; day `D`'s prices are published ~13:00 on `D-1`,
+*after* that deadline. So at gate closure for `D` a bidder knows every hourly price
+of market days `<= D-1` and none of day `D`. That is about **market days**, not UTC
+days and not raw hour offsets — and C3 found two places where the difference bites.
+
+**FINDING C3-A — a plain 24-hour lag leaks once per zone per year.** On the
+25-hour local day each autumn, the 25th hour's `t - 24h` lands on *that same market
+day's first hour* — a price published after the bidding deadline for the very day
+being predicted. Six cells over DE-LU 2019–2024, one per year, worth exactly one
+hour of lateness. Found by the guard, not by reasoning. Masked to NaN, counted in
+the build report (`price_lag_24h: 6`), rows never dropped. The 48h/72h/168h lags
+never reach that far forward, so the naive baseline is unaffected.
+
+**NOTE C3-01 — the daily-aggregate features cannot be built the way
+`config/features.yaml` literally describes, because that description leaks. A
+human decision is requested; proposed, not done.**
+`price_daily_{mean,min,max}_lag_24h` are declared as `mean_over_utc_day` with
+`lag_hours: 24`. Read literally — the aggregate over the UTC day containing
+`t - 24h` — that window is UTC day `D-1` for 23 of the 24 hours of target day `D`.
+For a CET zone UTC day `D-1` ends at `D-1 23:00Z`, which is **local midnight on
+`D`**: market day `D`'s own first cleared price. So the literal feature embeds one
+hour of the day it is predicting, on nearly every row, and **no** literal reading
+of the spec is leak-free. `forecast/features.py` therefore builds those three
+columns over *the latest UTC calendar day every hour of which was public at the
+row's gate closure* — derived mechanically from the publication calendar, which for
+the CET/CEST zones in scope resolves to UTC day `D-2`. The committed column names
+are kept so config stays the single source of truth, but `lag_24h` in those names
+is now a misnomer. **Decision requested:** rename them in `features.yaml` to
+`..._prev_available_utc_day` and restate the aggregate, or leave the names and rely
+on the documentation? Deliberately not done by this cycle — editing a feature spec
+so that a leak disappears is precisely the move CLAUDE.md warns about.
+
+**PLAN's three leakage assertions, on the real DE-LU pipeline (2024 validation,
+daily refit, expanding window from 2019).** Also asserted on synthetic series in
+`tests/test_c3_leakage_harness.py`.
+- **(i) shifting the feature matrix forward one day degrades metrics.** Aligned MAE
+  **32.80** EUR/MWh; one day staler **36.66**; one day fresher **36.04**. Both
+  directions hurt, because `price_lag_168h` shifted either way stops being the same
+  weekday — so the *sign* of the shift effect is not itself a leakage detector, and
+  the test asserts correct alignment beats both. What it establishes is that the
+  harness is sensitive to time at all, which is the precondition for (ii) meaning
+  anything.
+- **(ii) a deliberately inserted future-timestamped feature is caught.** A
+  `price_lead_24h` column declared honestly → rejected `after_gate_closure` (52,584
+  rows, worst 2 days late); smuggled in undeclared → rejected `undeclared`. The
+  walk-forward refuses to run on the injected matrix. A separate test measures what
+  the leak would have been *worth* on a persistence-dominated series: it more than
+  halves MAE.
+- **(iii) target permutation destroys skill.** Skill measured against a train-mean
+  baseline run through the same harness. Real **+0.134**; hour-wise permuted
+  **−0.130**; whole-day permuted **−0.105**. Both negative — a model fitted on
+  shuffled targets is worse than a constant.
+
+**Results, DE-LU 2024 (validation).** naive same-hour-last-week: **MAE 32.80,
+RMSE 55.22, bias −1.52** over 8,784 hours / 366 folds; every evaluation hour
+predicted exactly once, zero skipped days, zero missing predictions. Train-mean
+baseline MAE 37.88. The naive model beats that reference by only 13%, which says
+more about the reference than the model: an expanding window from 2019 puts the
+2022 crisis in the training mean (2019–2023 mean 99.08 EUR/MWh) against a 2024
+realised mean of 78.52. It is a deliberately weak denominator, used only for the
+permutation test — **rMAE against naive** is the comparison that matters, and that
+is C12's job. Committed: `backtest/results/c3_naive_DE-LU_2024_{predictions.csv.gz,
+folds.csv,summary.json}` (126 KiB total), each tagged with git SHA and config hash.
+
+**Design decisions worth a later cycle's attention.**
+- *Lags by explicit UTC offset reindexing, never `.shift(n)`.* `shift` counts rows,
+  so across a missing hour it hands back the price from 25 hours earlier and calls
+  it a 24-hour lag — a modelling bug that looks exactly like clean data. Asserted
+  against directly.
+- *Refit cadence is explicit.* `refit_every_days` blocks consecutive evaluation
+  days; the training window always ends the day before the *first* day of the
+  block, so a weekly refit means the last day is predicted by a six-day-stale
+  model. That is what a weekly-refit desk experiences, not a bug. C3's committed
+  run uses daily refit.
+- *The guard fails closed.* An undeclared column is a violation, not a column
+  given the benefit of the doubt — that is what catches a future cycle adding a
+  feature and forgetting the bookkeeping. Likewise a declaration that is not a UTC
+  timestamp column: one careless assignment turns it `object` or tz-naive, and
+  comparing that to a tz-aware gate closure raises an opaque pandas `TypeError`,
+  which in a guard is the worst outcome — a check that neither passes nor fails.
+  Two of this cycle's own new tests hit exactly that crash and the *code* was
+  fixed, not the test.
+- *Calendar columns are asserted price-independent* (rebuilt on shuffled prices,
+  bit-identical), so nothing price-derived can hide in a column declared to carry
+  no market information.
+
+**Files under `tests/` — declared, per CLAUDE.md.** Two files **added**:
+`tests/test_c3_timing_features.py` (19 tests) and
+`tests/test_c3_leakage_harness.py` (31 tests). That is C3's own mandate in PLAN.md
+("leakage tests written *before* the real model"), and adding a new test file is not
+what the rule guards against. **No existing test was edited, and no existing
+assertion weakened or deleted** — `git diff --stat HEAD -- tests/` is empty;
+`test_c1_data_layer.py`, `test_c2_contracts.py` and `conftest.py` are untouched. All
+87 pre-existing tests pass unmodified. Where a new test failed, the code was fixed
+(the two guard-robustness bugs above) except in three cases where the *test* was
+wrong and was corrected before anything was committed: it masked cells inside the
+lag warm-up window where the feature is legitimately NaN; it expected the
+belt-and-braces day-ordering error when the stronger publication check correctly
+fires first; and it asserted a 24-hour lead beats the weekly lag on a
+*week-periodic* synthetic series, where by construction it does not — that test now
+builds its own persistence-dominated series, which is the honest way to measure
+what a leak buys.
+
+**NOTE C3-02 — `config/data.yaml` gained three keys, so `config_hash` moved:
+`47583ac06601f0a2` → `d524f72059bc6d85`.** The leakage guard needs the day-ahead
+clock as config rather than as literals in code, so `structural_dates` gained
+`day_ahead_gate_closure_tz: Europe/Brussels` and
+`day_ahead_results_published_local: "13:00"` (plus comments). Purely additive —
+nothing was changed, removed or weakened, and `splits`, the holdout declaration and
+the unseal marker are untouched. Consequence: the committed
+`data/manifest/prices_manifest.json` still records the C2-era `config_hash`
+`47583ac06601f0a2`, which no longer matches the current config. The manifest's
+*data* is unchanged and still valid — only the config fingerprint moved, and it
+moved because of a key that has nothing to do with prices. Deliberately **not**
+regenerated: that would mean re-pulling all 54 (zone, year) pairs to chase a hash,
+churning a Checkpoint-A-approved artefact and hammering a free endpoint. Both
+hashes are recorded here so provenance stays traceable. The guard's correctness
+depends only on the ordering `gate_closure(D) < publication(D) < gate_closure(D+1)`,
+asserted in `GateClosureConvention.__post_init__` and tested for every day of a
+year — not on the exact publication minute.
+
+**Data.** Only DE-LU was fetched (6 files, 2019–2024, ~1 MB) — C3 is DE-LU only, so
+there was no reason to re-pull the other eight zones. All 6 downloaded cleanly, 0
+flagged; the container arrived with `data/raw/` empty as NOTE C2-02 predicts and the
+human decision there ("leave as is") was followed. No ENTSO-E call was made —
+C3 needs no exogenous data, so `ENTSOE_API_KEY` was not read this cycle.
+
+**Sealed holdout.** Verified armed before the work and again before committing:
+marker-alone-on-a-line count in this file 0, `holdout_is_unsealed()` = `False`,
+`sealed_years()` = `{2025}`, `fetch_years` = 2019–2024. No 2025 data was fetched,
+loaded, feature-engineered from or measured against. Two tests name the year 2025
+in order to prove the harness *refuses* it (`evaluation_days` and
+`run_walk_forward` both raise `SealedHoldoutError`); they pass bare `datetime.date`
+labels and read nothing — the same line C2 drew for its resolution-cutover tests.
+The C1b warning was heeded: the marker string is not reproduced anywhere in this
+entry, only referred to by its config key.
+
+**Repo-state note.** The detached-HEAD trap **did** recur: the container arrived on
+a detached HEAD at `17249e9`. Reattached with `git checkout -B master 17249e9` and
+re-pointed at `origin/master` before any work. Now 5 recurrences out of 11
+containers.
+
+**Next:** C4 — LEAR (per-hour LASSO, in-fold scaling / asinh transform, in-fold
+IC/CV selection), DE-LU, walk-forward on 2024 only. It plugs into this harness as a
+`Model` and adds `scikit-learn` to `requirements.txt`. It will need a documented
+policy for the NaN cells this cycle's mask creates (LASSO cannot take NaN) — the
+honest options are dropping those rows from the *training* fit only, or imputing
+in-fold from the training window, and neither should be chosen silently. The open
+item from this cycle is **NOTE C3-01** (rename the daily-aggregate features in
+`features.yaml`, or keep the names and rely on the docs); it does not block C4.
