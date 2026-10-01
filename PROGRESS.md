@@ -885,3 +885,19 @@ model, DE-LU only, and the leakage assertions: (i) shifting the feature matrix
 forward one day must degrade metrics, (ii) a deliberately future-timestamped
 feature must be caught by a gate-closure guard, (iii) target permutation must
 destroy skill.
+
+---
+
+### Checkpoint A wait — 2026-10-01 (scheduled cycle, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT A**, so
+  per CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has
+  changed and stopped. `origin/master` == local HEAD at `fc422de` (the C2 checkpoint
+  commit, no human commits since); all Checkpoint A artefacts present and unmodified
+  (`data/manifest/prices_manifest.{csv,json}`, `contract_report.{csv,json}`,
+  `dst_whitelist.csv`, 11 figures in `docs/figures/`); holdout guard re-verified armed
+  (`holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`); no 2025 data touched;
+  no push notification sent (avoiding repeat pings for the same wait). HEAD arrived
+  attached to `master` this container — the detached-HEAD trap did **not** recur
+  (now 4 recurrences out of 10 containers). Still waiting on the three Checkpoint A
+  decisions listed in the C2 entry above; C3 remains blocked until a human replaces the
+  status line with C3 and records approval here.
