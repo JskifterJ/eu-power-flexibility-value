@@ -148,6 +148,13 @@ tests both halves and uses only the oracle curve, which is its scope.
 The pooled half of the invariant — `value(naive) ≤ value(forecast)` on average,
 not per day — needs the naive curve and so is C6's.
 
+**C6 built both.** `dispatch/curves.py` has the same-start oracle, the per-day
+assertion (run on *every* dispatched day, not a sample), and the pooled
+comparison; `docs/commit_then_settle.md` has the design and the DE-LU 2024
+numbers. Measured worst per-day excess over the oracle: exactly 0.0 EUR for both
+the model and the naive curve. The model out-earned the *rolled* oracle on 50 of
+365 days, which is the trajectory effect described above, now a number.
+
 ## Simultaneous charge and discharge: found, measured, not silently fixed
 
 `PLAN.md` requires an explicit check and calls this an LP artefact needing a

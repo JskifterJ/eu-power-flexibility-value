@@ -2,67 +2,70 @@
 
 ## Current status
 
-- **Next cycle to run:** **C6 — CHECKPOINT B.** Commit-then-settle machinery with all
-  three curves (oracle / LEAR / naive) on DE-LU: solve on the forecast, freeze the
-  schedule, value at **realised** prices, and assert pooled
-  `oracle >= model >= naive`. The per-day half of the invariant needs a
-  **same-start oracle** re-solved each day from the forecast run's own opening SoC —
-  across two independently rolled trajectories the opening SoCs diverge and no
-  per-day bound exists; see the C5 entry. C6 also decides **NOTE C4-02** (dispatch
-  the one declined hour a year from the `impute` variant with the substitution
-  labelled, or exclude the day) and should put **FLAG C5-01**'s three options to the
-  human in the same review. Then **stop, push-notify, and wait**: Checkpoint B is a
-  human eyeballing one zone end-to-end (a week of dispatch against the price plot)
-  before anything scales out to nine zones. C5 is done — see the C5 entry at the end
-  of the log.
-- **Human checkpoints pending:** **Checkpoint B, at C6** (not yet reached).
-  Checkpoint A closed 2026-10-01 (human session, local, not a scheduled cycle).
-- **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch LP,
-  exactly as PLAN.md anticipated: 20 of 366 days in DE-LU 2024, 53 intervals, all at
-  negative prices, 0.43% of annual cash; forbidding it exactly with a MILP costs
-  0.17% of value. **Measured, both variants run and persisted, committed default
-  deliberately unchanged.** A human picks (a) MILP as default, (b) keep the pure LP
-  and carry 0.17% as a stated limitation, or (c) add the `c_t + d_t <= P` single-
-  inverter constraint. **Non-blocking** — C6 runs either way and is itself
-  Checkpoint B. No push notification was sent, because PLAN.md reserves that for a
-  genuine blocker or an invariant failing in a way that is not an expected,
-  explained finding, and this is a finding PLAN.md predicted by name.
+- **Next cycle to run:** **AWAITING HUMAN — CHECKPOINT B.** C6 is complete and
+  Checkpoint B is reached. Do **not** start C7 until a human has reviewed and
+  replaced this line. A scheduled cycle that fires while this still reads
+  "AWAITING HUMAN" should verify nothing has changed, append a one-line note that
+  it checked and is still waiting, and stop — without a push notification (the
+  Checkpoint B ping has already been sent; repeat pings for the same wait are
+  noise). See the C6 entry at the end of the log for everything below.
+- **What Checkpoint B wants:** (1) eyeball the three week figures
+  `docs/figures/c6_dispatch_week_DE-LU_{2024-05-20,2024-11-04,2024-12-02}.png`
+  against the Checkpoint A price plots — does the dispatch look like a battery
+  buying low and selling high, and does SoC carry across midnight rather than
+  reset? (2) sanity-check the headline: **87–92% of perfect-foresight value
+  captured** by a price-history-only LEAR on DE-LU 2024, **6,047 EUR/MW/yr lost
+  to forecast error**, oracle **74,399** / model **68,179** / naive **62,868**
+  EUR/MW/yr. (3) decide **FLAG C5-01**. (4) confirm or overturn **NOTE C4-02**.
+  (5) **NOTE C3-01** and **NOTE C4-01** are still open and unchanged.
+- **To approve and continue:** replace this "Next cycle to run" line with
+  **C7** and record the approval in the log, as Checkpoint A was closed.
+- **Human checkpoints:** **Checkpoint B reached 2026-10-02 (C6) — awaiting
+  review.** Checkpoint A closed 2026-10-01 (human session, local, not a
+  scheduled cycle). Next after B is **Checkpoint C at C16** (unsealing 2025).
+- **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch
+  LP, exactly as PLAN.md anticipated. **Still open, still non-blocking, committed
+  default deliberately unchanged (pure LP).** C6 added the decisive evidence: the
+  artefact *flatters the oracle* (+125.47 EUR) and *penalises the forecast
+  curves* (model −0.49, naive −89.88), so the pure LP's capture ratio is biased
+  **against** the model — 0.9187 under the LP vs **0.9203 under the MILP**, a
+  shift of **+0.16pp**. A human picks (a) MILP as default, (b) keep the pure LP
+  and carry it as a stated limitation, or (c) add the `c_t + d_t <= P`
+  single-inverter constraint. None of the three changes any conclusion.
 - **Open decision requests, all non-blocking:**
   - **NOTE C3-01** — the daily-aggregate feature names in `config/features.yaml`
     say `lag_24h` but the only leak-free window is the last fully-public UTC day
     (`D-2`); rename them or keep the names and rely on `docs/forecast_harness.md`?
-    See the C3 entry. C5 did not touch `config/features.yaml`.
+    See the C3 entry. C5 and C6 did not touch `config/features.yaml`.
   - **NOTE C4-01** — should `destroys_skill()` in `backtest/diagnostics.py` be
-    re-based on the new `TrainMedianBaseline`? It now reads `destroys_skill: False`
-    for LEAR (and likely for every median-like model from here, including C9's
-    booster) for a reason that is about the *reference*, not the model — see
-    FINDING C4-A in the C4 entry. Proposed, deliberately not done: that file holds
-    a PLAN.md leakage assertion. A human picks.
-  - **NOTE C4-02** — one hour a year (the autumn DST hour whose 24-hour lag the
-    gate-closure mask blanks) has no LEAR forecast under the committed
-    `nan_policy="decline"`, and the LP needs a complete vector. C5 built the
-    mechanism — a day with a hole is **skipped and counted by reason**, never
-    patched — so C6 now only has to choose: dispatch from the imputed forecast with
-    the substitution labelled (measured cost 0.001 EUR/MWh of annual MAE), or
-    exclude the day and report it excluded.
+    re-based on the new `TrainMedianBaseline`? See FINDING C4-A in the C4 entry.
+    Proposed, deliberately not done: that file holds a PLAN.md leakage assertion.
+    A human picks. Unchanged by C6.
+  - **NOTE C2-02** — the raw cache does not survive a container, so every cycle
+    re-pulls DE-LU (6 files, ~1 MB). 4th recurrence. See the C2 entry for the
+    three options.
+  - **NOTE C4-02 — now DECIDED by C6, confirmable or reversible by the human.**
+    The one declined hour a year is **excluded, and the day is reported
+    excluded**; every pooled number is computed over the common 365-day set.
+    Priced rather than argued: dispatching it from the `impute` variant would
+    have earned **−33.47 EUR** (the day is a loss), so excluding it does not
+    flatter the model. See the C6 entry.
 - **Sealed holdout (2025):** SEALED — do not touch until the human records
   approval of Checkpoint C (C16) here, using the marker string defined in
   `config/data.yaml` -> `holdout_unseal_marker` (never reproduced in this file).
-  Guard verified armed in C5, before and after the work: marker-alone-on-a-line
-  count 0, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`. No 2025
-  data has been fetched, loaded, dispatched or computed against at any point, in C2,
-  C3, C4 or C5.
+  Guard verified armed in C6, before and after the work: marker-alone-on-a-line
+  count 0, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`, and no
+  2025 file exists in the cache. No 2025 data has been fetched, loaded,
+  dispatched or computed against at any point in C2, C3, C4, C5 or C6.
 - **ENTSOE_API_KEY:** set in this environment (verified C1b). C7 precondition
-  satisfied; not needed before then, and not read in C2, C3, C4 or C5.
-- **Config hash:** `84f7bf31591d1e7f` as of C5 (was `d524f72059bc6d85` through
-  C3-C4). It moved because `config/battery.yaml` is new and `config_hash()` spans
-  every `config/*.yaml`; no pre-existing config file was modified.
-- **Repo-state note:** the detached-HEAD trap recurred again in C5 — the container
-  arrived on a detached HEAD at `89d5583`. Reattached with
-  `git checkout -B master 89d5583` and re-pointed at `origin/master` before any
-  work. Keep checking `git rev-parse --abbrev-ref HEAD` at the start of every
-  cycle; this is now 7 recurrences out of 13 containers.
-
+  satisfied; not needed before then, and not read in C2-C6.
+- **Config hash:** `84f7bf31591d1e7f`, unchanged by C6 (no `config/*.yaml` file
+  was modified). It last moved in C5 when `config/battery.yaml` was added.
+- **Repo-state note:** the detached-HEAD trap recurred again in C6 — the
+  container arrived on a detached HEAD at `f653618`. Reattached with
+  `git checkout -B master f653618` and re-pointed at `origin/master` before any
+  work. **8 recurrences out of 14 containers.** Keep checking
+  `git rev-parse --abbrev-ref HEAD` at the start of every cycle.
 
 ## Log
 
@@ -1626,3 +1629,246 @@ dispatch against the price plot) before scaling out. C6 also decides NOTE C4-02
 (imputed hour vs excluded day) and should put FLAG C5-01's three options to the
 human in the same review. Open items carried forward: **FLAG C5-01**, NOTE C3-01,
 NOTE C4-01, NOTE C4-02.
+
+### C6 — 2026-10-02 (scheduled cycle) — commit-then-settle, three curves, DE-LU — **CHECKPOINT B REACHED**
+
+**Done, as scoped in PLAN.md C6, and then stopped.** The commit-then-settle
+machinery across all three curves (oracle / LEAR / naive) on DE-LU 2024, both
+oracles, the pooled assertion, and Checkpoint B's own required output: three
+figures of a week of dispatch drawn against the price plot. 35 new offline tests
+(**271 total, all passing**). Design notes in `docs/commit_then_settle.md`. New
+modules: `dispatch/curves.py`, `backtest/run_c6_curves.py`. **NOTE C4-02 is
+decided and the decision is priced. FLAG C5-01 is restated with new evidence and
+is still the human's to decide.** No new FLAG was raised.
+
+**Checkpoint B is a human eyeballing one zone end to end before anything scales
+out to nine zones. Nothing in C7+ has been started.**
+
+---
+
+#### The headline, DE-LU 2024, 1 MW / 2 MWh
+
+Pooled over the 365 market days every curve dispatched (see NOTE C4-02 below for
+the 366th):
+
+| curve | cash, 365d | EUR/MW/yr | rolled capture | same-start capture |
+| --- | --- | --- | --- | --- |
+| **oracle** (perfect foresight) | 74,365.45 | **74,399** | 1.0000 | 1.0000 |
+| **model** (LEAR, C4's committed run) | 68,318.88 | **68,179** | **0.9187** | **0.8696** |
+| **naive** (same hour last week) | 62,997.68 | **62,868** | 0.8471 | 0.7797 |
+
+**EUR/MW/yr lost to forecast error: 6,047.** `oracle >= model >= naive` holds on
+pooled cash and on pooled `value_added`; margins 6,046.57 and 5,321.20 EUR.
+The oracle total reproduces C5's committed 74,552.06 EUR over its full 366 days
+**exactly** — a cross-cycle check that the LP and the roll did not move.
+
+**Two capture ratios, and the honest one is the lower one.** Both are reported
+because quoting either alone misleads:
+
+* **rolled** 0.9187 — annual cash against the rolled oracle's annual cash. Part
+  of what this credits to the forecast is the forecast run's *trajectory*
+  happening to open some days in a better state than the oracle's did.
+* **same-start** 0.8696 — pooled `value_added` against an oracle re-solved each
+  day from the model run's own opening SoC. Bounded above by 1 **on every single
+  day by construction**, so this is the per-day truth.
+* mean of the daily same-start ratios **0.8204**, median **0.9018**, p05 0.2919,
+  p25 0.7645, p75 0.9731. Mean below pooled says what it always says about power
+  prices: value is concentrated in a few high-spread days, and capture is
+  *better* on those days than on the quiet ones. PLAN.md asks for the
+  distribution and not just the mean, so the quantiles are persisted from C6 on.
+
+**The model beats the naive floor on 239 of 365 days (65.5%)** — it loses to it
+on more than a third of days and still wins by 5,321 EUR over the year. CLAUDE.md
+states that half of the invariant as an average and not a per-day claim; this is
+the number behind that wording.
+
+#### The two oracles, and the per-day invariant
+
+CLAUDE.md's `value(forecast @ realised) <= value(oracle @ realised)` **every
+day** is asserted on **every dispatched day, not a sample**, against the
+same-start oracle. Worst excess over the bound: **exactly 0.0 EUR** for both the
+model and the naive curve; **0 days** out of 730 curve-days have
+`capture_same_start > 1`, re-derived independently from the committed
+`..._daily.csv` rather than from the objects that wrote it.
+
+**The model out-earned the *rolled* oracle on 50 of 365 days.** That is the
+trajectory divergence C5 predicted in prose, now a number: across two
+independently rolled trajectories the opening SoCs differ and no per-day bound
+exists. It is counted and reported, never asserted away. A test demonstrates the
+mechanism as a controlled experiment rather than by hoping a fixture exhibits it
+— a run opening a day full, committed on an imperfect forecast, beats perfect
+foresight that opened the same day empty, and `assert_oracle_dominates`
+**refuses** that comparison rather than reporting a breach, because the two are
+not the same problem.
+
+**Commit-then-settle is structural, not careful.** `decision_prices` and
+`realised_prices` are separate arguments; every valuation carries
+`prices_are_decision_prices`; and `assert_settlement_is_not_a_readback`
+re-derives the truth from the schedules — comparing each day's decision vector
+against the realised one — and requires the flag to agree with what it finds. A
+perfect forecast that happens to equal realised prices is legitimate and passes;
+a forecast run that *claims* to be a read-back fails. Verified on all three runs.
+
+#### FINDING C6-A — `value_added >= 0` is a theorem about the **decision** problem, not about settlement
+
+C5 asserts `value_added >= 0` on the oracle run, reasoning that standing still is
+always feasible so the optimum cannot lose. Applied unchanged to the forecast
+curves it **failed on first run** — 3 model days and 17 naive days. It was right
+to fail: for the oracle the decision prices *are* the realised prices, so the
+statement transfers; for a forecast curve they are different vectors and it does
+not. A schedule frozen on a wrong forecast **can lose money at realised prices**,
+and that is the quantity this whole project exists to measure.
+
+So the theorem is now asserted about the problem it is a theorem about
+(`check_decision_value_added_non_negative`, on the decision prices, all three
+curves, holds), C5's realised-price form stays asserted **unchanged** on the
+oracle where it is binding, and the realised losses are *reported*:
+
+| curve | days that lost money at realised prices | total |
+| --- | --- | --- |
+| oracle | 0 of 366 | 0.00 EUR |
+| model | 3 of 365 (worst 2024-12-07, −34.13) | **−41.37 EUR** |
+| naive | 17 of 366 (worst 2024-12-25, −130.30) | **−662.52 EUR** |
+
+Nothing was weakened to make this green: no assertion was deleted or loosened,
+the oracle's version is unchanged, and the new one is a strictly-defined theorem
+that must hold. This is a left-tail result a desk would ask for before the mean —
+forecast error does not merely forgo upside, on ~1% of days it turns the day's
+trading into an outright loss, and the naive floor does it six times as often and
+sixteen times as expensively.
+
+#### NOTE C4-02 — **DECIDED: exclude the day, report it excluded.** The alternative was priced, not argued away.
+
+One hour a year (2024-10-27 23:00 local, the 25-hour autumn DST day whose 24-hour
+lag the gate-closure mask blanks — FINDING C3-A) has no LEAR forecast under the
+committed `nan_policy="decline"`, and the LP needs a complete vector.
+
+**Decision: the day is skipped and reported, and every pooled number is computed
+over the common day set** (365 days), so the exclusion can never compare a
+365-day model total against a 366-day oracle total. Reasons: it uses the
+skip-by-reason mechanism C5 already built and tested, it introduces no price that
+no model produced, and the alternative is recoverable at any time.
+
+**Priced**: `--measure-impute` re-runs that single fold under
+`nan_policy="impute"` (one LEAR fit, not 366) and dispatches the day from the
+imputed vector, opening at the SoC the committed model run actually carried in
+(0.0 MWh). It would have earned **−33.47 EUR of cash** — the day is a *loss* —
+at a same-start capture of 0.673. **Excluding it therefore does not flatter the
+model; it very slightly flatters it to include it**, which is the direction that
+matters for honesty. A human can overturn this to `impute` with the substitution
+labelled and the headline moves by about 0.05%.
+
+#### FLAG C5-01 — restated with new evidence, **still open, still the human's call**
+
+The committed default is **unchanged** (pure LP), exactly as C5 left it. C6 ran
+the MILP (`forbid_simultaneous=True`) across all three curves so the review can
+see whether the *result* — the capture ratio — moves. New evidence, which points
+the opposite way from what C5's single-curve measurement suggested:
+
+| curve | LP cash − MILP cash | simultaneity days (LP) | overlap cash (LP) |
+| --- | --- | --- | --- |
+| oracle | **+125.47** | 20 of 366 | +322.30 |
+| model | **−0.49** | 1 of 365 | +2.36 |
+| naive | **−89.88** | 20 of 366 | **−87.61** |
+
+**The artefact flatters the oracle and *penalises* the forecast curves.** A
+forecast curve commits the overlap on hours its forecast said were deeply
+negative; when they do not realise negative, the burn is paid for at realised
+prices and earns nothing — the naive curve's overlap cash is *negative*. So the
+pure LP's capture ratio is biased **against** the model: capture is 0.9187 under
+the LP and **0.9203 under the MILP**, a shift of **+0.0016** (+0.16pp). The
+ordering `oracle >= model >= naive` holds under both. Zero simultaneity intervals
+remain under the MILP, as they must.
+
+The three options are unchanged — **(a)** MILP as default with the pure LP as the
+sensitivity, **(b)** keep the pure LP and carry the artefact as a stated
+limitation, or **(c)** add `c_t + d_t <= P`, the single shared inverter rating,
+which is physically right for real hardware and needs no binary. The new
+information for the decision is that the effect on the headline is 0.16pp and in
+the model's favour, so none of the three changes any conclusion. Still
+non-blocking. No separate push notification: Checkpoint B's own notification
+carries it.
+
+#### Checkpoint B's required output — three weeks of dispatch, drawn
+
+`docs/figures/c6_dispatch_week_DE-LU_<START>.png`, chosen by rule rather than by
+taste: **typical** (week whose mean daily spread is closest to the year's),
+**high_spread** (the week with the most oracle value), **worst_capture** (the
+week containing the model's worst same-start capture day).
+
+| figure | week | oracle | model | naive |
+| --- | --- | --- | --- | --- |
+| typical | 2024-05-20 | 1,523 EUR | 1,382 (91%) | 1,449 (**95%**) |
+| high_spread | 2024-11-04 | 3,425 EUR | 3,340 (**98%**) | 3,110 (91%) |
+| worst_capture | 2024-12-02 | 998 EUR | 577 (58%) | 516 (52%) |
+
+Each has three panels on one time axis: realised price against both forecasts;
+the SoC each curve actually carried (including across midnight — a daily reset
+would show as a sawtooth and does not); and **cumulative settled cash**, which
+puts the whole result in one readable panel. In the typical week the **naive
+floor beats LEAR** — worth seeing, and exactly the kind of thing a weekly figure
+should surface rather than an annual mean hide.
+
+#### Independently re-verified from the committed artefacts alone
+
+Not from the objects that wrote them. Per curve, recomputing annual cash hour by
+hour from `..._schedule.csv.gz` × realised prices reproduces 74,552.06 /
+68,318.88 / 62,997.08 EUR to <2e-4 (CSV rounding); `soc_end(D) == soc_start(D+1)`
+to **0.0e+00** on every day pair for all three curves, including across the
+model's skipped day (SoC carried unchanged — the battery sat idle, as designed);
+power never exceeds 1.000000 MW and SoC stays inside [0, 2]; the capture ratios
+recompute from `..._daily.csv` to 0.918691 / 0.847136, matching the summary.
+
+#### Files under `tests/` — declared, per CLAUDE.md
+
+One file **added**: `tests/test_c6_commit_then_settle.py` (35 tests). **No
+existing test was edited** — `git diff --stat HEAD -- tests/` is empty and only
+the new untracked file appears in `git status tests/`; all 236 pre-existing tests
+pass unmodified. One of this cycle's own new tests failed on first run, before
+anything was committed, and the fix was to the *test*, not to a claim:
+`test_the_rolled_oracle_gives_no_per_day_bound` asserted that some day in a
+30-day synthetic fixture would see the model out-earn the rolled oracle. The
+claim is true on real data (50 of 365 days) but the fixture was too short and too
+smooth to exhibit it, and tuning a random fixture until it did would have been
+fabricating the phenomenon. Replaced by two tests that establish the same thing
+deterministically: a controlled same-day experiment (full opening SoC vs empty
+opening SoC) and a direct measurement that the two rolled trajectories do diverge
+in opening SoC.
+
+#### Housekeeping
+
+- **Data.** Only DE-LU was fetched (6 files, 2019–2024, ~1 MB) — C6 is DE-LU
+  only. The container again arrived with `data/raw/` empty, as **NOTE C2-02**
+  predicts; 6 pairs downloaded cleanly, 0 flagged. **NOTE C2-02 is still open**
+  and this is its 4th recurrence.
+- **No ENTSO-E call.** C6 needs no exogenous data, so `ENTSOE_API_KEY` was not
+  read. It *is* set in this environment; the C7 precondition still holds.
+- **Sealed holdout verified armed**, before and after the work: marker-alone-on-
+  a-line count **0**, `holdout_is_unsealed()` = `False`, `sealed_years()` =
+  `{2025}`, and no 2025 file exists in the cache. No 2025 data has been fetched,
+  loaded, dispatched or computed against at any point in C2–C6.
+- **Config hash unchanged at `84f7bf31591d1e7f`.** No `config/*.yaml` file was
+  modified; `config/features.yaml` is untouched and **NOTE C3-01 is still open**.
+- **No new dependency.** scipy/matplotlib/scikit-learn already declared.
+- **Repo-state note:** the detached-HEAD trap recurred again — the container
+  arrived on a detached HEAD at `f653618`. Reattached with
+  `git checkout -B master f653618` and re-pointed at `origin/master` before any
+  work. **8 recurrences out of 14 containers.** Keep checking
+  `git rev-parse --abbrev-ref HEAD` at the start of every cycle.
+
+#### What Checkpoint B is asking the human for
+
+1. **Eyeball the three week figures** against the price plots from Checkpoint A.
+   Does the dispatch look like a battery buying low and selling high, and does
+   the SoC carry across midnight rather than resetting?
+2. **Sanity-check the headline**: 87–92% of perfect-foresight value captured by a
+   price-history-only LEAR on DE-LU 2024, 6,047 EUR/MW/yr lost to forecast error.
+   Is that plausible for a 2h battery in a thermal/RES-mixed zone?
+3. **Decide FLAG C5-01** (a / b / c above). Effect on the headline is 0.16pp.
+4. **Confirm or overturn NOTE C4-02** (exclude the declined day — current
+   decision — vs dispatch it from the imputed forecast with the substitution
+   labelled).
+5. **NOTE C3-01 and NOTE C4-01 are still open** from C3/C4 and are unchanged.
+
+Then set "Next cycle to run" at the top of this file to **C7** and the cycle
+after this one will scale out.
