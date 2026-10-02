@@ -14,6 +14,15 @@ C4's LEAR and C9's gradient booster must satisfy:
     the denominator for the skill score in the target-permutation assertion. A
     model fitted on shuffled targets should land roughly here.
 
+``TrainMedianBaseline``
+    The same idea at the *median*, added in C4. It exists because MAE is
+    minimised by the median, not the mean, and European power prices are
+    strongly right-skewed (DE-LU 2019-2024: mean 95.65, median 66.18 EUR/MWh —
+    the 2022 crisis). So a zero-information constant placed at the median beats
+    one placed at the mean by ~7% of MAE, and any median-like estimator inherits
+    that margin for free. Without this reference, that free margin is
+    indistinguishable from skill — see FINDING C4-A.
+
 A model receives the whole :class:`~forecast.features.FeatureMatrix`, not a bare
 array, so it cannot accidentally be handed a frame whose information times
 nobody checked.
@@ -97,6 +106,39 @@ class TrainMeanBaseline:
             raise ModelError("TrainMeanBaseline.predict called before fit")
         return pd.Series(
             np.full(len(test.index), self.mean_, dtype="float64"),
+            index=test.index,
+            name=self.name,
+        )
+
+
+class TrainMedianBaseline:
+    """Predicts the median target of the training window, for every hour.
+
+    The reference that separates "this model knows something about *this* hour"
+    from "this model is shaped like a median and the metric is MAE". A LASSO
+    fitted in asinh space and mapped back through ``sinh`` is the latter, which
+    is why :class:`TrainMeanBaseline` alone cannot answer the question (FINDING
+    C4-A): on a right-skewed price distribution a mean reference hands any such
+    model several percent of apparent skill before it has learned anything.
+    """
+
+    name = "train_median"
+
+    def __init__(self) -> None:
+        self.median_: float | None = None
+
+    def fit(self, train: FeatureMatrix) -> "TrainMedianBaseline":
+        target = train.target.dropna()
+        if target.empty:
+            raise ModelError("cannot fit a median baseline on an empty training target")
+        self.median_ = float(target.median())
+        return self
+
+    def predict(self, test: FeatureMatrix) -> pd.Series:
+        if self.median_ is None:
+            raise ModelError("TrainMedianBaseline.predict called before fit")
+        return pd.Series(
+            np.full(len(test.index), self.median_, dtype="float64"),
             index=test.index,
             name=self.name,
         )

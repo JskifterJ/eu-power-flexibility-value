@@ -2,32 +2,47 @@
 
 ## Current status
 
-- **Next cycle to run:** **C4** — LEAR (per-hour LASSO, in-fold scaling / asinh
-  transform, in-fold IC/CV selection), DE-LU, walk-forward on 2024 (validation)
-  only. It plugs into C3's harness as a `Model` and needs a documented policy for
-  the NaN cells C3's gate-closure mask creates (LASSO cannot take NaN). C3 is done
-  — see the C3 entry at the end of the log.
+- **Next cycle to run:** **C5** — battery LP v1, DE-LU, **oracle curve only**.
+  Rolling 24h horizon, realised end-of-day SoC carried into the next day plus a
+  terminal condition (never reset to zero at midnight), symmetric round-trip
+  efficiency (sqrt(0.88) per leg), throughput/cycling cost ~2–5 EUR/MWh discharged,
+  and an explicit check for simultaneous charge/discharge under negative prices (a
+  FLAG if found). Unit tests PLAN.md names: hand-computed toy price vector, value
+  monotone in spread, value exactly 0 on a flat curve. Adds an LP solver to
+  `requirements.txt`. Commit-then-settle and the oracle ≥ model ≥ naive assertions
+  are C6, at **Checkpoint B**. C4 is done — see the C4 entry at the end of the log.
 - **Human checkpoints pending:** none. Checkpoint A closed 2026-10-01 (human
-  session, local, not a scheduled cycle).
-- **Open FLAGs:** none. C2's two NOTEs are resolved (C2-01 fixed in code, C2-02
-  decided: leave as is). **One open decision request, non-blocking: NOTE C3-01** —
-  the daily-aggregate feature names in `config/features.yaml` say `lag_24h` but the
-  only leak-free window is the last fully-public UTC day (`D-2`); rename them or
-  keep the names and rely on `docs/forecast_harness.md`? See the C3 entry. C4 is
-  not blocked by it.
+  session, local, not a scheduled cycle). Next is **Checkpoint B at C6**.
+- **Open FLAGs:** none. Three open decision requests, **all non-blocking**:
+  - **NOTE C3-01** — the daily-aggregate feature names in `config/features.yaml`
+    say `lag_24h` but the only leak-free window is the last fully-public UTC day
+    (`D-2`); rename them or keep the names and rely on `docs/forecast_harness.md`?
+    See the C3 entry.
+  - **NOTE C4-01** — should `destroys_skill()` in `backtest/diagnostics.py` be
+    re-based on the new `TrainMedianBaseline`? It now reads `destroys_skill: False`
+    for LEAR (and likely for every median-like model from here, including C9's
+    booster) for a reason that is about the *reference*, not the model — see
+    FINDING C4-A in the C4 entry. Proposed, deliberately not done: that file holds
+    a PLAN.md leakage assertion. A human picks.
+  - **NOTE C4-02** — hand-off to C5/C6: one hour a year (the autumn DST hour whose
+    24-hour lag the gate-closure mask blanks) has no LEAR forecast under the
+    committed `nan_policy="decline"`. The LP needs a complete 24-hour vector. The
+    `impute` variant is measured: full coverage costs 0.001 EUR/MWh of annual MAE.
+    C6 chooses — dispatch that day from the imputed forecast with the substitution
+    labelled, or exclude the day and report it excluded.
 - **Sealed holdout (2025):** SEALED — do not touch until the human records
   approval of Checkpoint C (C16) here, using the marker string defined in
   `config/data.yaml` -> `holdout_unseal_marker` (never reproduced in this file).
-  Guard verified armed in C3, before and after the work: marker-alone-on-a-line
+  Guard verified armed in C4, before and after the work: marker-alone-on-a-line
   count 0, `holdout_is_unsealed()` = `False`. No 2025 data has been fetched, loaded
-  or computed against at any point, in C2 or C3.
+  or computed against at any point, in C2, C3 or C4.
 - **ENTSOE_API_KEY:** set in this environment (verified C1b). C7 precondition
-  satisfied; not needed before then, and not read in C2 or C3.
-- **Repo-state note:** the detached-HEAD trap **did** recur in C3 — the container
-  arrived on a detached HEAD at `17249e9`. Reattached with
-  `git checkout -B master 17249e9` and re-pointed at `origin/master` before any
+  satisfied; not needed before then, and not read in C2, C3 or C4.
+- **Repo-state note:** the detached-HEAD trap recurred again in C4 — the container
+  arrived on a detached HEAD at `1a084d3`. Reattached with
+  `git checkout -B master 1a084d3` and re-pointed at `origin/master` before any
   work. Keep checking `git rev-parse --abbrev-ref HEAD` at the start of every
-  cycle; this is now 5 recurrences out of 11 containers.
+  cycle; this is now 6 recurrences out of 12 containers.
 
 ## Log
 
@@ -1148,3 +1163,203 @@ honest options are dropping those rows from the *training* fit only, or imputing
 in-fold from the training window, and neither should be chosen silently. The open
 item from this cycle is **NOTE C3-01** (rename the daily-aggregate features in
 `features.yaml`, or keep the names and rely on the docs); it does not block C4.
+
+### C4 — 2026-10-02 (scheduled cycle) — LEAR, DE-LU, walk-forward on 2024
+
+**Done, as scoped in PLAN.md C4.** LEAR — per-hour LASSO, in-fold asinh/MAD
+variance stabilisation, in-fold penalty selection — plugged into C3's harness as a
+`Model`, with the NaN policy C3 asked for decided and documented. 35 new offline
+tests (172 total, all passing). Design notes in `docs/lear_model.md`.
+
+**Headline, DE-LU 2024 (validation), expanding window from 2019, daily refit, 366
+folds, 8,784 hours.**
+
+| model | MAE | RMSE | bias | rMAE vs naive | coverage |
+| --- | --- | --- | --- | --- | --- |
+| naive same-hour-last-week (C3) | 32.80 | 55.22 | −1.52 | 1.000 | 1.00000 |
+| **LEAR (AIC, committed)** | **22.86** | **36.92** | +2.60 | **0.697** | 0.99989 |
+| LEAR (BIC) | 22.83 | 36.93 | +1.66 | 0.696 | 0.99989 |
+| LEAR (time-ordered CV) | 22.90 | 36.93 | +2.74 | 0.699 | 0.99989 |
+| LEAR (AIC, `nan_policy="impute"`) | 22.87 | 36.92 | +2.60 | 0.697 | 1.00000 |
+| train-mean reference | 37.88 | — | — | — | 1.00000 |
+
+**LEAR cuts the naive floor's MAE by 30%** (rMAE 0.697). That is the number C9's
+booster has to beat and the forecast error the battery gets dispatched against
+from C6.
+
+**New modules.** `forecast/lear.py` (`LearSpec`, `LearModel`, the design encoding,
+the VST), `backtest/run_c4_lear.py` (CLI). `forecast/models.py` gained
+`TrainMedianBaseline` — purely additive, and the reason is FINDING C4-A below.
+
+**The four decisions that carry the model, each one a place this usually goes
+wrong.**
+- *One LASSO per delivery hour, partitioned on **local** time.* Hour 03 and hour 18
+  are different products; pooling them makes one model wrong about both. CLAUDE.md
+  forbids local time for *resampling or alignment* — this is neither: no row moves,
+  nothing is reindexed, the matrix is only grouped. And the partition key is itself
+  a declared, gate-closure-checked feature column, so the thing deciding which
+  model sees a row is under the same guard as everything else. `hour_key="utc"`
+  exists so the choice is visible rather than baked in.
+- *Everything fitted in-fold, then applied frozen.* Medians, MADs, standardisation
+  moments, one-hot levels and the penalty are estimated on the training window and
+  never recomputed at predict time. Two tests assert this behaviourally rather than
+  by reading the code: predicting one row alone must return exactly what predicting
+  the whole block returned, and multiplying every *other* test row by a thousand
+  must not move the first row's number. A scaler fitted on train+test fails both —
+  which is the point, because it is invisible in a diff.
+- *asinh((y−a)/b) with the in-fold median and MAD, inverted exactly.* A log is
+  unavailable on a market with negative prices, and an untransformed LASSO spends
+  its whole budget on the 2022 spikes. `b` falls back MAD → std → 1.0 and the
+  fallback is *reported*, because a constant price column in a training window is a
+  data problem, not a feature. Back-transformed predictions are **not clipped**: an
+  absurd run should show an absurd number, and the fit report carries predicted
+  min/max so it is visible either way.
+- *NaN answered, not absorbed* — the open question C3 handed over. Training rows
+  with any missing design cell are **dropped from the fit** (listwise), counted per
+  hour-model; a test asserts dropping a row is *equivalent* to the row never having
+  existed, i.e. nothing was imputed behind the report's back. Test rows with a hole
+  get **no prediction** (`nan_policy="decline"`), and `backtest/metrics.py` charges
+  the model coverage for it rather than shrinking the denominator. A missing
+  *calendar* cell is missing too, not a row of zero indicators — one-hot encoding a
+  NaN would silently make it the reference level. An unseen category is counted; an
+  unseen delivery hour gets no model and no number.
+
+**The selector was chosen once, on validation, by a rule stated before the
+numbers.** All three in-fold rules land within 0.35% of each other (22.83–22.90).
+BIC wins by 0.17%, inside the 0.5% margin `backtest/run_c4_lear.py` commits to in
+its docstring, so **AIC stays the committed default** — cheapest, fully
+deterministic. The flatness is informative: with only ~26 design columns there is
+little for a penalty to do and the selected alphas are near-zero (near-OLS). That
+should change in C8 when load/RES features widen the design, so the comparison is
+worth re-reading **once** then, not per cycle.
+
+**PLAN's three leakage assertions, re-run on a model that can actually exploit a
+leak** (probe cadence: weekly refit, for cost; the main run is daily).
+- **(i) day shift.** Aligned MAE **22.861**; one day staler **26.479**; one day
+  fresher **0.000**. LEAR recovers the target *exactly* from the shifted
+  `price_lag_24h` column, because that column then **is** the target. So
+  `degrades_for_every_shift` is **False** here where C3's naive floor had it True —
+  the naive model reads only `price_lag_168h`, which any whole-day shift breaks in
+  both directions. That is the measurement of what the leak is worth, not a bug;
+  the gate-closure guard, not the sign of this number, is what refuses it on the
+  real matrix.
+- **(ii) future-feature guard.** Declared honestly → `after_gate_closure`;
+  smuggled in undeclared → `undeclared`. The walk-forward refuses to run on either,
+  with LEAR in the harness.
+- **(iii) target permutation.** See FINDING C4-A — it needed real work.
+
+**FINDING C4-A — a mean reference hands free skill to a median-like model, so
+`destroys_skill` reads False for reasons that have nothing to do with LEAR.**
+Real skill **+0.397** vs the train-mean baseline; with the target shuffled,
+**+0.055** (hour-wise) and **+0.069** (whole-day). Read at face value that says a
+model fitted on noise has skill. It does not. `backtest/metrics.py` scores MAE, minimised by the **median**;
+`backtest/diagnostics.py` scores skill against the train-**mean**. DE-LU 2019–2024
+prices are strongly right-skewed (mean **95.65**, median **66.18** EUR/MWh — the
+2022 crisis), so on shuffled targets a constant at the training median beats a
+constant at the training mean by ~**7%** of MAE while knowing nothing at all. LEAR
+is a LASSO fitted in asinh space and mapped back through `sinh` — a median-like
+estimator — so it collects that margin before it has learned anything. On the
+permuted 2024 set: train-mean 66.47, **zero-information constant median 61.95
+(+0.068 skill)**, permuted LEAR 62.78 (+0.055). **The permuted model earns less
+than the constant that knows nothing**, and re-based on a median reference its
+skill is **negative** (−0.013) while the honest model's stays clearly positive
+(+0.380). Shuffling the target did destroy every bit of conditional skill; the
+probe's pass criterion was simply calibrated for a mean-predicting model, which the
+naive floor is and LEAR is not.
+*The whole-day shuffle is a different question and also clean.* `mode="days"`
+permutes whole market days, so it preserves the within-day shape — C3's own
+docstring says as much, which is why that mode is reported separately rather than
+used as the pass/fail probe. Its residue was measured rather than assumed: on the
+day-permuted 2024 set a predictor knowing nothing but the **per-local-hour training
+median** earns **+0.017** over the global training median, which is *more* than the
+**+0.013** LEAR retains there; under the hour-wise shuffle the same hour-of-day
+profile is worth **−0.001**, i.e. nothing, because that shuffle destroys it too. So
+the entire day-mode residue is the daily price profile, LEAR extracts slightly less
+of it than a plain per-hour median does, and the decisive hour-wise probe leaves it
+with negative skill.
+*What was done:* `TrainMedianBaseline` added to `forecast/models.py`; the re-based
+comparison reported alongside the original in the committed summary under
+`diagnostics.target_permutation_against_median`, both references refitted inside
+the same walk-forward so nothing is a different evaluation set; and
+`test_a_mean_reference_hands_free_skill_to_a_median_like_model` reproduces all
+three halves of the diagnosis on a deliberately skewed synthetic series, so it
+cannot be quietly un-learned. The ordinary near-symmetric test series does not show
+it at all, which is why it surfaced only when LEAR met real prices.
+*What was deliberately **not** done:* `backtest/diagnostics.py` was not touched. It
+holds a PLAN.md leakage assertion, and re-basing `destroys_skill()` is exactly the
+edit that turns a red probe green without looking wrong in a diff. Hence:
+
+**NOTE C4-01 — decision requested, non-blocking: should `destroys_skill()` in
+`backtest/diagnostics.py` be re-based on `TrainMedianBaseline`?** Proposed, not
+done. As it stands the probe will read `destroys_skill: False` for every
+median-like model from here on (LEAR now, very likely the C9 booster too), which
+risks becoming a warning everyone learns to ignore — the worst state for a leakage
+check. The options are (a) re-base the criterion on the median reference, (b) keep
+the mean criterion and require instead that the permuted model not beat the
+zero-information constant, or (c) leave it and rely on the re-based numbers
+reported next to it. A human should pick; C5 is not blocked either way.
+
+**NOTE C4-02 — hand-off to C5/C6: one hour a year has no forecast.** The committed
+model declines the autumn DST hour whose 24-hour lag the gate-closure mask blanks
+(FINDING C3-A) — exactly 1 hour of 8,784 in 2024. A forecast table can report that
+honestly; the battery LP cannot, because committing a day's schedule needs a
+complete 24-hour price vector. So the `impute` variant was run and scored too:
+full coverage costs **0.001 EUR/MWh** of annual MAE. C6 therefore has a measured
+choice — dispatch that day from the imputed forecast with the substitution
+labelled, or exclude the day and report it as excluded. Either is defensible;
+filling the hole silently inside the LP is not.
+
+**NOTE C3-01 is still open** (rename the daily-aggregate features in
+`features.yaml` to match the only leak-free window, or keep the names and rely on
+`docs/forecast_harness.md`). C4 did not touch `config/features.yaml` and was not
+blocked by it. `config_hash` is unchanged from C3's `d524f72059bc6d85`.
+
+**Files under `tests/` — declared, per CLAUDE.md.** One file **added**:
+`tests/test_c4_lear.py` (35 tests). **No existing test was edited** and no existing
+assertion weakened or deleted — `git diff --stat HEAD -- tests/` shows only the new
+file; `conftest.py`, `test_c1_data_layer.py`, `test_c2_contracts.py`,
+`test_c3_timing_features.py` and `test_c3_leakage_harness.py` are untouched, and
+all 137 pre-existing tests pass unmodified. Four of this cycle's own new tests
+failed on first run and in all four cases the *test* was wrong and was corrected
+before anything was committed: two poked holes in cells that were already NaN
+inside the lag warm-up or spanned two months where the test said one; one asserted
+LEAR predicts every hour when declining the masked DST hour is the designed
+behaviour (it now asserts the declined hours are *exactly* the holed ones); and one
+expected a 24-hour lead to halve LEAR's MAE as it halved the naive floor's, where
+the honest expectation is ~30% — LEAR already holds the price 24 hours *back*, so
+the leading feature is a second observation the same distance away on the other
+side, and averaging two symmetric observations of a random walk cuts error by about
+sqrt(2), not sqrt(7). The bound and the reasoning are both in the test.
+
+**Dependencies.** `scikit-learn>=1.7` added to `requirements.txt`; the floor is 1.7
+because `LassoCV`'s alpha-path argument was renamed there (`n_alphas` → an int
+`alphas`) and `forecast/lear.py` uses the current spelling. Installed 1.9.1.
+
+**Data.** Only DE-LU was fetched (6 files, 2019–2024, ~1 MB) — C4 is DE-LU only.
+The container again arrived with `data/raw/` empty, as NOTE C2-02 predicts; all 6
+pairs downloaded cleanly, 0 flagged. No ENTSO-E call was made: C4 needs no
+exogenous data, so `ENTSOE_API_KEY` was not read (it *is* set in this environment —
+the C7 precondition still holds).
+
+**Sealed holdout.** Verified armed before the work and again before committing:
+marker-alone-on-a-line count in this file 0, `holdout_is_unsealed()` = `False`,
+`sealed_years()` = `{2025}`, `fetch_years` = 2019–2024. No 2025 data was fetched,
+loaded, feature-engineered from or measured against at any point in C4. The
+evaluation years passed to every run were `[2024]`. The marker string is not
+reproduced here, only referred to by its config key.
+
+**Repo-state note.** The detached-HEAD trap recurred again: the container arrived
+on a detached HEAD at `1a084d3`. Reattached with `git checkout -B master 1a084d3`
+and re-pointed at `origin/master` before any work. Now 6 recurrences out of 12
+containers — worth a line in the write-up's reproducibility section.
+
+**Next:** C5 — battery LP v1, DE-LU, **oracle curve only**. Rolling 24h horizon,
+realised end-of-day SoC carried into the next day plus a terminal condition (never
+reset to zero at midnight), symmetric round-trip efficiency (sqrt(0.88) per leg),
+throughput/cycling cost ~2–5 EUR/MWh discharged, and an explicit check for
+simultaneous charge/discharge under negative prices (a FLAG if found — LP artefact
+needing a penalty term or a MILP). Unit tests PLAN.md names: a hand-computed toy
+price vector, value monotone in spread, value exactly 0 on a flat curve. Adds an LP
+solver to `requirements.txt` (`highspy` via scipy's HiGHS, or `pulp`). The
+commit-then-settle machinery and the oracle ≥ model ≥ naive assertions are C6, at
+**Checkpoint B**. Open items carried forward: NOTE C3-01, NOTE C4-01, NOTE C4-02.

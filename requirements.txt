@@ -13,4 +13,10 @@ pytest>=8.0
 matplotlib>=3.8
 
 # C3 (walk-forward harness, naive model, leakage guard): no new dependencies —
-# pandas/numpy/pytest already cover it. LEAR (C4) adds scikit-learn.
+# pandas/numpy/pytest already cover it.
+
+# C4 (LEAR: per-hour LASSO, in-fold asinh/standardisation, in-fold AIC/BIC/CV
+# penalty selection). The floor is 1.7 because LassoCV's alpha-path argument was
+# renamed there (`n_alphas` -> an int `alphas`), and forecast/lear.py uses the
+# current spelling.
+scikit-learn>=1.7

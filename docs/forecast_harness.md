@@ -198,7 +198,8 @@ comparison that matters, and that is C12's job.
 ## Deliberately out of scope in C3
 
 * Any exogenous feature (C7/C8, needs ENTSO-E).
-* LEAR (C4) and the gradient booster (C9).
+* LEAR and the gradient booster. LEAR landed in C4 — `docs/lear_model.md`; the
+  booster is C9.
 * The full metrics layer — daily-spread error, within-day Spearman, capture ratio,
   block-bootstrap CIs (C12).
 * Tier-B zones (C10) and the battery LP (C5/C6).
