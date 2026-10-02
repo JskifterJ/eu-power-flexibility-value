@@ -2,47 +2,67 @@
 
 ## Current status
 
-- **Next cycle to run:** **C5** — battery LP v1, DE-LU, **oracle curve only**.
-  Rolling 24h horizon, realised end-of-day SoC carried into the next day plus a
-  terminal condition (never reset to zero at midnight), symmetric round-trip
-  efficiency (sqrt(0.88) per leg), throughput/cycling cost ~2–5 EUR/MWh discharged,
-  and an explicit check for simultaneous charge/discharge under negative prices (a
-  FLAG if found). Unit tests PLAN.md names: hand-computed toy price vector, value
-  monotone in spread, value exactly 0 on a flat curve. Adds an LP solver to
-  `requirements.txt`. Commit-then-settle and the oracle ≥ model ≥ naive assertions
-  are C6, at **Checkpoint B**. C4 is done — see the C4 entry at the end of the log.
-- **Human checkpoints pending:** none. Checkpoint A closed 2026-10-01 (human
-  session, local, not a scheduled cycle). Next is **Checkpoint B at C6**.
-- **Open FLAGs:** none. Three open decision requests, **all non-blocking**:
+- **Next cycle to run:** **C6 — CHECKPOINT B.** Commit-then-settle machinery with all
+  three curves (oracle / LEAR / naive) on DE-LU: solve on the forecast, freeze the
+  schedule, value at **realised** prices, and assert pooled
+  `oracle >= model >= naive`. The per-day half of the invariant needs a
+  **same-start oracle** re-solved each day from the forecast run's own opening SoC —
+  across two independently rolled trajectories the opening SoCs diverge and no
+  per-day bound exists; see the C5 entry. C6 also decides **NOTE C4-02** (dispatch
+  the one declined hour a year from the `impute` variant with the substitution
+  labelled, or exclude the day) and should put **FLAG C5-01**'s three options to the
+  human in the same review. Then **stop, push-notify, and wait**: Checkpoint B is a
+  human eyeballing one zone end-to-end (a week of dispatch against the price plot)
+  before anything scales out to nine zones. C5 is done — see the C5 entry at the end
+  of the log.
+- **Human checkpoints pending:** **Checkpoint B, at C6** (not yet reached).
+  Checkpoint A closed 2026-10-01 (human session, local, not a scheduled cycle).
+- **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch LP,
+  exactly as PLAN.md anticipated: 20 of 366 days in DE-LU 2024, 53 intervals, all at
+  negative prices, 0.43% of annual cash; forbidding it exactly with a MILP costs
+  0.17% of value. **Measured, both variants run and persisted, committed default
+  deliberately unchanged.** A human picks (a) MILP as default, (b) keep the pure LP
+  and carry 0.17% as a stated limitation, or (c) add the `c_t + d_t <= P` single-
+  inverter constraint. **Non-blocking** — C6 runs either way and is itself
+  Checkpoint B. No push notification was sent, because PLAN.md reserves that for a
+  genuine blocker or an invariant failing in a way that is not an expected,
+  explained finding, and this is a finding PLAN.md predicted by name.
+- **Open decision requests, all non-blocking:**
   - **NOTE C3-01** — the daily-aggregate feature names in `config/features.yaml`
     say `lag_24h` but the only leak-free window is the last fully-public UTC day
     (`D-2`); rename them or keep the names and rely on `docs/forecast_harness.md`?
-    See the C3 entry.
+    See the C3 entry. C5 did not touch `config/features.yaml`.
   - **NOTE C4-01** — should `destroys_skill()` in `backtest/diagnostics.py` be
     re-based on the new `TrainMedianBaseline`? It now reads `destroys_skill: False`
     for LEAR (and likely for every median-like model from here, including C9's
     booster) for a reason that is about the *reference*, not the model — see
     FINDING C4-A in the C4 entry. Proposed, deliberately not done: that file holds
     a PLAN.md leakage assertion. A human picks.
-  - **NOTE C4-02** — hand-off to C5/C6: one hour a year (the autumn DST hour whose
-    24-hour lag the gate-closure mask blanks) has no LEAR forecast under the
-    committed `nan_policy="decline"`. The LP needs a complete 24-hour vector. The
-    `impute` variant is measured: full coverage costs 0.001 EUR/MWh of annual MAE.
-    C6 chooses — dispatch that day from the imputed forecast with the substitution
-    labelled, or exclude the day and report it excluded.
+  - **NOTE C4-02** — one hour a year (the autumn DST hour whose 24-hour lag the
+    gate-closure mask blanks) has no LEAR forecast under the committed
+    `nan_policy="decline"`, and the LP needs a complete vector. C5 built the
+    mechanism — a day with a hole is **skipped and counted by reason**, never
+    patched — so C6 now only has to choose: dispatch from the imputed forecast with
+    the substitution labelled (measured cost 0.001 EUR/MWh of annual MAE), or
+    exclude the day and report it excluded.
 - **Sealed holdout (2025):** SEALED — do not touch until the human records
   approval of Checkpoint C (C16) here, using the marker string defined in
   `config/data.yaml` -> `holdout_unseal_marker` (never reproduced in this file).
-  Guard verified armed in C4, before and after the work: marker-alone-on-a-line
-  count 0, `holdout_is_unsealed()` = `False`. No 2025 data has been fetched, loaded
-  or computed against at any point, in C2, C3 or C4.
+  Guard verified armed in C5, before and after the work: marker-alone-on-a-line
+  count 0, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`. No 2025
+  data has been fetched, loaded, dispatched or computed against at any point, in C2,
+  C3, C4 or C5.
 - **ENTSOE_API_KEY:** set in this environment (verified C1b). C7 precondition
-  satisfied; not needed before then, and not read in C2, C3 or C4.
-- **Repo-state note:** the detached-HEAD trap recurred again in C4 — the container
-  arrived on a detached HEAD at `1a084d3`. Reattached with
-  `git checkout -B master 1a084d3` and re-pointed at `origin/master` before any
+  satisfied; not needed before then, and not read in C2, C3, C4 or C5.
+- **Config hash:** `84f7bf31591d1e7f` as of C5 (was `d524f72059bc6d85` through
+  C3-C4). It moved because `config/battery.yaml` is new and `config_hash()` spans
+  every `config/*.yaml`; no pre-existing config file was modified.
+- **Repo-state note:** the detached-HEAD trap recurred again in C5 — the container
+  arrived on a detached HEAD at `89d5583`. Reattached with
+  `git checkout -B master 89d5583` and re-pointed at `origin/master` before any
   work. Keep checking `git rev-parse --abbrev-ref HEAD` at the start of every
-  cycle; this is now 6 recurrences out of 12 containers.
+  cycle; this is now 7 recurrences out of 13 containers.
+
 
 ## Log
 
@@ -1363,3 +1383,246 @@ price vector, value monotone in spread, value exactly 0 on a flat curve. Adds an
 solver to `requirements.txt` (`highspy` via scipy's HiGHS, or `pulp`). The
 commit-then-settle machinery and the oracle ≥ model ≥ naive assertions are C6, at
 **Checkpoint B**. Open items carried forward: NOTE C3-01, NOTE C4-01, NOTE C4-02.
+
+### C5 — 2026-10-02 (scheduled cycle) — battery LP v1, DE-LU, oracle curve only
+
+**Done, as scoped in PLAN.md C5.** The dispatch LP, the rolling horizon with
+carried SoC, the settlement, and PLAN's three named unit tests. 64 new offline
+tests (**236 total, all passing**). Design notes in `docs/battery_lp.md`. New
+modules: `config/battery.yaml`, `dispatch/battery.py`, `dispatch/rolling.py`,
+`backtest/run_c5_oracle_lp.py`. One FLAG, raised not worked around — **FLAG
+C5-01** below.
+
+**Headline, DE-LU 2024, oracle (perfect foresight) curve.** 1 MW / 2 MWh (2h),
+round-trip 0.88 split `sqrt(0.88) = 0.938083` per leg, throughput cost
+2 EUR/MWh discharged, 7-day median trailing mark on closing inventory. 366 market
+days dispatched, **0 skipped**.
+
+| | |
+| --- | --- |
+| oracle cash | **74,552.06 EUR** = **74,399 EUR/MW/yr** |
+| equivalent full cycles | 634.8 (1.73/day) |
+| energy in / out | 1,443.76 / 1,269.57 MWh (ratio 0.8793 ≈ the 0.88 round trip) |
+| day-length histogram | 23h × 1, 24h × 364, 25h × 1 |
+
+That is the ceiling C6's forecast curve is measured against, and the denominator
+of every capture ratio from C11 on.
+
+**Per-year oracle value, 2019–2024 — descriptive context, not a result.** The
+oracle is a property of the realised price series: no model, no forecast, nothing
+fitted. One continuous roll, SoC carrying across year boundaries.
+
+| year | EUR/MW/yr | cycles | mean daily spread | sim-days |
+| --- | --- | --- | --- | --- |
+| 2019 | 16,250 | 578.4 | 30.01 | 9 |
+| 2020 | 18,498 | 616.7 | 32.47 | 16 |
+| 2021 | 48,327 | 600.9 | 80.31 | 9 |
+| 2022 | **119,855** | 624.7 | 186.99 | 0 |
+| 2023 | 62,522 | 621.5 | 97.88 | 8 |
+| 2024 | 74,399 | 634.8 | 111.20 | 20 |
+
+Value tracks mean daily spread almost exactly (2 MWh × spread × ~0.9 reproduces
+each row to within a few percent) while cycling barely moves — the asset is
+spread-limited, not cycle-limited, which is the shape C13's regime chapter needs.
+2022 at 7.4× 2019 is the crisis year PLAN.md requires reporting separately.
+
+**The design decisions that carry the result.** Full reasoning in
+`docs/battery_lp.md`; the four that would change numbers:
+
+- *The horizon is the **market day**, 23 and 25 hours included.* Not a UTC day and
+  not 24 rows. The auction clears a local calendar day as one block and a bidder
+  commits exactly that block. Each block's length is asserted against
+  `data.contracts.local_day_hours` — the tz database, not a remembered rule — which
+  is CLAUDE.md's DST whitelist applied to dispatch. The 2024 histogram above is
+  that assertion's output: exactly one short day and one long day, neither padded.
+- *Closing inventory is marked, because otherwise the LP invents the forbidden
+  midnight reset.* A 24h horizon with no terminal condition always ends empty — the
+  last stored MWh is free revenue inside the horizon and worthless outside it, so
+  PLAN.md's rolling SoC carryover becomes the daily reset it forbids, arrived at by
+  the LP rather than by a line of code, which is worse because nothing in the diff
+  shows it. One test pins that behaviour deliberately. The mark is
+  `max(0, eta * (p_ref - k))` per MWh *stored*: it pays the discharge leg and the
+  throughput cost on the way out, and it is floored at zero because a negative mark
+  would pay the LP to burn energy. **271 of 366 days open at SoC 0 and 95 do not** —
+  a reset would have made it 366, so the carryover is doing real work.
+- *`p_ref` is a **trailing** 7-day median of realised prices, never the day's own
+  vector.* Two properties, both asserted rather than argued. **Knowable at gate
+  closure**: it uses only market days `<= D-1`, published 13:00 local on `D-2`,
+  before gate closure 12:00 local on `D-1`; `assert_reference_is_knowable`
+  re-derives both instants from `forecast.timing` and raises otherwise. The mark is
+  a term in the objective, not a feature, so C3's gate-closure guard never sees it
+  and it gets its own check. **Curve-independent**: a mark read off the decision
+  vector would differ between the oracle, forecast and naive runs, and the per-day
+  dominance bound would not hold at all.
+- *Three money numbers, and the headline is **cash**.* `cash` (settled),
+  `terminal`/`opening` (marks on inventory), and
+  `value_added = cash + terminal - opening` — what the day's trading added over
+  standing still. `value_added` is what the LP maximises, so the invariants are
+  stated on it: exactly 0 on a flat non-negative curve, never negative, monotone in
+  spread/capacity/power. The headline is cash because the marks do not cancel over
+  a year — measured divergence on DE-LU 2024 is **0.861%**, small but a model
+  output rather than money.
+
+**The per-day upper bound needs two oracles, and C6 must build the second.**
+CLAUDE.md's `value(forecast @ realised) <= value(oracle @ realised)` **every day**
+holds exactly — and only — when both are solved from the **same opening SoC**
+against the **same mark**: the frozen forecast schedule is then a feasible point of
+the oracle's own problem. `assert_oracle_dominates` checks both preconditions and
+refuses to compare mismatched setups, because an assertion that silently compares
+two different problems is worse than none. Across two independently *rolled*
+trajectories the opening SoCs diverge and no per-day bound exists — a forecast run
+that happens to open a day fuller can out-earn the rolled oracle that day, which is
+expected, not a bug. **So C6 needs a rolled oracle for the pooled comparison and a
+same-start oracle, re-solved each day from the forecast run's own opening SoC, for
+the per-day assertion.** `solve_day` takes `soc_start_mwh` explicitly so C6 can do
+that without reaching into anything's state. Both halves are implemented and tested
+in C5; only the oracle curve is run, which is C5's scope.
+
+**Invariants run on the real 2024 run, all passing**, and independently
+re-verified from the committed artefacts alone (not from the objects that wrote
+them): annual cash recomputed hour-by-hour from `..._schedule.csv.gz` × realised
+prices reproduces 74,552.0 EUR; `soc_end(D) == soc_start(D+1)` for all 365 day
+pairs to **0.0e+00**; power never exceeds 1.000000 MW; the best day (2024-12-12,
+the 936 EUR/MWh spike) hand-recomputes to 1,754.724 EUR against 1,754.724 in the
+artefact, with its round-trip energy balance exact to 4 d.p.; `value_added >= 0` on
+all 366 days; perfect foresight beats a foresight-free schedule on all 60 sampled
+days with worst excess **0.0**.
+
+**FLAG C5-01 — simultaneous charge/discharge found, as PLAN.md anticipated.
+Measured, not silently fixed. One decision requested; C6 is not blocked.**
+PLAN.md requires an explicit check and calls this an LP artefact needing a penalty
+term or a MILP. It is real here, and the arithmetic predicts exactly where: with
+the upper SoC bound binding, `c` and `d` both positive draw a net
+`c * (1 - eta^2) > 0` MW from the grid with stored energy flat — the battery burning
+power in its own round-trip losses to be paid for consuming. It pays below
+`-k * eta^2 / (1 - eta^2)` = **-14.67 EUR/MWh**, and DE-LU had 457 negative hours in
+2024. A single-inverter BESS cannot do this.
+
+| | |
+| --- | --- |
+| days affected | **20 of 366** |
+| intervals affected | 53, **all 53 at a negative price** |
+| lowest price with overlap | -100.06 EUR/MWh (2024-05-12) |
+| grid energy burned | 5.318 MWh |
+| cash earned from the overlap | 322.30 EUR = **0.43% of annual cash** |
+| cost of forbidding it exactly (MILP) | **125.47 EUR = 0.17%** |
+
+The gap is smaller than the overlap cash because forbidding the trade makes the LP
+do something else instead rather than nothing. Per-year `sim-days` above show the
+same signature: 20 in 2024 and 16 in 2020 (many deep-negative hours), **0 in 2022**
+(69 negative hours, none deep enough).
+
+*What was done:* `forbid_simultaneous=True` implements PLAN's named remedy exactly,
+one binary per interval via scipy's HiGHS MILP (24 binaries a day is free), and
+both variants are run and persisted. `no_simultaneity_remains` reads 0 intervals
+under the MILP and `milp_cannot_beat_lp` holds, as it must.
+
+*What was deliberately **not** done:* the committed default was not changed. The
+pure LP is what C5 scopes, and which variant becomes the default from C6 onward
+moves every headline number by 0.17% — a human's call, not an unattended cycle's.
+The options are **(a)** make the MILP the default and report the pure LP as the
+sensitivity, **(b)** keep the pure LP and carry 0.17% as a stated limitation, or
+**(c)** add `c_t + d_t <= P` — a single shared inverter rating, which is physically
+the right constraint for real hardware, bounds the artefact without a binary, and
+is not implemented so that one decision sits in front of the reviewer instead of
+three. **No push notification was sent for this**: PLAN.md reserves that for a
+genuine blocker or an invariant failing in a way that is *not* an expected,
+explained finding, and this is a finding PLAN.md predicted by name and told this
+cycle to flag. C6 is Checkpoint B and will ask anyway.
+
+**FINDING C5-A — "value = 0 on a flat curve" is true only for a flat
+*non-negative* curve.** At a flat negative price, with no spread whatsoever, a
+battery is simply a load being paid to consume: it fills up, never discharges, and
+the money is real. The committed 1 MW / 2 MWh asset earns 29.76–80.42 EUR on a flat
+-25 EUR/MWh day depending on opening SoC. This is **not** FLAG C5-01 — a *lossless,
+costless* battery shows it too, where there is no round-trip channel to burn
+through at all (`simultaneity_price_threshold` is `-inf` at `eta = 1`), earning
+exactly 50 EUR by filling 2 MWh at -25. PLAN's invariant is kept as stated for
+`p >= 0`, where it holds exactly for every opening SoC, and the negative case is
+pinned by its own test so it cannot be quietly re-broken.
+
+**FINDING C5-B — the mark makes the flat-curve optimum degenerate, and that is
+value-neutral.** At `p_ref` exactly equal to a flat day's price, holding and
+liquidating are worth the same to the penny, so the LP may return either and the
+day's reported *cycling* is arbitrary; its *value* is exactly 0 either way, and
+cash is exactly the opening inventory liquidated at the mark. Two tests pin both
+halves, and the run counts flat days so "measure zero on real prices" is a
+measurement: **DE-LU 2024 has 0 flat days and 0 flat-at-the-mark days.** Priced
+away from the mark a flat day trades toward it — which is a second reason the
+headline is cash and not summed `value_added`.
+
+**NOTE C4-02 answered mechanically; C6 still chooses.** A day whose price vector
+has a hole is **skipped and reported**, never patched: `solve_day` refuses a
+non-finite decision price outright, and `dispatch/rolling.py` counts skips by
+reason (`incomplete` / `no_reference` / `boundary`). The oracle run skipped 0 days
+because realised prices are complete; the one declined hour a year is a *forecast*
+problem, so C6 still picks between dispatching that day from the `impute` variant
+with the substitution labelled (measured cost: 0.001 EUR/MWh of annual MAE) and
+excluding the day. C5's contribution is that neither choice can now be made
+invisibly.
+
+**Files under `tests/` — declared, per CLAUDE.md.** One file **added**:
+`tests/test_c5_battery_lp.py` (64 tests). **No existing test was edited**, no
+assertion weakened or deleted — `git diff --stat HEAD -- tests/` shows only the new
+untracked file, and all 172 pre-existing tests pass unmodified. Five of this
+cycle's own new tests failed on first run, before anything was committed. In four
+cases the *test* was wrong and in one it found a real code bug:
+1. `value_added == 0` asserted on a flat curve at **-25 EUR/MWh** — wrong, that is
+   FINDING C5-A. Test renamed to `..._non_negative_curve`, parameters changed to
+   `{0, 2, 50, 400}`, and the negative case given its own test asserting the
+   genuine value.
+2. "a flat curve produces no trading" — wrong, FINDING C5-B: at `p_ref == p` the
+   optimum is degenerate. Replaced by a test that the degenerate case is
+   value-neutral with cash pinned to the mark.
+3. "the mark keeps inventory on a flat day" — the same degeneracy; the reference is
+   now set above the day's price so the prediction is real.
+4. "a mark strictly above the day's price means no trading" — wrong premise
+   entirely: a mark above today's price makes *charging* attractive, so there is no
+   non-degenerate flat case in which the LP stands still. Replaced by a directional
+   test (below the mark → fills; above → empties).
+5. **A real bug.** Writing the FINDING C5-A test with a lossless, costless battery
+   exposed `simultaneity_price_threshold` returning `0.0` instead of `-inf` at
+   `eta = 1` with `k > 0`: at `eta = 1` matched charge/discharge draws a net zero
+   from the grid, so **no** price makes burning pay and the threshold is `-inf`
+   whatever the cost. `dispatch/battery.py` fixed; the test asserts the `-inf`.
+
+**Dependencies.** `scipy>=1.11` added to `requirements.txt` — already present
+transitively via scikit-learn, but C5 depends on it directly so it is declared
+directly. HiGHS ships inside scipy, so no separate solver install and no licence;
+the floor is 1.11 because `milp` and the `Bounds`/`LinearConstraint` objects it
+takes settled into their current form there. Installed 1.17.1. No `highspy` or
+`pulp`.
+
+**Config hash changed: `d524f72059bc6d85` → `84f7bf31591d1e7f`**, because
+`config/battery.yaml` is new and `config_hash()` spans every `config/*.yaml`. No
+existing config file was modified; `config/features.yaml` is untouched and **NOTE
+C3-01 is still open**.
+
+**Data.** DE-LU only, 6 files 2019–2024 (~1 MB) — C5 is DE-LU only. The container
+again arrived with `data/raw/` empty, as NOTE C2-02 predicts; all 6 pairs
+downloaded cleanly, 0 flagged. **Integrity verified rather than assumed**:
+`payload_fingerprint` for all six years matches C1's committed manifest exactly, so
+this is byte-identical to the data every prior cycle used. No ENTSO-E call — C5
+needs no exogenous data, so `ENTSOE_API_KEY` was not read (it *is* set in this
+environment; the C7 precondition still holds).
+
+**Sealed holdout.** Verified armed before the work and again before committing:
+marker-alone-on-a-line count in this file 0, `holdout_is_unsealed()` = `False`,
+`sealed_years()` = `{2025}`, `fetch_years` = 2019–2024. No 2025 data was fetched,
+loaded, dispatched or measured against at any point in C5. The runner calls
+`assert_not_sealed` on every requested year before a price file is opened. The
+marker string is not reproduced here, only referred to by its config key.
+
+**Repo-state note.** The detached-HEAD trap recurred again: the container arrived
+on a detached HEAD at `89d5583`. Reattached with `git checkout -B master 89d5583`
+and re-pointed at `origin/master` before any work. Now **7 recurrences out of 13
+containers** — still worth a line in the write-up's reproducibility section.
+
+**Next:** **C6 — CHECKPOINT B.** Commit-then-settle machinery with all three curves
+(oracle / LEAR / naive) on DE-LU, asserting pooled `oracle >= model >= naive` and
+the per-day bound via the **same-start oracle** described above; then stop,
+push-notify, and wait for the human to eyeball one zone end-to-end (a week of
+dispatch against the price plot) before scaling out. C6 also decides NOTE C4-02
+(imputed hour vs excluded day) and should put FLAG C5-01's three options to the
+human in the same review. Open items carried forward: **FLAG C5-01**, NOTE C3-01,
+NOTE C4-01, NOTE C4-02.

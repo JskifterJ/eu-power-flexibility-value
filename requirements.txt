@@ -20,3 +20,12 @@ matplotlib>=3.8
 # renamed there (`n_alphas` -> an int `alphas`), and forecast/lear.py uses the
 # current spelling.
 scikit-learn>=1.7
+
+# C5 (battery dispatch LP + MILP). scipy is already present transitively via
+# scikit-learn, but C5 depends on it directly so it is declared directly. HiGHS
+# ships inside scipy, so there is no separate solver install and no licence:
+# `scipy.optimize.linprog(method="highs")` for the LP and `scipy.optimize.milp`
+# for the forbid_simultaneous variant. The floor is 1.11 because `milp` and the
+# `Bounds`/`LinearConstraint` objects it takes settled into their current form
+# there.
+scipy>=1.11

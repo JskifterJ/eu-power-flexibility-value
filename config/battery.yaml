@@ -1,0 +1,89 @@
+# The representative battery, and the conventions the dispatch LP optimises under.
+#
+# Added in C5. Every number here is a modelling choice that moves the headline
+# result, so each one carries the reason it was chosen; C15 re-runs three of them
+# (throughput cost, duration, SoC-carryover mode) as declared sensitivities.
+#
+# Units: power in MW, energy in MWh, prices and costs in EUR/MWh. Everything is
+# per MW of installed power so the headline can be quoted as EUR/MW/yr.
+
+schema_version: 1
+
+battery:
+  # 1 MW keeps every result directly quotable per MW. The LP is linear and the
+  # battery is a price taker (PLAN.md), so value scales exactly with power.
+  power_mw: 1.0
+
+  # 2 hours of storage at rated power. The modal new-build grid-scale BESS in
+  # continental Europe over 2021-2024 is 1-2h; 2h is the representative choice
+  # and 4h is the declared C15 sensitivity, not a second headline.
+  duration_hours: 2.0
+
+  # Symmetric round-trip efficiency, split sqrt(0.88) ~ 0.9381 per leg (PLAN.md).
+  # Charging 1 MWh from the grid stores eta MWh; delivering 1 MWh to the grid
+  # draws 1/eta MWh from store.
+  round_trip_efficiency: 0.88
+
+  # EUR per MWh *delivered to the grid*: the degradation/cycling cost a desk
+  # charges itself for a cycle. PLAN.md's range is ~2-5; 2.0 is the committed
+  # default (the conservative end for a 2024-vintage LFP system) and C15 runs
+  # 0 / 2 / 5.
+  throughput_cost_eur_per_mwh: 2.0
+
+  # Where the very first market day of a run starts. Half full is neutral: it
+  # biases neither the first charge nor the first discharge.
+  initial_soc_fraction: 0.5
+
+# ---------------------------------------------------------------------------
+# End-of-horizon condition
+# ---------------------------------------------------------------------------
+# The horizon is one market day (PLAN.md: rolling 24h, D+1). With no terminal
+# condition at all a 24h LP always empties the battery before midnight -- selling
+# the last stored MWh is free money inside the horizon and worthless outside it --
+# which silently turns PLAN.md's rolling-horizon SoC carryover into the daily
+# reset it forbids. So stored energy left at the end of a day is valued, the way a
+# desk marks end-of-day inventory against a curve.
+terminal:
+  # trailing_value : value closing SoC at a trailing realised price level.
+  # floor          : constrain closing SoC >= floor_fraction * capacity, unvalued.
+  # none           : no condition (the LP will empty the battery; C15's
+  #                  daily-reset leg, never the default).
+  mode: trailing_value
+
+  # The reference price for trailing_value: a quantile of realised hourly prices
+  # over the last N market days, which are all public before this day's gate
+  # closure (publication(D-1) = 13:00 local on D-2 < gate closure(D) = 12:00
+  # local on D-1). Deliberately NOT a function of the day's own price vector:
+  # the reference must be identical for the oracle, forecast and naive curves or
+  # they are not being scored on the same objective, and it must be knowable at
+  # gate closure or it is a leak.
+  trailing_days: 7
+  trailing_quantile: 0.5
+  min_trailing_days: 1
+
+  # Marking inventory at the trailing level, discounted by the discharge leg and
+  # the throughput cost it will pay on the way out: eta * (p_ref - cost), floored
+  # at zero. Floored because holding stored energy can never be worth less than
+  # nothing -- a negative mark would pay the LP to burn energy.
+  floor_fraction: 0.0
+
+# ---------------------------------------------------------------------------
+# Solver
+# ---------------------------------------------------------------------------
+solver:
+  # scipy.optimize.linprog / milp, both HiGHS. Deterministic, no licence.
+  backend: highs
+
+  # PLAN.md requires an explicit check for simultaneous charge and discharge and
+  # calls it an LP artefact needing a penalty term or a MILP. The pure LP is the
+  # committed default (it is what C5 scopes); forbid_simultaneous switches in a
+  # per-interval binary that rules it out exactly. Both are reported.
+  forbid_simultaneous: false
+
+  # MW below which a nonzero charge or discharge is treated as solver noise
+  # rather than a real instruction.
+  zero_tolerance_mw: 1.0e-7
+
+  # Relative tolerance for the "LP objective == recomputed cash + terminal value"
+  # consistency assertion that runs on every solve.
+  objective_check_rtol: 1.0e-6

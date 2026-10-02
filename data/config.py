@@ -106,6 +106,22 @@ def load_data_config(config_dir: Path | None = None) -> dict[str, Any]:
 
 
 @lru_cache(maxsize=None)
+def load_battery_config(config_dir: Path | None = None) -> dict[str, Any]:
+    """Return the parsed ``config/battery.yaml`` (C5 onwards).
+
+    Only presence of the three top-level sections is checked here; the physical
+    sanity of the numbers (positive power, efficiency in ``(0, 1]``, a known
+    terminal mode) belongs to :class:`dispatch.battery.BatterySpec`, which is
+    where a caller can actually act on it.
+    """
+    cfg = _read_yaml((config_dir or CONFIG_DIR) / "battery.yaml")
+    for required in ("battery", "terminal", "solver"):
+        if required not in cfg:
+            raise ConfigError(f"battery.yaml is missing required key {required!r}")
+    return cfg
+
+
+@lru_cache(maxsize=None)
 def load_feature_config(config_dir: Path | None = None) -> dict[str, Any]:
     """Return the parsed ``config/features.yaml``."""
     cfg = _read_yaml((config_dir or CONFIG_DIR) / "features.yaml")
