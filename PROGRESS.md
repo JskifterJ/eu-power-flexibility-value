@@ -1894,3 +1894,27 @@ after this one will scale out.
   **FLAG C5-01**, confirm or overturn **NOTE C4-02**, and the still-open **NOTE C3-01**
   / **NOTE C4-01**); **NOTE C2-02** also remains open. C7 stays blocked until a human
   replaces the status line with **C7** and records the approval here.
+
+### Checkpoint B wait — 2026-10-03 (scheduled cycle, 2nd wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT B**, so
+  per CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has
+  changed and stopped. `origin/master` == local HEAD at `00f70fc` (the first
+  Checkpoint B wait commit — no human commits since, `git status` clean, `git fetch`
+  brought nothing new beyond the commit this session's container already had); all
+  Checkpoint B artefacts present and unmodified (`backtest/results/c6_curves_DE-LU_2024_{summary.json,daily.csv,schedule.csv.gz}`,
+  the three `docs/figures/c6_dispatch_week_DE-LU_*.png`, and the C1–C5 artefacts
+  beneath them); holdout guard re-verified armed (marker-alone-on-a-line count **0**,
+  `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`, no 2025 file
+  anywhere under `data/`); no 2025 data touched; `ENTSOE_API_KEY` not read (not
+  needed before C7); config hash unchanged (no `config/*.yaml` modified); no push
+  notification sent (the Checkpoint B ping was already sent in C6 — repeat pings for
+  the same wait are noise). `data/raw/` again arrived empty, **NOTE C2-02**'s 5th
+  recurrence, but nothing was re-downloaded because no work needed data. The
+  detached-HEAD trap **did** recur: the container arrived detached at `00f70fc`,
+  reattached with `git checkout -B master 00f70fc` and re-pointed at `origin/master`
+  before anything else (now **10 recurrences out of 16 containers**). Still waiting on
+  the five Checkpoint B items listed at the top of this file (eyeball the three week
+  figures, sanity-check the 87–92% headline, decide **FLAG C5-01**, confirm or overturn
+  **NOTE C4-02**, and the still-open **NOTE C3-01** / **NOTE C4-01**); **NOTE C2-02**
+  also remains open. C7 stays blocked until a human replaces the status line with
+  **C7** and records the approval here.
