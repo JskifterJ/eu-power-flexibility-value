@@ -1872,3 +1872,25 @@ in opening SoC.
 
 Then set "Next cycle to run" at the top of this file to **C7** and the cycle
 after this one will scale out.
+
+---
+
+### Checkpoint B wait — 2026-10-03 (scheduled cycle, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT B**, so
+  per CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has
+  changed and stopped. `origin/master` == local HEAD at `babdca9` (the C6 checkpoint
+  commit, no human commits since, `git status` clean); all Checkpoint B artefacts
+  present and unmodified (`backtest/results/c6_curves_DE-LU_2024_{summary.json,
+  daily.csv,schedule.csv.gz}`, the three `docs/figures/c6_dispatch_week_DE-LU_*.png`,
+  and the C1–C5 artefacts beneath them); holdout guard re-verified armed
+  (marker-alone-on-a-line → `holdout_is_unsealed()` = `False`, `sealed_years()` =
+  `{2025}`, no 2025 file anywhere under `data/`); no 2025 data touched; no push
+  notification sent (the Checkpoint B ping was already sent in C6 — repeat pings for
+  the same wait are noise). The detached-HEAD trap **did** recur: the container
+  arrived detached at `babdca9`, reattached with `git checkout -B master babdca9` and
+  re-pointed at `origin/master` before anything else (now **9 recurrences out of 15
+  containers**). Still waiting on the five Checkpoint B items listed at the top of
+  this file (eyeball the three week figures, sanity-check the 87–92% headline, decide
+  **FLAG C5-01**, confirm or overturn **NOTE C4-02**, and the still-open **NOTE C3-01**
+  / **NOTE C4-01**); **NOTE C2-02** also remains open. C7 stays blocked until a human
+  replaces the status line with **C7** and records the approval here.
