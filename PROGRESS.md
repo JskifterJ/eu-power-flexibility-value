@@ -1918,3 +1918,34 @@ after this one will scale out.
   **NOTE C4-02**, and the still-open **NOTE C3-01** / **NOTE C4-01**); **NOTE C2-02**
   also remains open. C7 stays blocked until a human replaces the status line with
   **C7** and records the approval here.
+
+### Checkpoint B wait — 2026-10-03 (scheduled cycle, 3rd wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT B**, so
+  per CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has
+  changed and stopped. `git fetch origin` advanced `origin/master` from the stale
+  `fc422de` the container shipped with to **`c329968`** (the 2nd Checkpoint B wait
+  commit) — i.e. **no human commits since**, and `origin/master` == local HEAD ==
+  `c329968`, `git status` clean, `git diff HEAD` empty. All Checkpoint B artefacts
+  present and unmodified (`backtest/results/c6_curves_DE-LU_2024_{summary.json,
+  daily.csv,schedule.csv.gz}`, the three `docs/figures/c6_dispatch_week_DE-LU_*.png`,
+  and the C1–C5 artefacts beneath them: 12 files in `backtest/results/`, 14 in
+  `docs/figures/`). Holdout guard re-verified armed (marker-alone-on-a-line count
+  **0**, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`, no `*2025*`
+  file anywhere under `data/`); no 2025 data touched. `ENTSOE_API_KEY` not read (not
+  needed before C7); no `config/*.yaml` modified, so the config hash is unchanged; no
+  push notification sent (the Checkpoint B ping was already sent in C6 — repeat pings
+  for the same wait are noise). `data/raw/` did not exist at all this time, **NOTE
+  C2-02**'s 6th recurrence, but nothing was re-downloaded because no work needed data.
+- The detached-HEAD trap **did** recur: the container arrived detached at `c329968`
+  (now **11 recurrences out of 17 containers**). New wrinkle worth recording for
+  future cycles: the local `master` *ref* arrived stale at `fc422de` (the C2
+  checkpoint commit, 3 commits behind HEAD), so a bare `git checkout master` would
+  have silently rewound C5, C6 and the two wait commits out of the working tree. The
+  safe reattach is the one used here and in the previous two waits — `git checkout -B
+  master <HEAD sha>` after a `git fetch`, then `--set-upstream-to=origin/master` —
+  never a plain `git checkout master`.
+- Still waiting on the five Checkpoint B items listed at the top of this file (eyeball
+  the three week figures, sanity-check the 87–92% headline, decide **FLAG C5-01**,
+  confirm or overturn **NOTE C4-02**, and the still-open **NOTE C3-01** / **NOTE
+  C4-01**); **NOTE C2-02** also remains open. C7 stays blocked until a human replaces
+  the status line with **C7** and records the approval here.
