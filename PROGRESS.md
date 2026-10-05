@@ -23,6 +23,10 @@
 - **Human checkpoints:** **Checkpoint B reached 2026-10-02 (C6) — awaiting
   review.** Checkpoint A closed 2026-10-01 (human session, local, not a
   scheduled cycle). Next after B is **Checkpoint C at C16** (unsealing 2025).
+- **`ENTSOE_API_KEY` is now set in the cloud environment** (first observed by the
+  7th Checkpoint B wait cycle, 2026-10-05; value never read or logged). PLAN.md's
+  "ENTSO-E API key note" is now stale — **C7 can run its full intended scope** and
+  does not need the Tier-B-only fallback. Re-confirm at the start of C7.
 - **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch
   LP, exactly as PLAN.md anticipated. **Still open, still non-blocking, committed
   default deliberately unchanged (pure LP).** C6 added the decisive evidence: the
@@ -2038,6 +2042,51 @@ after this one will scale out.
   Reattached with `git checkout -B master 98d4fae` after the fetch, then
   `--set-upstream-to=origin/master`; a plain `git checkout master` would have rewound
   C5, C6 and the five wait commits out of the working tree.
+- Still waiting on the five Checkpoint B items listed at the top of this file (eyeball
+  the three week figures, sanity-check the 87–92% headline, decide **FLAG C5-01**,
+  confirm or overturn **NOTE C4-02**, and the still-open **NOTE C3-01** / **NOTE
+  C4-01**); **NOTE C2-02** also remains open. C7 stays blocked until a human replaces
+  the status line with **C7** and records the approval here.
+
+### Checkpoint B wait — 2026-10-05 (scheduled cycle, 7th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT B**, so
+  per CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has
+  changed and stopped. `git fetch origin master` advanced `origin/master` from the
+  stale `fc422de` the container shipped with to **`78fbba5`** (the 6th Checkpoint B
+  wait commit) — i.e. **no human commits since**; `origin/master` == local HEAD ==
+  `78fbba5` (`git rev-list --left-right --count HEAD...origin/master` → `0 0`),
+  `git status --porcelain` empty, `git diff HEAD` empty. All Checkpoint B artefacts
+  present and unmodified (`backtest/results/c6_curves_DE-LU_2024_{summary.json,
+  daily.csv,schedule.csv.gz}`, the three `docs/figures/c6_dispatch_week_DE-LU_*.png`,
+  and the C1–C5 artefacts beneath them: 12 files in `backtest/results/`, 14 in
+  `docs/figures/`, unchanged from the 6th wait). Holdout guard re-verified armed
+  (marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
+  `sealed_years()` = `{2025}`, no `*2025*` file anywhere under `data/`); no 2025 data
+  touched. No `config/*.yaml` modified, so the config hash is unchanged; no push
+  notification sent (the Checkpoint B ping was already sent in C6 — repeat pings for
+  the same wait are noise). `data/raw/` did not exist at all again, **NOTE C2-02**'s
+  10th recurrence, but nothing was re-downloaded because no work needed data.
+- **NEW, and the one thing that changed outside the repo: `ENTSOE_API_KEY` is now
+  set in the cloud environment.** Every prior cycle recorded it as absent, and
+  PLAN.md's "ENTSO-E API key note" still describes it as not yet available to cloud
+  routine cycles. It is now present. This cycle did **not** read, use, or log its
+  value, and made no ENTSO-E request — C7 is the first cycle that needs it, and C7 is
+  blocked behind this checkpoint. Consequence for whoever closes Checkpoint B: the
+  C7 fallback path ("flag it and do Tier-B / Energy-Charts-only work instead") looks
+  **unnecessary** — C7 can run its full intended scope. Worth re-confirming the key
+  is still set at the start of C7 rather than trusting this note, since the
+  environment is configured outside the repo and can change between cycles.
+- The detached-HEAD trap **did** recur, in the same shape as the 3rd–6th waits: the
+  container arrived detached at `78fbba5` with the local `master` *ref* stale at
+  `fc422de` — now **15 recurrences out of 21 containers**. Reattached with
+  `git checkout -B master 78fbba5` after the fetch, then
+  `--set-upstream-to=origin/master`; a plain `git checkout master` would have rewound
+  C5, C6 and the six wait commits out of the working tree. Correction to the arithmetic
+  in the 3rd–6th wait entries: the stale `master` ref is **12** commits behind HEAD
+  here (`git rev-list --count master..HEAD`), not the 5–6 those entries reported —
+  they appear to have counted only the wait commits, not C3–C6 and the Checkpoint A
+  close beneath them. The reattach procedure is unaffected; the stakes of getting it
+  wrong are simply larger than those entries implied.
 - Still waiting on the five Checkpoint B items listed at the top of this file (eyeball
   the three week figures, sanity-check the 87–92% headline, decide **FLAG C5-01**,
   confirm or overturn **NOTE C4-02**, and the still-open **NOTE C3-01** / **NOTE
