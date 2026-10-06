@@ -2228,3 +2228,39 @@ after this one will scale out.
   confirm or overturn **NOTE C4-02**, and the still-open **NOTE C3-01** / **NOTE
   C4-01**); **NOTE C2-02** also remains open. C7 stays blocked until a human replaces
   the status line with **C7** and records the approval here.
+
+### Checkpoint B wait — 2026-10-06 (scheduled cycle, 11th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT B**, so
+  per CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has
+  changed and stopped. **No human commits since the 10th wait** — after
+  `git fetch origin master`, `HEAD` == `master` == `origin/master` == **`0108407`**
+  (`git rev-list --left-right --count HEAD...origin/master` → `0 0`),
+  `git status --porcelain --untracked-files=all` empty, `git diff HEAD` empty. All
+  Checkpoint B artefacts present and unmodified (12 files in `backtest/results/`,
+  14 in `docs/figures/`, all 26 git-tracked and clean), including
+  `c6_curves_DE-LU_2024_{summary.json,daily.csv,schedule.csv.gz}` and the three
+  `docs/figures/c6_dispatch_week_DE-LU_*.png`. Holdout guard re-verified armed
+  (marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
+  `sealed_years()` = `{2025}`, no `*2025*` file anywhere under `data/`); no 2025 data
+  touched. No `config/*.yaml` modified, so the config hash is unchanged; no push
+  notification sent (the Checkpoint B ping was already sent in C6).
+  `data/raw/` did not exist at all again — **NOTE C2-02**'s 14th recurrence — but
+  nothing was re-downloaded because no work needed data.
+- **`ENTSOE_API_KEY` is still set** in the cloud environment — fifth consecutive
+  container. Presence only was tested (`-n` on the variable); the value was not read,
+  logged, or used, and no ENTSO-E request was made. Still re-confirm at the start of
+  C7 rather than trusting this note.
+- **The detached-HEAD trap did NOT recur this container**, the first time since the
+  2nd wait: the container arrived already attached to `master` at `0108407`, matching
+  `origin/master`, so no `git checkout -B` reattachment was needed. Running tally is
+  therefore **18 recurrences out of 25 containers** (unchanged count, one more
+  container). Future cycles should still check `git rev-parse --abbrev-ref HEAD` and
+  `git rev-list --count master..HEAD` before any `git checkout master`.
+- No virtualenv exists in this container either (`.venv/` is gitignored and not
+  rebuilt); the guard check above ran against the system `python3`. C7 will need to
+  create the venv and install `requirements.txt` before any modelling work.
+- Still waiting on the five Checkpoint B items listed at the top of this file, plus
+  the open **NOTE C2-02**. The 10th wait's elapsed-budget note (C7–C21 is 15 cycles
+  and the plan's 3–4-cycle buffer is more than spent) still stands and is **not**
+  re-escalated here. C7 stays blocked until a human replaces the status line with
+  **C7** and records the approval here.
