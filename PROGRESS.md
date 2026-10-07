@@ -2,41 +2,28 @@
 
 ## Current status
 
-- **Next cycle to run:** **AWAITING HUMAN — CHECKPOINT B.** C6 is complete and
-  Checkpoint B is reached. Do **not** start C7 until a human has reviewed and
-  replaced this line. A scheduled cycle that fires while this still reads
-  "AWAITING HUMAN" should verify nothing has changed, append a one-line note that
-  it checked and is still waiting, and stop — without a push notification (the
-  Checkpoint B ping has already been sent; repeat pings for the same wait are
-  noise). See the C6 entry at the end of the log for everything below.
-- **What Checkpoint B wants:** (1) eyeball the three week figures
-  `docs/figures/c6_dispatch_week_DE-LU_{2024-05-20,2024-11-04,2024-12-02}.png`
-  against the Checkpoint A price plots — does the dispatch look like a battery
-  buying low and selling high, and does SoC carry across midnight rather than
-  reset? (2) sanity-check the headline: **87–92% of perfect-foresight value
-  captured** by a price-history-only LEAR on DE-LU 2024, **6,047 EUR/MW/yr lost
-  to forecast error**, oracle **74,399** / model **68,179** / naive **62,868**
-  EUR/MW/yr. (3) decide **FLAG C5-01**. (4) confirm or overturn **NOTE C4-02**.
-  (5) **NOTE C3-01** and **NOTE C4-01** are still open and unchanged.
-- **To approve and continue:** replace this "Next cycle to run" line with
-  **C7** and record the approval in the log, as Checkpoint A was closed.
-- **Human checkpoints:** **Checkpoint B reached 2026-10-02 (C6) — awaiting
-  review.** Checkpoint A closed 2026-10-01 (human session, local, not a
+- **Next cycle to run:** **C7.** Checkpoint B approved as-is by J. on 2026-10-07 (see
+  the "Checkpoint B — approved and closed" entry at the end of the log for exactly
+  what was and was not reviewed, and how each open item was resolved).
+- **Human checkpoints:** **Checkpoint B closed 2026-10-07** (approved as-is,
+  human instruction via local assistant session). Checkpoint A closed 2026-10-01 (human session, local, not a
   scheduled cycle). Next after B is **Checkpoint C at C16** (unsealing 2025).
 - **`ENTSOE_API_KEY` is now set in the cloud environment** (first observed by the
   7th Checkpoint B wait cycle, 2026-10-05; value never read or logged). PLAN.md's
   "ENTSO-E API key note" is now stale — **C7 can run its full intended scope** and
   does not need the Tier-B-only fallback. Re-confirm at the start of C7.
 - **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch
-  LP, exactly as PLAN.md anticipated. **Still open, still non-blocking, committed
-  default deliberately unchanged (pure LP).** C6 added the decisive evidence: the
+  LP, exactly as PLAN.md anticipated. **RESOLVED at Checkpoint B (2026-10-07): option
+  (b) — keep the pure LP as the default and carry the artefact as a stated limitation
+  in the write-up** (the "as-is" choice; it biases capture *against* the model by
+  ~0.16pp, so it is conservative). C6 added the decisive evidence: the
   artefact *flatters the oracle* (+125.47 EUR) and *penalises the forecast
   curves* (model −0.49, naive −89.88), so the pure LP's capture ratio is biased
   **against** the model — 0.9187 under the LP vs **0.9203 under the MILP**, a
   shift of **+0.16pp**. A human picks (a) MILP as default, (b) keep the pure LP
   and carry it as a stated limitation, or (c) add the `c_t + d_t <= P`
   single-inverter constraint. None of the three changes any conclusion.
-- **Open decision requests, all non-blocking:**
+- **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07), i.e. no change to current behaviour:**
   - **NOTE C3-01** — the daily-aggregate feature names in `config/features.yaml`
     say `lag_24h` but the only leak-free window is the last fully-public UTC day
     (`D-2`); rename them or keep the names and rely on `docs/forecast_harness.md`?
@@ -48,7 +35,7 @@
   - **NOTE C2-02** — the raw cache does not survive a container, so every cycle
     re-pulls DE-LU (6 files, ~1 MB). 4th recurrence. See the C2 entry for the
     three options.
-  - **NOTE C4-02 — now DECIDED by C6, confirmable or reversible by the human.**
+  - **NOTE C4-02 — DECIDED by C6, CONFIRMED by J. at Checkpoint B.**
     The one declined hour a year is **excluded, and the day is reported
     excluded**; every pooled number is computed over the common 365-day set.
     Priced rather than argued: dispatching it from the `impute` variant would
@@ -2404,3 +2391,29 @@ after this one will scale out.
   is 15 cycles and the plan's 3–4-cycle buffer is more than spent) still stands and is
   **not** re-escalated here. C7 stays blocked until a human replaces the status line
   with **C7** and records the approval here.
+
+### Checkpoint B — approved and closed — 2026-10-07 (human instruction, local assistant session, not a scheduled cycle)
+
+**Approved by:** J., 2026-10-07, who instructed the local assistant session to
+"approve as is so it can move forward". Recorded faithfully: this is an approval
+of the current state **without an itemised review** — J. did not report
+eyeballing the three C6 week figures or re-deriving the headline numbers in this
+session. Checkpoint D (C19) still requires the human to hand-check three numbers
+and verify the surprising finding, so the numbers get a human read before
+anything is published.
+
+**How each open item was resolved ("as-is" = keep current committed behaviour):**
+- **Headline (87–92% capture, DE-LU 2024):** accepted as the working result.
+- **FLAG C5-01:** option **(b)** — pure LP stays the default; the simultaneous
+  charge/discharge artefact is carried as a stated limitation in the C18 write-up,
+  quoting the C6 evidence (MILP capture 0.9203 vs LP 0.9187).
+- **NOTE C4-02:** confirmed — the declined hour's day stays excluded and reported.
+- **NOTE C3-01:** keep the `lag_24h` names; `docs/forecast_harness.md` stays the
+  documentation of the actual `D-2` window. No config change.
+- **NOTE C4-01:** `destroys_skill()` is not re-based; the PLAN.md leakage assertion
+  file stays untouched.
+- **NOTE C2-02:** no change — cycles keep re-pulling the ~1 MB DE-LU cache.
+
+**Next:** C7 (ENTSO-E client + D-1 load / wind / solar forecasts for Tier-A zones).
+`ENTSOE_API_KEY` was observed set from 2026-10-05; re-confirm at the start of C7.
+No code, config, data or holdout state was touched by this entry.
