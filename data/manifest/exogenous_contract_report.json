@@ -1,0 +1,1119 @@
+{
+  "generated_at_utc": "2026-10-07T18:29:53+00:00",
+  "git_sha": "38cd939",
+  "config_hash": "28ebdd1ca5e72913",
+  "cycle": "C7",
+  "source": "ENTSO-E Transparency Platform (web-api.tp.entsoe.eu)",
+  "licence": "ENTSO-E Transparency Platform reuse conditions \u2014 attribution required",
+  "attribution": "Data: ENTSO-E Transparency Platform",
+  "sealed_holdout_years": [
+    2025
+  ],
+  "series_resolution": "hourly (UTC), aggregated per data/aggregate.py",
+  "contracts": [
+    "index is tz-aware UTC and strictly monotonic, no duplicate timestamps",
+    "every fully-covered UTC day holds exactly 86400/resolution rows",
+    "every fully-covered local day holds the DST-derived expected row count",
+    "any deviation from a 24h local day falls on a tz-database transition date",
+    "no negative value in a MW load / wind / solar day-ahead forecast"
+  ],
+  "reported_but_not_failed": [
+    "gaps (missing intervals) \u2014 the source is genuinely ragged at DST boundaries; PLAN.md's answer to a source gap is to report it and skip the dependent work, not to discard a training year",
+    "NaN values \u2014 an interval covered by only some of the summed psrTypes, kept NaN rather than partially summed",
+    "resolution changes \u2014 the SDAC 15-minute cutover rule applies to the day-ahead price series, not to a TSO's own forecast publication",
+    "a constant series \u2014 real for a zone with no such fleet (NO2 solar)"
+  ],
+  "leakage": {
+    "load_forecast_da": {
+      "document_type": "A65",
+      "leakage_status": "safe",
+      "leakage_note": "Published at latest 2h before day-ahead gate closure, so the archived vintage is information a bidder genuinely held. Safe."
+    },
+    "wind_solar_forecast_da": {
+      "document_type": "A69",
+      "leakage_status": "FLAGGED",
+      "leakage_note": "The Art. 14 D-1 forecast is published at 18:00 on D-1 \u2014 AFTER day-ahead gate closure \u2014 and is revised intraday, so the archived vintage is NOT what a bidder had. Usable only alongside the mandatory C8 degradation sensitivity, and stated in the write-up's Limits."
+    },
+    "residual_load_forecast_mw": {
+      "document_type": "derived",
+      "leakage_status": "FLAGGED",
+      "leakage_note": "load - wind - solar; FLAGGED by inheritance because two of its three inputs are the Art. 14 post-gate-closure vintage."
+    }
+  },
+  "n_series": 12,
+  "n_series_ok": 12,
+  "series": [
+    {
+      "zone": "DE-LU",
+      "tier": "A",
+      "local_tz": "Europe/Berlin",
+      "series": "load_forecast_da_mw",
+      "document": "load_forecast_da",
+      "leakage_status": "safe",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "0de0fef8c9c6be7c9ddbc0f9cb7d4f3c089eb0968b110536d0aedab222022f3f",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 50,
+      "nan_timestamps_utc": [
+        "2022-02-21T23:00:00+00:00",
+        "2022-02-22T00:00:00+00:00",
+        "2022-02-22T01:00:00+00:00",
+        "2022-02-22T02:00:00+00:00",
+        "2022-02-22T03:00:00+00:00",
+        "2022-02-22T04:00:00+00:00",
+        "2022-02-22T05:00:00+00:00",
+        "2022-02-22T06:00:00+00:00",
+        "2022-02-22T07:00:00+00:00",
+        "2022-02-22T08:00:00+00:00",
+        "2022-02-22T09:00:00+00:00",
+        "2022-02-22T10:00:00+00:00",
+        "2022-02-22T11:00:00+00:00",
+        "2022-02-22T12:00:00+00:00",
+        "2022-02-22T13:00:00+00:00",
+        "2022-02-22T14:00:00+00:00",
+        "2022-02-22T15:00:00+00:00",
+        "2022-02-22T16:00:00+00:00",
+        "2022-02-22T17:00:00+00:00",
+        "2022-02-22T18:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 30893.055,
+      "mw_max": 76458.638,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "50 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "DE-LU",
+      "tier": "A",
+      "local_tz": "Europe/Berlin",
+      "series": "solar_forecast_da_mw",
+      "document": "wind_solar_forecast_da",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "64bae59fa4078d4649a65cafdb15a1c60d920e9a8c4863e1da66dfb92cc0058b",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 2,
+      "nan_timestamps_utc": [
+        "2023-10-28T22:00:00+00:00",
+        "2024-10-26T22:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 0.0,
+      "mw_max": 48567.717,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "2 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "DE-LU",
+      "tier": "A",
+      "local_tz": "Europe/Berlin",
+      "series": "wind_forecast_da_mw",
+      "document": "wind_solar_forecast_da",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "9c8f1a5614cbe945a3c098185f0a1fa2e375f3e18a517910187ac1beb4ec4e97",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 2,
+      "nan_timestamps_utc": [
+        "2023-10-28T22:00:00+00:00",
+        "2024-10-26T22:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 248.227,
+      "mw_max": 50446.975,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "2 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "DE-LU",
+      "tier": "A",
+      "local_tz": "Europe/Berlin",
+      "series": "residual_load_forecast_mw",
+      "document": "derived",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "ff4b6cc34fe892a405d595e71dde53c9ee0d53327ea6570dbb74edc2eaba5be9",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 50,
+      "nan_timestamps_utc": [
+        "2022-02-21T23:00:00+00:00",
+        "2022-02-22T00:00:00+00:00",
+        "2022-02-22T01:00:00+00:00",
+        "2022-02-22T02:00:00+00:00",
+        "2022-02-22T03:00:00+00:00",
+        "2022-02-22T04:00:00+00:00",
+        "2022-02-22T05:00:00+00:00",
+        "2022-02-22T06:00:00+00:00",
+        "2022-02-22T07:00:00+00:00",
+        "2022-02-22T08:00:00+00:00",
+        "2022-02-22T09:00:00+00:00",
+        "2022-02-22T10:00:00+00:00",
+        "2022-02-22T11:00:00+00:00",
+        "2022-02-22T12:00:00+00:00",
+        "2022-02-22T13:00:00+00:00",
+        "2022-02-22T14:00:00+00:00",
+        "2022-02-22T15:00:00+00:00",
+        "2022-02-22T16:00:00+00:00",
+        "2022-02-22T17:00:00+00:00",
+        "2022-02-22T18:00:00+00:00"
+      ],
+      "n_negative_values": 262,
+      "negative_timestamps_utc": [
+        "2022-03-20T11:00:00+00:00",
+        "2022-03-20T12:00:00+00:00",
+        "2022-03-20T13:00:00+00:00",
+        "2022-05-21T10:00:00+00:00",
+        "2022-05-21T11:00:00+00:00",
+        "2022-05-21T12:00:00+00:00",
+        "2022-05-21T13:00:00+00:00",
+        "2022-05-28T10:00:00+00:00",
+        "2022-05-28T11:00:00+00:00",
+        "2022-05-28T12:00:00+00:00",
+        "2023-01-01T02:00:00+00:00",
+        "2023-01-01T04:00:00+00:00",
+        "2023-01-01T05:00:00+00:00",
+        "2023-03-25T11:00:00+00:00",
+        "2023-03-25T12:00:00+00:00",
+        "2023-03-25T13:00:00+00:00",
+        "2023-04-10T10:00:00+00:00",
+        "2023-04-10T11:00:00+00:00",
+        "2023-04-10T12:00:00+00:00",
+        "2023-04-10T13:00:00+00:00"
+      ],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": -13601.895,
+      "mw_max": 68653.868,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": true,
+      "notes": [
+        "50 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed",
+        "262 negative value(s) \u2014 real and expected for this series: residual load goes negative when wind + solar exceed load, which is the condition that drives negative prices"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "ES",
+      "tier": "A",
+      "local_tz": "Europe/Madrid",
+      "series": "load_forecast_da_mw",
+      "document": "load_forecast_da",
+      "leakage_status": "safe",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26303,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "bedd155780e11876b40e032f7769d37ff5fa95d8c90756044427fe998cd88edc",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 0,
+      "nan_timestamps_utc": [],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 16768.0,
+      "mw_max": 38747.25,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2022-10-29T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 7247
+        },
+        {
+          "start_utc": "2022-10-29T23:00:00+00:00",
+          "end_utc": "2022-10-30T01:00:00+00:00",
+          "seconds": 7200,
+          "n_intervals": 1
+        },
+        {
+          "start_utc": "2022-10-30T01:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 19054
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [
+        {
+          "after_utc": "2022-10-29T23:00:00+00:00",
+          "before_utc": "2022-10-30T01:00:00+00:00",
+          "missing_intervals": 1,
+          "hours": 2.0
+        }
+      ],
+      "n_missing_intervals": 1,
+      "max_gap_hours": 2.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [
+        "utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity)"
+      ],
+      "local_day_violations": [
+        "local day 2022-10-30: expected 25 rows, found 24 (Europe/Madrid, 25h local day (DST transition))"
+      ],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "1 missing interval(s) in 1 gap(s), largest 2.0h \u2014 reported, not filled (see data/entsoe.py on the DST-day publication gap)",
+        "2 day(s) hold fewer rows than expected, e.g. utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity) \u2014 a completeness finding, the same fact as the gap count above; see this report's `violations` for the integrity findings that are failures"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "ES",
+      "tier": "A",
+      "local_tz": "Europe/Madrid",
+      "series": "solar_forecast_da_mw",
+      "document": "wind_solar_forecast_da",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26303,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "7c206af92805dd07c05f55173c9740a8b39fd7c77dfad110cc7378ca07099d62",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 120,
+      "nan_timestamps_utc": [
+        "2024-12-06T23:00:00+00:00",
+        "2024-12-07T00:00:00+00:00",
+        "2024-12-07T01:00:00+00:00",
+        "2024-12-07T02:00:00+00:00",
+        "2024-12-07T03:00:00+00:00",
+        "2024-12-07T04:00:00+00:00",
+        "2024-12-07T05:00:00+00:00",
+        "2024-12-07T06:00:00+00:00",
+        "2024-12-07T07:00:00+00:00",
+        "2024-12-07T08:00:00+00:00",
+        "2024-12-07T09:00:00+00:00",
+        "2024-12-07T10:00:00+00:00",
+        "2024-12-07T11:00:00+00:00",
+        "2024-12-07T12:00:00+00:00",
+        "2024-12-07T13:00:00+00:00",
+        "2024-12-07T14:00:00+00:00",
+        "2024-12-07T15:00:00+00:00",
+        "2024-12-07T16:00:00+00:00",
+        "2024-12-07T17:00:00+00:00",
+        "2024-12-07T18:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 0.0,
+      "mw_max": 21218.95,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2022-10-29T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 7247
+        },
+        {
+          "start_utc": "2022-10-29T23:00:00+00:00",
+          "end_utc": "2022-10-30T01:00:00+00:00",
+          "seconds": 7200,
+          "n_intervals": 1
+        },
+        {
+          "start_utc": "2022-10-30T01:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 19054
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [
+        {
+          "after_utc": "2022-10-29T23:00:00+00:00",
+          "before_utc": "2022-10-30T01:00:00+00:00",
+          "missing_intervals": 1,
+          "hours": 2.0
+        }
+      ],
+      "n_missing_intervals": 1,
+      "max_gap_hours": 2.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [
+        "utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity)"
+      ],
+      "local_day_violations": [
+        "local day 2022-10-30: expected 25 rows, found 24 (Europe/Madrid, 25h local day (DST transition))"
+      ],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "1 missing interval(s) in 1 gap(s), largest 2.0h \u2014 reported, not filled (see data/entsoe.py on the DST-day publication gap)",
+        "120 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed",
+        "2 day(s) hold fewer rows than expected, e.g. utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity) \u2014 a completeness finding, the same fact as the gap count above; see this report's `violations` for the integrity findings that are failures"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "ES",
+      "tier": "A",
+      "local_tz": "Europe/Madrid",
+      "series": "wind_forecast_da_mw",
+      "document": "wind_solar_forecast_da",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26303,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "f66ade47d450fed8aac7c96d79413bc89eef514f9e209429835d5af36125f466",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 24,
+      "nan_timestamps_utc": [
+        "2024-06-01T22:00:00+00:00",
+        "2024-06-01T23:00:00+00:00",
+        "2024-06-02T00:00:00+00:00",
+        "2024-06-02T01:00:00+00:00",
+        "2024-06-02T02:00:00+00:00",
+        "2024-06-02T03:00:00+00:00",
+        "2024-06-02T04:00:00+00:00",
+        "2024-06-02T05:00:00+00:00",
+        "2024-06-02T06:00:00+00:00",
+        "2024-06-02T07:00:00+00:00",
+        "2024-06-02T08:00:00+00:00",
+        "2024-06-02T09:00:00+00:00",
+        "2024-06-02T10:00:00+00:00",
+        "2024-06-02T11:00:00+00:00",
+        "2024-06-02T12:00:00+00:00",
+        "2024-06-02T13:00:00+00:00",
+        "2024-06-02T14:00:00+00:00",
+        "2024-06-02T15:00:00+00:00",
+        "2024-06-02T16:00:00+00:00",
+        "2024-06-02T17:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 346.75,
+      "mw_max": 19753.75,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2022-10-29T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 7247
+        },
+        {
+          "start_utc": "2022-10-29T23:00:00+00:00",
+          "end_utc": "2022-10-30T01:00:00+00:00",
+          "seconds": 7200,
+          "n_intervals": 1
+        },
+        {
+          "start_utc": "2022-10-30T01:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 19054
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [
+        {
+          "after_utc": "2022-10-29T23:00:00+00:00",
+          "before_utc": "2022-10-30T01:00:00+00:00",
+          "missing_intervals": 1,
+          "hours": 2.0
+        }
+      ],
+      "n_missing_intervals": 1,
+      "max_gap_hours": 2.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [
+        "utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity)"
+      ],
+      "local_day_violations": [
+        "local day 2022-10-30: expected 25 rows, found 24 (Europe/Madrid, 25h local day (DST transition))"
+      ],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "1 missing interval(s) in 1 gap(s), largest 2.0h \u2014 reported, not filled (see data/entsoe.py on the DST-day publication gap)",
+        "24 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed",
+        "2 day(s) hold fewer rows than expected, e.g. utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity) \u2014 a completeness finding, the same fact as the gap count above; see this report's `violations` for the integrity findings that are failures"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "ES",
+      "tier": "A",
+      "local_tz": "Europe/Madrid",
+      "series": "residual_load_forecast_mw",
+      "document": "derived",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26303,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "45ed8089c9d282bfb03a69cb28f154e7cea36cc75b6c6363c9ff2bba27f26dde",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 144,
+      "nan_timestamps_utc": [
+        "2024-06-01T22:00:00+00:00",
+        "2024-06-01T23:00:00+00:00",
+        "2024-06-02T00:00:00+00:00",
+        "2024-06-02T01:00:00+00:00",
+        "2024-06-02T02:00:00+00:00",
+        "2024-06-02T03:00:00+00:00",
+        "2024-06-02T04:00:00+00:00",
+        "2024-06-02T05:00:00+00:00",
+        "2024-06-02T06:00:00+00:00",
+        "2024-06-02T07:00:00+00:00",
+        "2024-06-02T08:00:00+00:00",
+        "2024-06-02T09:00:00+00:00",
+        "2024-06-02T10:00:00+00:00",
+        "2024-06-02T11:00:00+00:00",
+        "2024-06-02T12:00:00+00:00",
+        "2024-06-02T13:00:00+00:00",
+        "2024-06-02T14:00:00+00:00",
+        "2024-06-02T15:00:00+00:00",
+        "2024-06-02T16:00:00+00:00",
+        "2024-06-02T17:00:00+00:00"
+      ],
+      "n_negative_values": 324,
+      "negative_timestamps_utc": [
+        "2022-04-10T13:00:00+00:00",
+        "2022-04-10T14:00:00+00:00",
+        "2022-04-10T15:00:00+00:00",
+        "2022-04-23T12:00:00+00:00",
+        "2022-04-23T13:00:00+00:00",
+        "2022-04-23T14:00:00+00:00",
+        "2022-04-23T15:00:00+00:00",
+        "2023-02-26T12:00:00+00:00",
+        "2023-02-26T13:00:00+00:00",
+        "2023-02-26T14:00:00+00:00",
+        "2023-02-26T15:00:00+00:00",
+        "2023-03-11T10:00:00+00:00",
+        "2023-03-11T11:00:00+00:00",
+        "2023-03-11T12:00:00+00:00",
+        "2023-03-11T13:00:00+00:00",
+        "2023-03-11T14:00:00+00:00",
+        "2023-03-11T15:00:00+00:00",
+        "2023-03-13T13:00:00+00:00",
+        "2023-03-13T14:00:00+00:00",
+        "2023-03-13T15:00:00+00:00"
+      ],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": -7117.5,
+      "mw_max": 36434.175,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2022-10-29T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 7247
+        },
+        {
+          "start_utc": "2022-10-29T23:00:00+00:00",
+          "end_utc": "2022-10-30T01:00:00+00:00",
+          "seconds": 7200,
+          "n_intervals": 1
+        },
+        {
+          "start_utc": "2022-10-30T01:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 19054
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [
+        {
+          "after_utc": "2022-10-29T23:00:00+00:00",
+          "before_utc": "2022-10-30T01:00:00+00:00",
+          "missing_intervals": 1,
+          "hours": 2.0
+        }
+      ],
+      "n_missing_intervals": 1,
+      "max_gap_hours": 2.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [
+        "utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity)"
+      ],
+      "local_day_violations": [
+        "local day 2022-10-30: expected 25 rows, found 24 (Europe/Madrid, 25h local day (DST transition))"
+      ],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": true,
+      "notes": [
+        "1 missing interval(s) in 1 gap(s), largest 2.0h \u2014 reported, not filled (see data/entsoe.py on the DST-day publication gap)",
+        "144 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed",
+        "2 day(s) hold fewer rows than expected, e.g. utc day 2022-10-30: expected 24 rows, found 23 (UTC days have no DST discontinuity) \u2014 a completeness finding, the same fact as the gap count above; see this report's `violations` for the integrity findings that are failures",
+        "324 negative value(s) \u2014 real and expected for this series: residual load goes negative when wind + solar exceed load, which is the condition that drives negative prices"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "NO2",
+      "tier": "A",
+      "local_tz": "Europe/Oslo",
+      "series": "load_forecast_da_mw",
+      "document": "load_forecast_da",
+      "leakage_status": "safe",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "deeb373f9b9933fb8106bf20c899ff77628e14844c66a0c6c617ed6dfd7a51be",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 0,
+      "nan_timestamps_utc": [],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 2130.33,
+      "mw_max": 6418.33,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "NO2",
+      "tier": "A",
+      "local_tz": "Europe/Oslo",
+      "series": "solar_forecast_da_mw",
+      "document": "wind_solar_forecast_da",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "5f04e2839fc74c256c252790ec1ec915d72981868b0f433ca9ffe64a8884e908",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 48,
+      "nan_timestamps_utc": [
+        "2022-10-31T23:00:00+00:00",
+        "2022-11-01T00:00:00+00:00",
+        "2022-11-01T01:00:00+00:00",
+        "2022-11-01T02:00:00+00:00",
+        "2022-11-01T03:00:00+00:00",
+        "2022-11-01T04:00:00+00:00",
+        "2022-11-01T05:00:00+00:00",
+        "2022-11-01T06:00:00+00:00",
+        "2022-11-01T07:00:00+00:00",
+        "2022-11-01T08:00:00+00:00",
+        "2022-11-01T09:00:00+00:00",
+        "2022-11-01T10:00:00+00:00",
+        "2022-11-01T11:00:00+00:00",
+        "2022-11-01T12:00:00+00:00",
+        "2022-11-01T13:00:00+00:00",
+        "2022-11-01T14:00:00+00:00",
+        "2022-11-01T15:00:00+00:00",
+        "2022-11-01T16:00:00+00:00",
+        "2022-11-01T17:00:00+00:00",
+        "2022-11-01T18:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": true,
+      "constant_value": 0.0,
+      "mw_min": 0.0,
+      "mw_max": 0.0,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "48 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed",
+        "series is identically 0.0 over 26256 point(s) \u2014 real for a zone with no such fleet (NO2 solar), a broken feed anywhere else"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "NO2",
+      "tier": "A",
+      "local_tz": "Europe/Oslo",
+      "series": "wind_forecast_da_mw",
+      "document": "wind_solar_forecast_da",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "54ddbaa795a2db9fa0822714dcb29857c85bde86c52af48a98ac5a95fe7feff2",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 48,
+      "nan_timestamps_utc": [
+        "2022-10-31T23:00:00+00:00",
+        "2022-11-01T00:00:00+00:00",
+        "2022-11-01T01:00:00+00:00",
+        "2022-11-01T02:00:00+00:00",
+        "2022-11-01T03:00:00+00:00",
+        "2022-11-01T04:00:00+00:00",
+        "2022-11-01T05:00:00+00:00",
+        "2022-11-01T06:00:00+00:00",
+        "2022-11-01T07:00:00+00:00",
+        "2022-11-01T08:00:00+00:00",
+        "2022-11-01T09:00:00+00:00",
+        "2022-11-01T10:00:00+00:00",
+        "2022-11-01T11:00:00+00:00",
+        "2022-11-01T12:00:00+00:00",
+        "2022-11-01T13:00:00+00:00",
+        "2022-11-01T14:00:00+00:00",
+        "2022-11-01T15:00:00+00:00",
+        "2022-11-01T16:00:00+00:00",
+        "2022-11-01T17:00:00+00:00",
+        "2022-11-01T18:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 0.0,
+      "mw_max": 1343.02,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": false,
+      "notes": [
+        "48 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed"
+      ],
+      "ok": true,
+      "violations": []
+    },
+    {
+      "zone": "NO2",
+      "tier": "A",
+      "local_tz": "Europe/Oslo",
+      "series": "residual_load_forecast_mw",
+      "document": "derived",
+      "leakage_status": "FLAGGED",
+      "years": [
+        2022,
+        2023,
+        2024
+      ],
+      "n_points": 26304,
+      "first_ts_utc": "2022-01-01T00:00:00+00:00",
+      "last_ts_utc": "2024-12-31T23:00:00+00:00",
+      "modal_resolution_seconds": 3600,
+      "payload_sha256": "caf86909ecc22cc07ff3f5f3ab27a42951db212f6e5d95ce760a95e3a046689c",
+      "index_is_utc": true,
+      "index_is_monotonic": true,
+      "n_duplicate_timestamps": 0,
+      "n_nan_values": 48,
+      "nan_timestamps_utc": [
+        "2022-10-31T23:00:00+00:00",
+        "2022-11-01T00:00:00+00:00",
+        "2022-11-01T01:00:00+00:00",
+        "2022-11-01T02:00:00+00:00",
+        "2022-11-01T03:00:00+00:00",
+        "2022-11-01T04:00:00+00:00",
+        "2022-11-01T05:00:00+00:00",
+        "2022-11-01T06:00:00+00:00",
+        "2022-11-01T07:00:00+00:00",
+        "2022-11-01T08:00:00+00:00",
+        "2022-11-01T09:00:00+00:00",
+        "2022-11-01T10:00:00+00:00",
+        "2022-11-01T11:00:00+00:00",
+        "2022-11-01T12:00:00+00:00",
+        "2022-11-01T13:00:00+00:00",
+        "2022-11-01T14:00:00+00:00",
+        "2022-11-01T15:00:00+00:00",
+        "2022-11-01T16:00:00+00:00",
+        "2022-11-01T17:00:00+00:00",
+        "2022-11-01T18:00:00+00:00"
+      ],
+      "n_negative_values": 0,
+      "negative_timestamps_utc": [],
+      "is_constant": false,
+      "constant_value": null,
+      "mw_min": 1278.51,
+      "mw_max": 6256.03,
+      "resolution_segments": [
+        {
+          "start_utc": "2022-01-01T00:00:00+00:00",
+          "end_utc": "2024-12-31T23:00:00+00:00",
+          "seconds": 3600,
+          "n_intervals": 26303
+        }
+      ],
+      "resolution_changes": [],
+      "gaps": [],
+      "n_missing_intervals": 0,
+      "max_gap_hours": 0.0,
+      "n_utc_days_checked": 1096,
+      "n_local_days_checked": 1095,
+      "utc_day_violations": [],
+      "local_day_violations": [],
+      "boundary_partial_days": [],
+      "n_dst_days_seen": 6,
+      "dst_whitelist_days": {
+        "2022-03-27": 23,
+        "2022-10-30": 25,
+        "2023-03-26": 23,
+        "2023-10-29": 25,
+        "2024-03-31": 23,
+        "2024-10-27": 25
+      },
+      "n_partial_psr_intervals": 0,
+      "zero_components": {},
+      "may_be_negative": true,
+      "notes": [
+        "48 NaN value(s) \u2014 a UTC hour not tiled exactly by its sub-hourly intervals, or covered by only some of the summed psrTypes; kept NaN rather than partially averaged or partially summed"
+      ],
+      "ok": true,
+      "violations": []
+    }
+  ]
+}

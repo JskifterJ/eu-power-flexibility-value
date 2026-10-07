@@ -2,61 +2,56 @@
 
 ## Current status
 
-- **Next cycle to run:** **C7.** Checkpoint B approved as-is by J. on 2026-10-07 (see
-  the "Checkpoint B — approved and closed" entry at the end of the log for exactly
-  what was and was not reviewed, and how each open item was resolved).
-- **Human checkpoints:** **Checkpoint B closed 2026-10-07** (approved as-is,
-  human instruction via local assistant session). Checkpoint A closed 2026-10-01 (human session, local, not a
-  scheduled cycle). Next after B is **Checkpoint C at C16** (unsealing 2025).
-- **`ENTSOE_API_KEY` is now set in the cloud environment** (first observed by the
-  7th Checkpoint B wait cycle, 2026-10-05; value never read or logged). PLAN.md's
-  "ENTSO-E API key note" is now stale — **C7 can run its full intended scope** and
-  does not need the Tier-B-only fallback. Re-confirm at the start of C7.
-- **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch
-  LP, exactly as PLAN.md anticipated. **RESOLVED at Checkpoint B (2026-10-07): option
-  (b) — keep the pure LP as the default and carry the artefact as a stated limitation
-  in the write-up** (the "as-is" choice; it biases capture *against* the model by
-  ~0.16pp, so it is conservative). C6 added the decisive evidence: the
-  artefact *flatters the oracle* (+125.47 EUR) and *penalises the forecast
-  curves* (model −0.49, naive −89.88), so the pure LP's capture ratio is biased
-  **against** the model — 0.9187 under the LP vs **0.9203 under the MILP**, a
-  shift of **+0.16pp**. A human picks (a) MILP as default, (b) keep the pure LP
-  and carry it as a stated limitation, or (c) add the `c_t + d_t <= P`
-  single-inverter constraint. None of the three changes any conclusion.
-- **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07), i.e. no change to current behaviour:**
-  - **NOTE C3-01** — the daily-aggregate feature names in `config/features.yaml`
-    say `lag_24h` but the only leak-free window is the last fully-public UTC day
-    (`D-2`); rename them or keep the names and rely on `docs/forecast_harness.md`?
-    See the C3 entry. C5 and C6 did not touch `config/features.yaml`.
-  - **NOTE C4-01** — should `destroys_skill()` in `backtest/diagnostics.py` be
-    re-based on the new `TrainMedianBaseline`? See FINDING C4-A in the C4 entry.
-    Proposed, deliberately not done: that file holds a PLAN.md leakage assertion.
-    A human picks. Unchanged by C6.
+- **Next cycle to run:** **C8.** C7 complete (ENTSO-E client, Tier-A D-1 load +
+  wind/solar forecasts, exogenous manifest and contracts). See the C7 entry for the
+  five data pathologies it found and how each was resolved.
+- **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
+  closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
+- **`ENTSOE_API_KEY` is set and was used for the first time in C7.** 18 of 18
+  (zone, document, year) pulls succeeded. The value was never read, logged or
+  written to disk; every stored URL and every error message is redacted (see
+  `docs/entsoe_layer.md` "Token hygiene"). PLAN.md's "ENTSO-E API key note" is now
+  spent — the Tier-B-only fallback was never needed.
+- **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch LP.
+  **RESOLVED at Checkpoint B (2026-10-07): option (b)** — keep the pure LP as the
+  default and carry the artefact as a stated limitation in the write-up. It biases
+  capture *against* the model by ~0.16pp (LP 0.9187 vs MILP 0.9203), so it is
+  conservative. Unchanged by C7, which touched no dispatch code.
+- **New in C7 — all resolved in-cycle, none blocking, all recorded in the C7 entry
+  and `docs/entsoe_layer.md`:** **FINDING C7-A** (curveType A03 sparse block
+  semantics), **FINDING C7-B** (ES changed resolution PT60M→PT15M mid-2022),
+  **FINDING C7-C** (autumn-DST-day publication gaps, DE-LU and ES),
+  **FINDING C7-D** (NO2 offshore wind is an all-zero stub), **FINDING C7-E**
+  (negative residual load is signal, not a defect). **NOTE C7-01** is the one
+  open question for a human, and it is a presentation choice, not a blocker.
+- **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07):**
+  - **NOTE C3-01** — daily-aggregate feature names say `lag_24h` but the leak-free
+    window is `D-2`. Closed: keep the names; `docs/forecast_harness.md` documents the
+    real window. C7 did not touch `config/features.yaml`.
+  - **NOTE C4-01** — `destroys_skill()` not re-based on `TrainMedianBaseline`. Closed:
+    leave the PLAN.md leakage-assertion file untouched. C7 did not touch it.
+  - **NOTE C4-02** — the one declined hour a year is excluded and the day reported
+    excluded. Confirmed by J.
   - **NOTE C2-02** — the raw cache does not survive a container, so every cycle
-    re-pulls DE-LU (6 files, ~1 MB). 4th recurrence. See the C2 entry for the
-    three options.
-  - **NOTE C4-02 — DECIDED by C6, CONFIRMED by J. at Checkpoint B.**
-    The one declined hour a year is **excluded, and the day is reported
-    excluded**; every pooled number is computed over the common 365-day set.
-    Priced rather than argued: dispatching it from the `impute` variant would
-    have earned **−33.47 EUR** (the day is a loss), so excluding it does not
-    flatter the model. See the C6 entry.
-- **Sealed holdout (2025):** SEALED — do not touch until the human records
-  approval of Checkpoint C (C16) here, using the marker string defined in
-  `config/data.yaml` -> `holdout_unseal_marker` (never reproduced in this file).
-  Guard verified armed in C6, before and after the work: marker-alone-on-a-line
-  count 0, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`, and no
-  2025 file exists in the cache. No 2025 data has been fetched, loaded,
-  dispatched or computed against at any point in C2, C3, C4, C5 or C6.
-- **ENTSOE_API_KEY:** set in this environment (verified C1b). C7 precondition
-  satisfied; not needed before then, and not read in C2-C6.
-- **Config hash:** `84f7bf31591d1e7f`, unchanged by C6 (no `config/*.yaml` file
-  was modified). It last moved in C5 when `config/battery.yaml` was added.
-- **Repo-state note:** the detached-HEAD trap recurred again in C6 — the
-  container arrived on a detached HEAD at `f653618`. Reattached with
-  `git checkout -B master f653618` and re-pointed at `origin/master` before any
-  work. **8 recurrences out of 14 containers.** Keep checking
-  `git rev-parse --abbrev-ref HEAD` at the start of every cycle.
+    re-pulls DE-LU prices (~1 MB). Closed: no change. **18th recurrence** (C7 did not
+    need prices, so nothing was re-pulled).
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C7, before and after the
+  work: marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
+  `sealed_years()` = `{2025}`, and no `*2025*` file exists anywhere under `data/`.
+  C7 **strengthened** the guard: `data/entsoe.py` now asserts positively that no
+  parsed timestamp falls in a sealed year, so the exclusive-`periodEnd` argument is
+  checked rather than trusted. No 2025 data has been fetched, loaded, dispatched or
+  computed against at any point in C2-C7.
+- **Config hash:** **`28ebdd1ca5e72913`** (was `84f7bf31591d1e7f`). It moved because
+  C7 added the `sources.entsoe` document/request/series block to `config/data.yaml`.
+  No other `config/*.yaml` file was modified.
+- **Repo-state note:** the detached-HEAD trap recurred again in C7 — the container
+  arrived detached at `38cd939` with the local `master` ref stale 5 commits behind.
+  `git checkout -B master 38cd939` was **permitted this time** (it was denied in the
+  13th and 14th Checkpoint B waits), so no `HEAD:master` push path was needed.
+  **22 recurrences out of 29 containers.** Keep checking
+  `git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the
+  start of every cycle.
 
 ## Log
 
@@ -2417,3 +2412,205 @@ anything is published.
 **Next:** C7 (ENTSO-E client + D-1 load / wind / solar forecasts for Tier-A zones).
 `ENTSOE_API_KEY` was observed set from 2026-10-05; re-confirm at the start of C7.
 No code, config, data or holdout state was touched by this entry.
+
+### C7 — 2026-10-07 (scheduled cycle) — ENTSO-E client + Tier-A exogenous forecasts
+
+Scope per PLAN.md C7: `ENTSOE_API_KEY` is configured, so the full intended scope ran
+— ENTSO-E client, D-1 load forecast (Art. 6, safe) + D-1 wind/solar forecast
+(Art. 14, FLAGGED) for the three Tier-A zones, and extend manifest/contracts. No
+Tier-B fallback was needed. No modelling: C7 fetches, validates, describes and
+contracts this data; **no model consumes it yet**, which is C8's work alongside the
+RES-degradation sensitivity PLAN.md requires in the same cycle.
+
+**Pulled and cached (18/18 pairs, 0 FLAGs on the final run):** DE-LU, ES, NO2 ×
+{A65/A01 day-ahead total load, A69/A01 day-ahead wind+solar} × 2022-2024. 2019-2021
+are refused *in code* (`exogenous_available_from_year: 2022`) — the platform answers
+for them, but PLAN.md records that no archived D-1 forecast vintage exists there.
+~3.5 MB gzipped, gitignored under `data/raw/entsoe/`.
+
+**Built and committed (68 new tests, 339 passing in total):**
+- `data/entsoe.py` — the client. Config-driven document specs; A03/A01 curve
+  expansion; `Acknowledgement_MarketDocument` → `UnexpectedResponse` with its Reason
+  code; 4xx never retried, 429/5xx/transport retried 3× at 5/15/45s; nothing
+  unvalidated ever reaches the cache; per-row interval lengths carried out of each
+  `<Period>`; the sealed-year assertion described below.
+- `data/exogenous.py` — stitching loader + hourly aggregation + derived
+  `residual_load_forecast_mw`. The FLAGGED status travels on `attrs`.
+- `data/exog_manifest.py` + `data/build_exog_manifest.py` — 35-column manifest, one
+  row per (zone, document, series, year), carrying `leakage_status`.
+- `data/exog_contracts.py` + `data/build_exog_contracts.py` — the contract layer.
+- `data/fetch_exogenous.py` — the fetch CLI (`--dry-run`, per-pair FLAG, exit 4 on a
+  missing key without making a request).
+- `tests/test_c7_entsoe.py` — 68 offline tests. No network, no real payload, no
+  sealed year; the holdout tests assert the guard *fires*.
+- `docs/entsoe_layer.md` — the full write-up of everything below.
+
+**No frozen file was edited.** `tests/` gained one new file and no existing test was
+modified; `data/contracts.py` and `forecast/leakage.py` were not touched. PLAN.md's
+C7 line says "extend manifest/contracts", and CLAUDE.md forbids editing a
+data-contract or leakage-assertion file without flagging and stopping, so the
+extension is **additive**: `data/exog_contracts.py` imports and reuses the C2
+primitives (`gap_report`, `check_utc_day_counts`, `check_local_day_counts`,
+`dst_transition_days`, `modal_resolution_seconds`, …) rather than changing them, and
+`data/exog_manifest.py` sits beside `data/manifest.py` rather than inside it.
+`data/aggregate.py` is likewise untouched — see FINDING C7-B.
+
+**All exogenous contracts hold.** All 12 (zone, series) reports `ok`, 0 negative
+values in any load/wind/solar series, every index UTC and strictly monotonic with no
+duplicates.
+
+#### FINDING C7-A — `curveType A03`: sparse positions with block semantics. RESOLVED.
+
+Every response the platform returned is `curveType A03`, a *variable-sized block*
+curve: positions are **sparse**, and an omitted position means "the previous point's
+value still holds". Real DE-LU solar, 2024-01-01 at PT15M, is
+`position 1 → 0`, then `position 29 → 52.58`, with 2-28 absent and meaning *zero*.
+Parsing position-by-row would have produced a 26-row "day" full of holes; parsing
+positions as a dense index would have shifted every value after each block. NO2's
+solar forecast for a whole year is a **single point of `0.0`**, which is only
+correct under A03. `expand_points` implements the semantics; the tests pin it against
+hand-computed sparse curves. A missing position 1 raises rather than guessing the
+leading block.
+
+#### FINDING C7-B — ES changed resolution mid-2022. RESOLVED.
+
+DE-LU and NO2 publish at a single resolution (PT15M and PT60M), but **ES switched
+PT60M → PT15M on 2022-05-23T00:00Z**. `data/aggregate.py`'s `to_hourly` documents a
+single input resolution and takes the modal one, so over the stitched ES series it
+treated the entire PT60M stretch — **3408 hours of real data** — as partial hours and
+NaN'd them. Two knock-on errors in the first manifest build: ES 2022 read as **70.8%
+covered** with **3409 gaps**, when it has one real missing hour.
+
+Fixed without touching `data/aggregate.py` (it holds the C2 aggregation method and
+its tests): each row's **true** interval length is now carried out of its own
+`<Period>` as `attrs['interval_seconds']`, and `data/exogenous.py` splits the series
+into maximal runs of constant resolution, handing each to `to_hourly` separately —
+which is exactly the uniform input that function is specified for. A delta-based
+guess cannot do this: the row before a one-hour hole in a PT15M series has a 4500s
+forward delta, indistinguishable from a resolution change. The manifest now measures
+coverage as *time covered / time in the year* and counts a gap as a step longer than
+the **preceding row's own** interval. ES 2022 now reads **99.9886% covered, 1 gap**,
+and ES load's NaN count went 3408 → **0**.
+
+#### FINDING C7-C — autumn-DST-day publication gaps. REPORTED, not filled.
+
+The German and Spanish day-ahead publications each **drop one hour at the autumn DST
+boundary**, at the first hour of the 25-hour local day. DE-LU 2023-10-28 and
+2024-10-26: the onshore-wind (B19) and solar (B16) series split into two Periods
+around a missing `22:00Z-23:00Z` while offshore wind (B18) runs straight through. ES
+2022-10-30: the same hour missing from both documents.
+
+This is a structural property of these publications, not a one-off, and belongs in
+the write-up's Limits section. Complete list of every source gap found (worst case
+~0.4% of a zone-year, all reported, none filled):
+
+| Zone / document | Missing | What it is |
+|---|---|---|
+| DE-LU load | 2022-02-22, 2022-03-24 | 24h each — two whole local days absent |
+| DE-LU load | 2023-10-28, 2024-10-26 | 1h each — autumn DST long day |
+| DE-LU wind & solar | 2023-10-28, 2024-10-26 | 1h each, NaN — partial psrType, same hour |
+| ES (both documents) | 2022-10-30 | 1h — autumn DST long day |
+| ES solar | 2024-12-07 … 12-11 | 120h NaN — partial psrType coverage |
+| ES wind | 2024-06-02 | 24h NaN — partial psrType coverage |
+| NO2 wind & solar | 2022-11-01 … 11-02 | 48h — two whole local days absent |
+
+An intermediate version of the parser **raised** on the DE-LU case, which cost a
+whole training year for four intervals. That was the wrong granularity: CLAUDE.md
+says to flag a source anomaly and skip only the *dependent* work, and this project's
+standing rule (`data/prices.py`) is that a gap stays a gap and gets reported rather
+than filled. The four intervals are now NaN, counted on `attrs`, and surfaced in both
+committed artefacts. NaN cannot be mistaken for a real low-wind hour; zero could.
+
+#### FINDING C7-D — NO2 offshore wind is an all-zero stub. RESOLVED by a checkable rule.
+
+`wind_forecast_da_mw` is `B18 + B19` (offshore + onshore), and two cases pull in
+opposite directions:
+- **DE-LU**: the absent onshore component is worth tens of GW → the sum must be NaN.
+- **NO2**: offshore B18 is published for just **48 hours of 2022 and 192 of 2024**,
+  absent from 2023 entirely, and is **`0.0` at every single published point**. NO2 has
+  no offshore fleet; the TSO emits an occasional all-zero stub. Treating that absence
+  as NaN wiped out the wind feature for a whole Tier-A zone for ~8600 hours/year.
+
+Resolved by a rule the **data decides**, not the zone: a component that is
+*identically zero wherever it is published* is not a fleet, so its absence
+contributes zero. Asserted against the payload rather than assumed, and recorded in
+`attrs['zero_components']` and the contract report so a human can overrule it. NO2
+wind is now complete; DE-LU's four DST intervals correctly stay NaN. Both directions
+are pinned by tests.
+
+#### FINDING C7-E — negative residual load is the signal, not a defect. RESOLVED.
+
+The first contract run failed `residual_load_forecast_mw` for 262 negative hours
+(DE-LU) and 317 (ES). Those are **real and are the point**: residual load =
+load − wind − solar goes negative exactly when renewables exceed demand, which is the
+condition that produces negative day-ahead prices and the subject of PLAN.md's C14
+fundamentals chapter. DE-LU's first is 2022-03-20T11:00Z, a sunny windy Sunday
+midday. Flagging it would have flagged the signal itself. Non-negativity is now
+config-driven per series (load/wind/solar: a negative value is a source defect) with
+residual load the deliberate, documented exception.
+
+**The contract dividing line, now stated once in `data/exog_contracts.py`:**
+*integrity* findings are violations (non-UTC or non-monotonic index, duplicate
+timestamps, a negative value in a quantity that cannot be negative, or a day with
+*more* rows than expected — which can only be a bug of ours); *completeness* findings
+are reported notes (gaps, NaNs, a day with *fewer* rows than expected). A shortfall
+and a gap are the same fact counted twice, which is why only one is a failure.
+
+#### Sealed-holdout guard strengthened
+
+ENTSO-E's `periodEnd` is the **exclusive** window end, so fetching year `Y` must name
+`(Y+1)-01-01T00:00Z` — verified in C7 as the only complete spelling (an end of
+`Y-12-31T23:00` returns 92 of that day's 96 quarter-hours). Naming that boundary is
+not an observation of `Y+1`, but rather than rely on the argument, `parse_document`
+now asserts **positively** that no parsed timestamp falls in a sealed year. If the
+platform ever returned a point past the boundary while fetching 2024, it raises
+instead of caching. The ordinary `assert_not_sealed` guard still runs before any
+request and before any cached read, and a test asserts the new check fires.
+
+#### Token hygiene
+
+ENTSO-E authenticates with a `securityToken` **query parameter**, so unlike
+Energy-Charts the request URL is itself a secret. `data.entsoe.redact` strips both the
+literal token and any `securityToken=...` parameter, and is applied to every stored
+provenance record, every exception message and every CLI FLAG line (including
+transport errors that quote the URL). `document_request()` returns params *without*
+the token; it is added only at request time. `api_key_is_set()` tests presence only.
+Tests assert the token appears in no cached metadata and in no raised message.
+
+#### Plausibility eyeball (first exogenous numbers in the project)
+
+DE-LU load 30.9-76.5 GW (peak ~80 GW ✓), wind 0.2-50.4 GW (record ~50 GW ✓), solar
+0-48.6 GW (record ~48-50 GW ✓), residual load **-13.6** to 68.7 GW (negative at
+sunny/windy midday ✓). ES load 16.8-38.7 GW (peak ~40 GW ✓), wind 0.3-19.8 GW,
+solar 0-21.2 GW. NO2 load 2.1-6.4 GW, wind 0-1.3 GW (onshore ~1.5 GW ✓), solar
+identically 0 (no fleet ✓).
+
+#### LP invariants
+
+C7 touched no dispatch, forecast or backtest code, so the battery-LP invariants do
+not apply to any new artefact. They remain executable and green as part of the full
+suite: `assert_oracle_dominates` and the rolling commit-then-settle assertions in
+`tests/test_c5_battery_lp.py` and `tests/test_c6_commit_then_settle.py` all pass
+(339 tests, 0 failures). No LP objective from a forecast-priced solve is reported
+anywhere as a realised value.
+
+#### NOTE C7-01 — one open question for a human (presentation, not a blocker)
+
+`config/features.yaml` names the exogenous features `load_forecast_da`,
+`wind_forecast_da`, `solar_forecast_da`, `residual_load_forecast`; the columns this
+cycle produces are the same names with a `_mw` suffix (`load_forecast_da_mw`, …),
+because the unit matters once three series in MW sit beside prices in EUR/MWh. The
+suffix is declared in `config/data.yaml` under `sources.entsoe.documents.*.series`,
+so nothing is ambiguous in code, but the two config files now spell the same feature
+two ways. Options: (a) keep both spellings and let `docs/entsoe_layer.md` be the
+mapping — the same resolution a human already chose for **NOTE C3-01**; (b) rename
+the `config/features.yaml` entries to carry `_mw`. **Not done either way**, because
+`config/features.yaml` is a feature contract and C8 is the cycle that actually
+consumes it. Proceeding as (a) unless a human says otherwise; this does not block C8.
+
+**Next:** C8 — exogenous features into LEAR for Tier A, plus the RES-forecast
+degradation sensitivity (as-published vs persistence-degraded) as a first-class
+experiment. C8 must read the gap/NaN notes in
+`data/manifest/exogenous_contract_report.json` before building these columns in: the
+FLAGGED Art. 14 vintage is only usable alongside that sensitivity, and ~0.4% of
+hours are NaN by design.

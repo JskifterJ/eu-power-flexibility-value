@@ -29,3 +29,11 @@ scikit-learn>=1.7
 # `Bounds`/`LinearConstraint` objects it takes settled into their current form
 # there.
 scipy>=1.11
+
+# C7 (ENTSO-E client, exogenous loader, manifest + contracts): no new
+# dependencies. The Transparency Platform returns XML, parsed with the standard
+# library's xml.etree.ElementTree — no lxml, and deliberately no `entsoe-py`:
+# the whole point of data/entsoe.py is the explicit refusal behaviour CLAUDE.md
+# requires (an Acknowledgement is a FLAG, nothing is retried that should not be,
+# nothing unvalidated reaches the cache, the token never reaches disk), which a
+# convenience wrapper would hide.

@@ -80,6 +80,72 @@ sources:
     licence: "ENTSO-E Transparency Platform reuse conditions — attribution required"
     attribution: "Data: ENTSO-E Transparency Platform"
     first_used_in_cycle: "C7"
+    cache_dir: "data/raw/entsoe"
+    # Tier-A exogenous features start in 2022: no archived D-1 forecast vintage
+    # exists earlier (PLAN.md "Training/test split", features.yaml
+    # `available_from`). The API *will* answer for 2019-2021, so this bound is
+    # enforced in code rather than left to a caller's memory.
+    exogenous_available_from_year: 2022
+    request:
+      # Full-year A69 documents are ~13 MB of XML for DE-LU, so the timeout is
+      # generous; the window is one calendar year because the platform rejects
+      # anything larger than P1Y for these document types (observed in C7:
+      # HTTP 400 + Acknowledgement_MarketDocument, Reason code 999).
+      timeout_seconds: 300
+      sleep_between_requests_seconds: 3.0
+      max_retries: 3                 # transport/429/5xx only, exponential backoff
+      retry_backoff_seconds: [5, 15, 45]
+      max_window: P1Y
+    expected_unit: MAW               # megawatt; anything else is a FLAG
+    # The two document types PLAN.md C7 asks for. `domain_param` differs between
+    # them (A65 is an out-zone load document, A69 an in-zone generation
+    # document) and getting it wrong yields an empty Acknowledgement, so it is
+    # declared here rather than inferred.
+    #
+    # `series` maps ENTSO-E psrTypes onto the feature column each one rolls up
+    # into. An empty `psr_types` list means the document carries no MktPSRType
+    # at all (true of A65). psrTypes seen in a response but absent from this
+    # mapping are a FLAG, never silently dropped.
+    documents:
+      load_forecast_da:
+        document_type: A65
+        process_type: A01
+        domain_param: outBiddingZone_Domain
+        title: "Art. 6.1.B day-ahead total load forecast"
+        expected_business_types: [A04]
+        leakage_status: safe
+        leakage_note: >
+          Published at latest 2h before day-ahead gate closure, so the archived
+          vintage is information a bidder genuinely held. Safe.
+        series:
+          load_forecast_da_mw:
+            psr_types: []
+            non_negative: true
+      wind_solar_forecast_da:
+        document_type: A69
+        process_type: A01
+        domain_param: in_Domain
+        title: "Art. 14.1.D day-ahead generation forecast for wind and solar"
+        expected_business_types: [A93, A94]
+        leakage_status: FLAGGED
+        leakage_note: >
+          The Art. 14 D-1 forecast is published at 18:00 on D-1 — AFTER
+          day-ahead gate closure — and is revised intraday, so the archived
+          vintage is NOT what a bidder had. Usable only alongside the mandatory
+          C8 degradation sensitivity, and stated in the write-up's Limits.
+        series:
+          solar_forecast_da_mw:
+            psr_types: [B16]
+            non_negative: true
+          wind_forecast_da_mw:
+            psr_types: [B18, B19]   # offshore + onshore, summed
+            non_negative: true
+    # Curve types this project knows how to read. A01 is a fixed-size sequence
+    # (every position present); A03 is a variable-sized block curve, where an
+    # omitted position means "the previous point's value still holds". Every
+    # response observed in C7 is A03, and naive position->row parsing of an A03
+    # curve silently drops the repeated blocks — see docs/entsoe_layer.md.
+    supported_curve_types: [A01, A03]
 
 # ---------------------------------------------------------------------------
 # Time-handling contract (asserted in tests from C2)
