@@ -2,80 +2,106 @@
 
 ## Current status
 
-- **Next cycle to run:** **C9.** C8 complete (exogenous features into LEAR for Tier A,
-  plus the RES-forecast degradation sensitivity). See the C8 entry for FINDING C8-A —
-  the headline result of the project so far — and for NOTE C8-01, the one open
-  question for a human, which does not block C9.
+- **Next cycle to run:** **C10.** C9 complete (the gradient-boosted model — one fixed
+  LightGBM config, in-fold early stopping, Tier A, run on all four of C8's exogenous
+  arms). See the C9 entry for **FINDING C9-C**, which is now the project's headline
+  result, and for the partial answer to NOTE C8-01. No open blocker.
 - **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
   closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
-- **FINDING C8-A — read this before any later cycle reports an exogenous number.**
-  At an honest vintage the entire ENTSO-E exogenous block is worth **nothing** on
-  2024 MAE for all three Tier-A zones (−0.8% to +0.7%). Fed the as-published
-  Art. 14 archive — published 18:00 on D-1, six hours *after* gate closure — the
-  same columns in the same model buy **+8.4% (DE-LU)** and **+11.3% (ES)** of MAE,
-  and nothing in NO2 (the hydro control). Almost all of the apparent value of the
-  literature's standard RES-forecast source is the **vintage**, not the information.
-  The headline arm for later cycles is therefore `res_persistence` (leak-free);
-  `res_as_published` travels alongside it only as the labelled measurement of the
+- **FINDING C9-C — read this before any later cycle reports a GBM number, and before
+  the C18 write-up ranks the models.** C8 measured the Art. 14 **vintage premium**
+  (as-published vs leak-free persistence) with a per-hour LASSO: +8.4% of MAE on DE-LU,
+  +11.3% on ES. C9 re-measured it with a tree ensemble on the same rows, vintages and
+  folds: **+23.96% (DE-LU) and +17.82% (ES)** — two to three times larger. The leak is
+  worth *more* to a non-linear model, and the booster's whole advantage over the LASSO
+  is concentrated in the late arm (DE-LU `gbm − lear`: −0.74 on `price_only`, −4.46 on
+  `res_as_published`); on the honest arms there is no uniform winner — the GBM wins
+  DE-LU and NO2 by 3-5% and *loses* solar-dominated ES by 1-2%. So a result of the form
+  "gradient boosting beats LEAR on a RES-fed day-ahead model" may be substantially an
+  artefact of a publication timestamp. Visible in the model's internals too: split-gain
+  importance on `residual_load_forecast_mw` (DE-LU) is 0.033 leak-free and **0.236**
+  late — seven times heavier.
+- **FINDING C8-A still stands and is the reason C9-C matters.** At an honest vintage
+  the entire ENTSO-E exogenous block is worth ~nothing on 2024 MAE for all three
+  Tier-A zones. C9 refines "nothing" slightly: under the booster the leak-free
+  `res_persistence` arm buys **+1.0%** of MAE on DE-LU and ES (LEAR got −0.8%/−1.1%)
+  and +0.2% on NO2. The headline arm for later cycles remains `res_persistence`;
+  `res_as_published` travels alongside **only** as the labelled measurement of the
   leak, and its numbers are never reportable as achievable.
-- **`ENTSOE_API_KEY` is set.** C8 used it only to re-populate the cache: 36/36 pulls
+- **The GBM config is frozen and tripwired.** `forecast.gbm.GbmSpec`, fingerprint
+  **`a366a760e269bba6`**, lightgbm 4.7.0. PLAN.md forbids a hyperparameter search
+  across cycles, so the config is pinned to literals by
+  `test_the_committed_config_is_exactly_what_plan_md_froze` — **a cycle that wants to
+  tune a knob has to edit a test, which CLAUDE.md makes a flag-and-stop event.** Do not
+  edit it; flag instead.
+- **`ENTSOE_API_KEY` is set.** C9 used it only to re-populate the cache: 36/36 pulls
   (18 price, 18 ENTSO-E) succeeded, 0 FLAGs. The value was never read, logged or
-  written to disk; every stored URL and error message is redacted.
+  written to disk.
 - **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch LP.
   **RESOLVED at Checkpoint B (2026-10-07): option (b)** — keep the pure LP as the
   default and carry the artefact as a stated limitation in the write-up. It biases
   capture *against* the model by ~0.16pp (LP 0.9187 vs MILP 0.9203), so it is
-  conservative. Unchanged by C7 and C8, neither of which touched dispatch code.
-- **Findings from C7 (all resolved in-cycle, recorded in `docs/entsoe_layer.md`):**
-  **C7-A** curveType A03 sparse block semantics; **C7-B** ES changed resolution
-  PT60M→PT15M mid-2022; **C7-C** autumn-DST-day publication gaps (DE-LU, ES);
-  **C7-D** NO2 offshore wind is an all-zero stub; **C7-E** negative residual load is
-  signal, not a defect.
-- **Findings from C8 (all recorded in the C8 entry and `docs/exogenous_model.md`):**
-  **C8-A** the vintage premium above; **C8-B** the MAE ladder is not monotone for
-  DE-LU and NO2 (reported, not smoothed — no action taken, since fixing it would be
-  tuning against a visible metric); **C8-C** the 24h persistence offset is itself late
-  on the autumn DST long day, and for DE-LU the hour it would read is the very hour
-  FINDING C7-C recorded as missing.
-- **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07):**
-  - **NOTE C3-01** — daily-aggregate feature names say `lag_24h` but the leak-free
-    window is `D-2`. Closed: keep the names; `docs/forecast_harness.md` documents the
-    real window. C8 did not touch `config/features.yaml`.
-  - **NOTE C4-01** — `destroys_skill()` not re-based on `TrainMedianBaseline`. Closed:
-    leave the PLAN.md leakage-assertion file untouched. C8 did not touch it.
-  - **NOTE C4-02** — the one declined hour a year is excluded and the day reported
-    excluded. Confirmed by J.
-  - **NOTE C7-01** — `config/features.yaml` says `load_forecast_da`, the built column
-    is `load_forecast_da_mw`. Closed as option (a) — keep both spellings and document
-    the mapping. C8 makes the mapping *executable*:
-    `forecast.exog_features.exogenous_feature_names()` derives it from both files, so a
-    rename in either surfaces as a failing test instead of as drift.
-  - **NOTE C2-02** — the raw cache does not survive a container, so every cycle
-    re-pulls. Closed: no change. **19th recurrence** (C8 re-pulled all 36 files and
-    verified every one of C7's 27 series fingerprints reproduces exactly — only
-    `fetched_at_utc` and `gzip_bytes` differ, the latter because ENTSO-E stamps a fresh
-    random `mRID` into each response header).
-- **Open question for a human — NOTE C8-01** (presentation, not a blocker): given
-  FINDING C8-A, should Tier A keep the exogenous block in C9/C10? **Proceeding as
-  PLAN.md describes** (keep it; a GBM may use residual load where a LASSO cannot, and
-  the metric that decides is a spread metric, not MAE). Say so if you would rather
-  Tier A ran `load_only` or price-only until a spread metric justifies the RES columns.
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C8, before and after the
+  conservative. Unchanged by C7, C8 and C9, none of which touched dispatch code.
+- **Findings from C9 (all recorded in the C9 entry and `docs/gbm_model.md`):**
+  **C9-A** PLAN.md leakage assertion (i) is *vacuous* for a pooled booster on the
+  synthetic week-periodic fixture (the staler matrix scores *better*, 1.716 vs 1.759)
+  because the calendar columns already explain that series to within its noise floor;
+  the assertion was re-sited onto a persistence fixture and onto real prices, where it
+  degrades MAE by +14.6%/+24.1%/+20.8% — `tests/test_c3_leakage_harness.py` untouched.
+  **C9-B** **RETRACTED** — the claim that `lgb.train` keeps the trees built after the
+  best iteration is false on lightgbm 4.7.0 (it rolls back; `num_trees() ==
+  best_iteration`). It was a hypothesis, and the test written to pin it disproved it on
+  the first full-suite run. Two pushed commit messages (`3388a39` and the artefact
+  commits) still assert the retracted version and cannot be rewritten — the C9 entry is
+  the correction of record. No committed number changes. **C9-C** the vintage premium
+  above.
+  **C9-D** NO2's hydro control is no longer *exactly* null under a non-linear model
+  (+3.48% vs LEAR's +0.06%), though it still holds in ratio (5-7x below the RES-exposed
+  zones) — "the hydro zone shows nothing" is a C8 sentence, not a C9 one. **C9-E** ladder
+  monotonicity flips between the two models in all three zones, which is the strongest
+  evidence yet that FINDING C8-B's non-monotonicities are noise around zero, not
+  structure. No action taken on C9-D or C9-E: smoothing either would be tuning against a
+  visible metric.
+- **Earlier findings that still bind:** C7-A..C7-E (`docs/entsoe_layer.md`), C8-A..C8-C
+  (`docs/exogenous_model.md`), C4-A (the mean-reference contamination of the
+  target-permutation probe — read it before trusting that probe's sign on a skewed
+  series).
+- **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07):** NOTE C3-01
+  (daily-aggregate feature names), NOTE C4-01 (`destroys_skill()` not re-based), NOTE
+  C4-02 (the one declined hour a year), NOTE C7-01 (the `load_forecast_da` spelling
+  mapping, now executable). **NOTE C2-02** (the raw cache does not survive a container)
+  — no change, **20th recurrence**; C9 re-pulled all 36 files and every one of C7's 27
+  series fingerprints reproduced exactly, with `fetched_at_utc` and `gzip_bytes` the only
+  differing fields. C9's LEAR-reference loader adds a stronger check: C8's committed
+  realised prices agree with C9's to **0.0 EUR/MWh** in all three zones.
+- **NOTE C8-01 — partially answered, still open for C11/C12.** PLAN.md kept the
+  exogenous block for Tier A on the argument that "a GBM may use residual load where a
+  LASSO cannot". Measured: it does, by ~1% of MAE, which is nowhere near enough to
+  justify the block on MAE alone. The metric that decides is a spread metric, so
+  **C11/C12 should settle it** — test whether `res_persistence` improves the *capture
+  ratio* over `price_only` by more than its 1% of MAE suggests, since RES information
+  mostly kills the large errors and those sit in the high-wind, negative-price hours a
+  battery earns in.
+- **NOTE C9-01 (new, for C11/C12, not a blocker):** every model arm is biased **high**
+  (GBM +2.6..+8.7, LEAR +2.6..+5.7 EUR/MWh), which is the shared convex `sinh`
+  back-transform, not a GBM defect. A roughly uniform upward bias barely perturbs the
+  within-day ordering and spread a battery trades on, so the capture ratio may be far
+  less sensitive to it than the MAE table suggests. A prediction to test, not a claim.
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C9, before and after the
   work: marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
   `sealed_years()` = `{2025}`, `assert_not_sealed({2025})` raises, and no `*2025*` file
-  exists anywhere under `data/`. Every C8 arm was evaluated on `[2024]` only. No 2025
-  data has been fetched, loaded, dispatched or computed against at any point in C2-C8.
-- **Config hash:** **`515d4e8d98887256`** (was `28ebdd1ca5e72913`). It moved because C8
-  added `sources.entsoe.publication_tz` and the two `published_day_offset`/
-  `published_local` pairs to `config/data.yaml` — the publication clock the
-  gate-closure guard needs in order to check the exogenous columns at all. No other
-  `config/*.yaml` file was modified.
-- **Repo-state note:** the detached-HEAD trap recurred again in C8 — the container
-  arrived detached at `bb8e67c` with the local `master` ref stale 6 commits behind.
-  `git checkout -B master bb8e67c` was permitted, so no `HEAD:master` push path was
-  needed. **23 recurrences out of 30 containers.** Keep checking
-  `git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the
-  start of every cycle.
+  exists anywhere under `data/`. Every C9 arm was evaluated on `[2024]` only. No 2025
+  data has been fetched, loaded, dispatched or computed against at any point in C2-C9.
+- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C9 modified no
+  `config/*.yaml`; the GBM's configuration is code, tracked by its own fingerprint.
+- **Repo-state note:** the detached-HEAD trap recurred in C9 — the container arrived
+  detached at `24e01c6` with local `master` stale 7 commits behind. **24 recurrences out
+  of 31 containers.** This time `git checkout -B master` was **denied by the permission
+  classifier**, so the cycle worked detached and pushed `HEAD:master`, which was safe
+  only because `origin/master` equalled `HEAD` at session start. **If a future container
+  arrives detached *and* genuinely behind the remote, that fallback does not exist** —
+  flag rather than improvise. Keep checking `git rev-parse --abbrev-ref HEAD` and
+  `git rev-list --count master..HEAD` at the start of every cycle.
 
 ## Log
 
@@ -2908,3 +2934,443 @@ no hyperparameter search. Note that `lightgbm` is not yet in `requirements.txt` 
 will need adding. C9 should read FINDING C8-A first: the GBM must be run on the same
 four arms (or at minimum on `res_persistence` and `res_as_published`) so the vintage
 premium is measured for the non-linear model too rather than inherited from LEAR.
+
+### C9 — 2026-10-08 (scheduled cycle) — the gradient-boosted model, Tier A, on C8's four arms
+
+Scope per PLAN.md C9: GBM, **one fixed LightGBM config, in-fold early stopping, Tier A
+only, no hyperparameter search**. Done for all three Tier-A zones. Following the C8
+entry's instruction, the booster was run on **all four of C8's exogenous arms** so the
+vintage premium is *re-measured* under a non-linear functional form rather than
+inherited from LEAR. No checkpoint, no blocker, no FLAG raised. `ENTSOE_API_KEY` is
+set and was used only to re-populate the cache (see "Cache re-pull" below).
+
+`lightgbm` was added to `requirements.txt` (installed: **4.7.0**) — the only new
+dependency since C5.
+
+#### How the "no hyperparameter search" rule is actually enforced
+
+This is the part of C9 that matters most across cycles, so it is structural rather
+than a promise. Validation metrics are visible to every cycle, a booster has a dozen
+knobs, and a cycle that nudges one after seeing a 2024 number is overfitting the
+validation year *through the agent* — leaving no trace in the diff, because the next
+cycle just finds a slightly different literal and no reason to doubt it.
+
+- `forecast.gbm.GbmSpec` is a frozen dataclass. Every value is either a LightGBM
+  default or a standard choice stated with its reason in the module docstring; none
+  was chosen by looking at a score.
+- `GbmSpec.fingerprint()` is a 16-hex hash of every committed value and is written
+  into every result row. C9's runs all carry **`a366a760e269bba6`**.
+- `test_the_committed_config_is_exactly_what_plan_md_froze` pins all seventeen values
+  to literals and `test_the_fingerprint_changes_when_any_knob_changes` pins that the
+  hash is sensitive to each. **A later cycle that wants to tune has to edit a test**,
+  which CLAUDE.md makes a flag-and-stop event. That is the whole mechanism.
+
+The config: L2 objective, `learning_rate=0.05`, `num_leaves=31`, `min_data_in_leaf=20`,
+`feature_fraction=bagging_fraction=0.9`, `bagging_freq=1`, `lambda_l2=1.0`,
+`num_boost_round=2000` capped with `early_stopping_rounds=50`, `early_stopping_days=90`,
+`refit_on_full_window=True`, `seed=20260101`, `deterministic=True`,
+`force_row_wise=True`, `num_threads=4`. `docs/gbm_model.md` tabulates the provenance
+of each.
+
+#### Results — all three Tier-A zones, 2024, common hours
+
+Daily refit, expanding window aligned to 2022-01-01, 366 folds per arm, config
+fingerprint `a366a760e269bba6`, lightgbm 4.7.0. Scored on the hours every arm of
+**both** models predicted (DE-LU 8 782, ES 8 591, NO2 8 783 — ES drops the most,
+chiefly FINDING C7-C's 120-hour December 2024 solar gap, which LEAR declines and the
+GBM routes natively). MAE/RMSE in EUR/MWh:
+
+| Series | DE-LU MAE | RMSE | ES MAE | RMSE | NO2 MAE | RMSE |
+|---|---|---|---|---|---|---|
+| `naive_last_week` | 32.791 | 55.213 | 26.958 | 37.513 | 21.192 | 41.757 |
+| `gbm_price_only` | 22.787 | 36.339 | 18.348 | 24.354 | 14.035 | 25.907 |
+| `gbm_load_only` | 22.749 | 36.085 | 18.376 | 24.472 | 14.005 | 25.846 |
+| `gbm_res_persistence` | 22.556 | 35.998 | 18.171 | 24.329 | 14.004 | 25.696 |
+| `gbm_res_as_published` *(late)* | **17.151** | **29.077** | **14.932** | **19.572** | **13.517** | **24.625** |
+| `lear_price_only` (C8) | 23.525 | 37.416 | 18.126 | 24.075 | 14.737 | 26.894 |
+| `lear_load_only` | 23.715 | 37.425 | 18.015 | 23.992 | 14.746 | 26.915 |
+| `lear_res_persistence` | 23.588 | 37.199 | 17.930 | 23.892 | 14.817 | 26.938 |
+| `lear_res_as_published` *(late)* | 21.610 | 32.699 | 15.906 | 20.650 | 14.809 | 26.273 |
+
+#### FINDING C9-C — the vintage premium is 2-3x LARGER for the booster. Read this before any later cycle reports a GBM number.
+
+| Zone | capturable gain, GBM | **vintage premium, GBM** | vintage premium, LEAR (C8) | ratio |
+|---|---|---|---|---|
+| DE-LU | +0.16% of MAE | **+23.96%** | +8.39% | **2.9x** |
+| ES | −0.15% | **+17.82%** | +11.28% | **1.6x** |
+| NO2 | +0.21% | +3.48% | +0.06% | — |
+
+C8 measured the premium with a per-hour LASSO: 8-11% of MAE in the two RES-exposed
+zones. Same columns, same vintages, same rows, same folds, under a tree ensemble:
+**24% and 18%.** FINDING C8-A therefore does not merely survive a change of
+functional form — **the leak is worth two to three times more to a non-linear model.**
+
+The mechanism shows up in the model's own internals, not only in the metric.
+Split-gain importance on `residual_load_forecast_mw` (DE-LU, last fold) is **0.033**
+under `res_persistence` and **0.236** under `res_as_published` — the booster leans
+*seven times harder* on residual load when fed the vintage published after gate
+closure. That is what a non-linear model does with a merit-order driver it can
+actually trust, and precisely what the honest vintage denies it.
+
+The practical reading is the opposite of reassuring, and it is the sharpest thing
+this project has produced so far. On these three zones the booster's advantage over
+the LASSO is concentrated almost entirely in the late arm:
+
+| `gbm − lear` MAE (negative favours GBM) | DE-LU | ES | NO2 |
+|---|---|---|---|
+| `price_only` | −0.738 (−3.1%) | **+0.222 (+1.2%)** | −0.703 (−4.8%) |
+| `load_only` | −0.966 (−4.1%) | **+0.361 (+2.0%)** | −0.740 (−5.0%) |
+| `res_persistence` | −1.032 (−4.4%) | **+0.241 (+1.4%)** | −0.813 (−5.5%) |
+| `res_as_published` *(late)* | **−4.458 (−20.6%)** | −0.974 (−6.1%) | −1.291 (−8.7%) |
+
+On the honest arms there is **no uniform winner**: the GBM wins DE-LU and NO2 by
+3-5% and *loses* solar-dominated ES by 1-2%. On the late arm it wins everywhere, and
+on DE-LU by 21%. So a published result of the form *"gradient boosting beats LEAR on
+a RES-fed day-ahead price model"* may be substantially an artefact of the Art. 14
+publication timestamp rather than of the functional form.
+
+**Caveat that must travel with that comparison** (stated in the module docstring, the
+runner and `summary.model_comparison.note`): the GBM−LEAR difference is one of
+functional form **and** of pooling — LEAR fits 24 models partitioned by delivery
+hour, the GBM fits one pooled model with the hour as a categorical feature — and C9
+cannot separate the two. The *within-model* vintage premium above is unaffected by
+that entanglement, which is exactly why it is the number this cycle can settle and
+the model ranking is not.
+
+#### FINDING C9-D — NO2's control holds in ratio but is no longer exactly null
+
+C8's NO2 result was a clean zero in both directions (+0.06% premium), and that is
+what made the other two zones credible: a method that invented a premium in a hydro
+zone with no solar fleet would be measuring its own machinery. Under the booster
+NO2's honest arms stay flat (+0.21%; `price_only`, `load_only` and `res_persistence`
+land within 0.03 EUR/MWh of each other) but the premium is **+3.48%**, not zero.
+
+Reported, not smoothed. NO2 carries ~1.3 GW of onshore wind, so same-day wind
+information the market had not yet seen is apparently worth a little to a model that
+can respond to it non-linearly, even where reservoir opportunity cost sets the price.
+The control still carries the finding in *ratio* — 24% and 18% against 3.5%, a 5-7x
+gap — but **"the hydro zone shows nothing" is a C8 sentence, not a C9 one**, and the
+C18 write-up must use the C9 version.
+
+#### FINDING C9-E — ladder monotonicity flips between models, in all three zones
+
+Each arm's information set contains the previous arm's, so MAE was expected to be
+non-increasing along the ladder. FINDING C8-B recorded that it is not, for DE-LU and
+NO2 under LEAR. Under the GBM it **is** monotone for DE-LU and NO2 and is **not** for
+ES (`load_only` lands 0.028 EUR/MWh above `price_only`) — the flag flips relative to
+LEAR in every zone.
+
+That is the strongest available evidence that these fractional non-monotonicities are
+noise around zero rather than structure: across 2 models x 3 zones both orderings
+occur, which is what to expect if the honest exogenous gain really is ~0 and the sign
+of a 0.2% difference is a coin flip. **No action taken** on either — dropping a column
+or widening a model to rescue an ordering would be tuning against a visible validation
+metric, which PLAN.md forbids.
+
+#### NOTE C8-01, partially answered
+
+C8 asked whether Tier A should keep the exogenous block given that it is worth ~0 on
+MAE, and PLAN.md's argument for keeping it was that "a GBM may use residual load where
+a LASSO cannot". **Measured: it does, a little, and nowhere near enough to justify the
+block on MAE.** The leak-free `res_persistence` arm buys 1.0% of MAE over `price_only`
+on DE-LU (22.787 → 22.556) and 1.0% on ES (18.348 → 18.171), where LEAR got −0.8% and
+−1.1% respectively; NO2 gets 0.2%. So the booster does extract something honest where
+the LASSO extracted nothing, and it is ~1%, not the 8-24% the late vintage buys.
+
+This still does not settle the question, because the metric that decides is a spread
+metric and not MAE. **C11/C12 should decide it**, and the right test is whether
+`res_persistence` improves the *capture ratio* over `price_only` by more than its 1%
+of MAE suggests — RES information mostly kills the large errors (RMSE moves more than
+MAE here too), and large errors are concentrated in exactly the high-wind,
+negative-price hours a battery earns in.
+
+#### Early stopping did its job, in all 12 runs
+
+Across all 12 (zone, arm) runs of 366 folds each, the chosen round count ranged
+**43-624** with medians of 81-139 by arm, and **not one fold of any arm in any zone hit
+the 2 000-round cap.** So the round count is genuinely an in-fold choice rather than a
+fixed hyperparameter wearing its name. Fitting set 24 119 rows, in-fold stopping set
+2 161 rows, on the last fold of every run. NO2 consistently needs more rounds (median
+114-139) than DE-LU or ES (81-104) — the kind of thing a per-zone tuning pass would
+have "fixed", and which is left alone.
+
+#### Bias — flagged for C11/C12, not acted on
+
+Every arm of every zone is biased **high**: GBM +2.6 to +8.7 EUR/MWh, LEAR +2.6 to
++5.7. This is the shared asinh VST, not a GBM defect — `sinh` is convex, so
+back-transforming a conditional-mean estimate in asinh space overshoots in price
+space, and the booster inherits the effect LEAR already had (DE-LU `price_only`: GBM
++5.20, LEAR +5.06). The late arm is the most biased because it is the most confident.
+
+Flagged because C11/C12 dispatch against these curves: a roughly *uniform* upward bias
+barely perturbs the within-day ordering and spread a battery actually trades on, so the
+capture ratio may be far less sensitive to it than the MAE table suggests. That is a
+prediction for C11/C12 to test, not a claim made here.
+
+#### Leakage assertion (i) on real prices — decisive in all three zones
+
+| Zone | aligned MAE | one day staler | degradation | `staler_is_worse` |
+|---|---|---|---|---|
+| DE-LU | 22.786 | 26.104 | **+14.56%** | yes |
+| ES | 18.766 | 23.282 | **+24.07%** | yes |
+| NO2 | 14.035 | 16.956 | **+20.81%** | yes |
+
+Which is the point of FINDING C9-A below: the assertion has real content on real
+prices; it was the synthetic fixture that was vacuous, not the guard.
+
+#### FINDING C9-A — PLAN.md assertion (i) is vacuous for a pooled booster on a periodic series
+
+C3 asserts leakage assertion (i) ("shifting the feature matrix forward one day must
+degrade metrics") against `NaiveLastWeek`, which *is* `price_lag_168h`, so misaligning
+the matrix necessarily wrecks it. Run the same experiment with the GBM on the same
+synthetic week-periodic fixture and the **staler matrix scores better** — MAE 1.716
+against 1.759.
+
+Not a bug and not a leak. The pooled booster also holds `hour_of_day_local`,
+`day_of_week` and `month`, and on that fixture the price shape is an exact
+deterministic function of those three. The lagged prices are a *noisier restatement*
+of a signal the calendar gives for free — each lag carries its own copy of the noise
+term — so the best available model on that series ignores the lags, and misaligning
+them nudges the booster towards doing exactly that. The tell is that the aligned MAE
+(1.759) is already within 10% of the 1.596 noise floor no model can beat.
+
+So assertion (i) is only informative on a series where the lagged prices carry
+something the calendar cannot. The response was **not to weaken the assertion** but to
+put it where it means something, in three places:
+
+1. `test_shifting_the_features_forward_a_day_degrades_the_gbm` runs it on the
+   persistence-dominated synthetic series, where it passes decisively.
+2. `test_the_day_shift_assertion_is_vacuous_for_this_model_on_a_periodic_series` pins
+   the vacuity *and its reason*, so nobody later reads a passing periodic-series shift
+   test as evidence of anything.
+3. `backtest/run_c9_gbm.py` runs the assertion on each zone's **real prices** at the
+   committed config and records it in `summary.day_shift_diagnostic` — which is where
+   the assertion is actually established for this model (numbers above).
+
+**`tests/test_c3_leakage_harness.py` is untouched.** Its assertion is about the naive
+floor and remains true of it. Nothing was edited to make a red test green; one new
+test file was added and the assertion was re-sited onto a fixture where it has content.
+
+#### FINDING C9-B — RETRACTED. It was my hypothesis, and my own test disproved it.
+
+**Recorded in full because the retraction is the useful part.**
+
+The hypothesis: LightGBM's early stopping might not discard the
+`early_stopping_rounds` trees built while it discovers the best iteration, in which
+case `booster.predict(X, num_iteration=booster.num_trees())` would quietly serve the
+exact overfit tail early stopping existed to reject — a nasty bug class, because
+nothing about it looks wrong. The model was changed to carry the round count
+explicitly, and a test was written to pin the supposed gap.
+
+**The hypothesis is false on lightgbm 4.7.0.** `lgb.train` truncates the booster to
+the best iteration: `num_trees() == best_iteration`, and a bare `predict()` already
+uses the right trees. Verified directly on a synthetic fit (best_iteration 83,
+num_trees() 83, `predict()` identical to `predict(num_iteration=best_iteration)`), and
+the original code was therefore never wrong. **The test is what caught it** — it
+failed on the first full-suite run with `assert 354 > 354` — which is exactly what a
+test pinning a claimed mechanism is for.
+
+What survives: `GbmModel` still passes `num_iteration` explicitly, because the
+rollback is a library implementation detail rather than a documented guarantee and the
+code should be correct either way, and the fit report still distinguishes
+`n_rounds_used` from `n_trees_in_booster`. The test was rewritten as
+`test_the_booster_is_rolled_back_to_the_best_iteration`, which pins the behaviour in
+the *opposite* direction — so a future LightGBM that stops rolling back surfaces as a
+failure here rather than as a silent shift in every result.
+
+**Two pushed commit messages state the retracted version and cannot be rewritten**
+(`3388a39` "C9: GBM ... code + tests", which asserts the finding, and the DE-LU/ES
+artefact commits, which reference "the fixed code"). The commits' *code* is correct —
+it just was not fixing a real bug. This entry is the correction of record; a later
+cycle reading those messages should read this paragraph instead. Nothing about the
+committed numbers changes: the explicit round count and the implicit one are the same
+number on this version, so every C9 result stands as reported.
+
+#### Where early stopping chooses from, and why that is the only forward-looking risk
+
+The round count is the one quantity this model adapts per fold, so it is the one place
+a GBM fold could look forward. `early_stopping_split` takes the last
+`early_stopping_days` **market days** of the training window as the stopping set and
+everything strictly before as the fitting set:
+
+- split by *day*, not by row — half a day on each side would put a row's own near
+  neighbours across the split and make the stopping curve optimistic;
+- strictly time-ordered, asserted rather than assumed (`ModelError` if not);
+- inside the training window, which the harness has already asserted was public at the
+  fold's gate closure, so it never touches the test fold.
+  `test_early_stopping_uses_only_training_days` checks that against the fold's own day
+  sets rather than by reading the code.
+
+With `refit_on_full_window=True` the model is then refit on the *whole* window for the
+chosen rounds. The alternative throws away the most recent 90 days — the days most like
+the one being predicted — purely as a side effect of having used them to pick a number.
+The refit sees those days' targets, which is in-fold model *selection*, not leakage:
+every one of them was published before the fold's gate closure.
+
+#### How the late arm is allowed to run at all
+
+Unchanged from C8 and reused rather than reimplemented: `res_as_published` goes through
+`forecast.exog_features.assert_only_acknowledged_leakage` over the whole arm matrix,
+which permits a violation only if its column was named in advance, its kind is
+`after_gate_closure`, and its worst lateness equals what the declared publication clock
+predicts to the minute. The harness's per-fold check is skipped for that one arm only
+(`check_leakage=False`) and replaced by that one pass, which implies it — the guard is
+a per-(row, column) predicate. The three leak-free arms get nothing special and the
+**unmodified** `assert_no_leakage` has to pass clean on every fold of each.
+
+`forecast/leakage.py`, `forecast/features.py`, `forecast/exog_features.py`,
+`forecast/lear.py`, `data/contracts.py`, `data/aggregate.py` and every `config/*.yaml`
+are **untouched** by C9 — verified with `git diff --stat HEAD` over exactly those paths
+before committing. The only modified existing file in the whole cycle is
+`requirements.txt` (the `lightgbm>=4.3` line).
+
+#### LEAR is read from C8's artefact, not refitted
+
+C8 committed LEAR's predictions for all four arms, per Tier-A zone, for 2024, on the
+same aligned 2022-01-01 training window and the same daily-refit spec. Refitting would
+spend an hour reproducing a committed number and would quietly allow the two models to
+be compared on different folds if any spec drifted. So `load_c8_lear_predictions`
+loads the artefact and **asserts** its index and realised prices against this run's
+rather than reindexing onto them — a mismatch is a loud failure, not a silent
+realignment.
+
+#### Built and committed (51 new tests, 432 in total)
+
+**Test-run record, stated exactly.** The first full-suite run gave **431 passed, 1
+failed** — the failure being C9's own new `test_the_overfit_tail_...`, which disproved
+FINDING C9-B (see its retraction above). That test was rewritten as
+`test_the_booster_is_rolled_back_to_the_best_iteration` and verified passing, and the
+suite was re-run to confirm all 432 green; the confirming run's result is recorded in
+the commit that carries this entry.
+
+- `forecast/gbm.py` — `GbmSpec` (the frozen, fingerprinted config), `GbmModel`
+  (pooled booster, categorical calendar, LEAR's asinh target VST imported rather than
+  re-implemented, native/decline NaN policy, per-fold fit report, split-gain
+  importances), `early_stopping_split`, `gbm_factory`.
+- `backtest/run_c9_gbm.py` — the CLI: four arms × three zones, the common-hours table,
+  both ladders, the GBM−LEAR comparison, the early-stopping report, the real-data
+  day-shift diagnostic, and the C8 LEAR-artefact loader with its index/price
+  assertions.
+- `tests/test_c9_gbm.py` — 51 offline tests. No network, no cached file, no sealed year.
+- `docs/gbm_model.md` — the full write-up of everything above.
+- `backtest/results/c9_gbm_{DE-LU,ES,NO2}_2024_{predictions.csv.gz,folds.csv,summary.json}`.
+- `requirements.txt` — `lightgbm>=4.3`, with the reason for the floor.
+
+#### Three design choices that were easy to get wrong
+
+- **Pooled over delivery hours, not 24 models.** LEAR partitions because a
+  ~30-parameter linear model per hour is estimable from ~1 000 rows and pooling would
+  force one slope to describe hour 03 and hour 18 at once. A tree ensemble has the
+  opposite problem: splitting 24 ways starves all 24 boosters, while one pooled model
+  can *learn* the hour interaction where the data supports it. The consequence is
+  stated, not hidden, in three places including `summary.model_comparison.note`: **a
+  GBM−LEAR difference is a difference of functional form AND of pooling, and this
+  cycle cannot separate the two.** The within-model differences — which is what
+  FINDING C8-A turns on — are unaffected by that entanglement, which is why the
+  vintage premium is the number this cycle can actually settle.
+- **The target transform is imported from `forecast.lear`, not copied.** Identical
+  `asinh((y−a)/b)` on the in-fold median/MAD, inverted exactly. Copying would let the
+  two drift and turn a model comparison into a comparison of loss scales; importing
+  makes "identical" a property of the code rather than of a comment. No *feature* is
+  transformed — trees are invariant to monotone feature transforms, so LEAR's
+  per-column price VST is pointless here and is not used.
+- **The categorical set is read from LEAR's own constants.** `CATEGORICAL_FEATURES`
+  is built from `forecast.lear.CATEGORICAL_CALENDAR` and `HOUR_KEYS`, so the two models
+  cannot drift apart about what is a category and what is a number;
+  `test_the_calendar_categoricals_are_the_same_set_lear_encodes` pins it. The codes
+  handed to LightGBM are the *values themselves* (hour 0-23, ISO weekday, month 1-12),
+  not positions in a fitted level list, so a level the training window never saw cannot
+  shift the meaning of another one.
+
+#### LP invariants
+
+C9 touched no dispatch, LP or settlement code, so the battery-LP invariants apply to no
+new artefact. They remain executable and green as part of the full suite:
+`assert_oracle_dominates` and the rolling commit-then-settle assertions in
+`tests/test_c5_battery_lp.py` and `tests/test_c6_commit_then_settle.py` pass. No LP
+objective from a forecast-priced solve is reported anywhere as a realised value.
+**FLAG C5-01** (simultaneous charge/discharge) is unchanged and still resolved as
+option (b) per Checkpoint B.
+
+#### Cache re-pull — NOTE C2-02, 20th recurrence
+
+`data/raw/` was empty again (the container does not keep it), so C9 re-pulled 18
+(zone, year) price files and 18 (zone, document, year) ENTSO-E files for the Tier-A
+zones. **36/36 succeeded, 0 FLAGs.** Then `data.build_exog_manifest`,
+`data.build_exog_contracts` and `data.build_manifest --zones DE-LU ES NO2` were re-run
+against the fresh cache and diffed against the committed artefacts:
+
+- **exogenous manifest** (27 rows x 38 columns): the only fields that differ are
+  `fetched_at_utc` (27 rows) and `gzip_bytes` (27 rows). Every `payload_sha256`, count,
+  coverage figure, gap count, NaN count, negative count and distribution statistic is
+  **identical**.
+- **price manifest**, Tier-A rows (18 x 28): the only field that differs is
+  `fetched_at_utc`.
+- **exogenous contract report**: CSV body byte-identical ignoring timestamps; "all
+  exogenous data contracts hold". The JSON differs only in `generated_at_utc`,
+  `git_sha` and `config_hash` — the last because the committed report was generated at
+  C7, before C8 added the publication clocks.
+
+`gzip_bytes` moves by a few bytes because ENTSO-E stamps a fresh random `mRID` into
+each response header, which the series fingerprint correctly ignores. The regenerated
+manifest artefacts were therefore **reverted** rather than committed, as in C8:
+they describe the same data, they are correctly labelled `"cycle": "C7"`, and
+committing a new timestamp every cycle would churn the manifest forever for no
+information gain. The 9-zone price contract report was **not** regenerated, because C9
+is Tier-A only and doing so would have meant re-downloading the six Tier-B zones for
+nothing.
+
+An additional, stronger verification this cycle: `load_c8_lear_predictions` asserts
+C8's committed realised prices against C9's freshly-loaded ones per zone, and the
+**worst disagreement is 0.0 EUR/MWh in all three zones**. C8's artefact reproduces
+exactly on a cache pulled a day later.
+
+#### Sealed holdout
+
+**SEALED.** Verified armed before and after the work: marker-alone-on-a-line count
+**0**, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`,
+`assert_not_sealed({2025})` raises `SealedHoldoutError`, and no `*2025*` file exists
+anywhere under `data/`. Every arm of every zone was evaluated on `[2024]` only; the
+exogenous window is 2022-01-01..2024-12-31 and the price window
+2018-12-31..2024-12-31. `test_the_gbm_cannot_be_evaluated_against_a_sealed_year`
+asserts the booster inherits the refusal with no door of its own. No 2025 data has
+been fetched, loaded, dispatched or computed against at any point in C2-C9.
+
+#### Config hash
+
+**`515d4e8d98887256`** — unchanged from C8. C9 modified no `config/*.yaml` file; the
+GBM's configuration lives in `forecast.gbm.GbmSpec` and is tracked by its own
+fingerprint (`a366a760e269bba6`) rather than by the config hash, because it is code, not
+data-layer config. Verified with `git diff --stat HEAD -- config/` (empty).
+
+#### Repo-state note
+
+The detached-HEAD trap recurred: the container arrived detached at `24e01c6` with local
+`master` stale 7 commits behind. **24 recurrences out of 31 containers.** This time
+`git checkout -B master 24e01c6` was **denied by the permission classifier** ("Git
+Destructive"), so the cycle worked detached and pushed `HEAD:master` throughout, which
+was safe only because `origin/master` equalled `HEAD` at session start. **If a future
+container arrives detached *and* genuinely behind the remote, that fallback is not
+available** — the cycle will need either the `checkout -B` permission or a different
+reattachment route, and should flag rather than improvise. Keep checking
+`git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the start
+of every cycle.
+
+#### Suggestion for C10 (not done here — out of C9's scope)
+
+PLAN.md C10 writes results append-only, "each row tagged with git SHA + config hash".
+Add **library provenance** to that row too (at minimum `lightgbm.__version__`): the GBM
+fingerprint pins the values *we* set, but everything `GbmSpec.booster_params()` does not
+name — `max_cat_threshold`, `min_data_per_group`, `max_depth` — comes from the installed
+LightGBM, so a major-version bump that moved a default would change results without
+changing the fingerprint. C9's runs used **lightgbm 4.7.0**. Deliberately not bolted onto
+C9's summaries after the fact, because the artefacts and the code that produced them
+should stay in lockstep.
+
+**Next:** C10 — scale the harness: Tier A (3 models, exogenous features) + Tier B
+(naive + LEAR, price-only), results written append-only with each row tagged by git SHA
+and config hash. Read FINDING C9-C first: the headline arm for Tier A is
+`res_persistence` (leak-free), with `res_as_published` carried alongside **only** as the
+labelled vintage-premium measurement, and the GBM's apparent edge over LEAR must never
+be quoted from the late arm. Note also that C10's Tier-B scale-out needs the six Tier-B
+zones' price cache, which this cycle did not pull (Tier A only).

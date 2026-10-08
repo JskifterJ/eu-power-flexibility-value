@@ -133,14 +133,23 @@ purely as a side effect of having used them to choose a round count. The refit
 sees those days' targets, which is in-fold model *selection*, not leakage: every
 one of them was published before the fold's gate closure.
 
-**A trap worth naming.** `lgb.train` does not discard the trees built *after* the
-best iteration while early stopping discovers it; it only records which
-iteration was best. A booster therefore generally holds more trees than the
-model should use, and predicting with `num_trees()` would quietly serve the
-overfit tail that early stopping existed to reject. The round count is carried
-explicitly in `n_iteration_` and passed to every predict call;
-`test_the_overfit_tail_after_the_best_iteration_is_never_predicted_with` pins
-both the gap and the fact that the two counts give different answers.
+**A trap that turned out not to be one — and the retraction of FINDING C9-B.**
+The worry was that `lgb.train` might keep the `early_stopping_rounds` trees built
+*after* the best iteration while discovering it, in which case predicting with
+`num_trees()` would quietly serve the exact overfit tail early stopping existed
+to reject, and nothing would look wrong. C9 first recorded that as FINDING C9-B.
+
+**It is false on lightgbm 4.7.0.** `lgb.train` truncates the booster to the best
+iteration — `num_trees() == best_iteration`, and a bare `predict()` already uses
+the right trees — so the original code was never wrong. The test written to pin
+the supposed gap is what disproved it, which is what the test was for.
+
+What survives is the defensive half: `GbmModel` passes `num_iteration`
+explicitly, because the rollback is a library implementation detail rather than a
+documented guarantee, and the code should be correct either way.
+`test_the_booster_is_rolled_back_to_the_best_iteration` now pins the behaviour in
+the other direction, so a version that stops rolling back shows up as a test
+failure rather than as a silent shift in every result.
 
 ### 4. Missing cells are routed, not invented
 
@@ -232,7 +241,142 @@ against a freshly re-pulled cache. `--no-lear-reference` skips it.
 
 ## Results — 2024 validation year, Tier A
 
-<!-- RESULTS -->
+All three Tier-A zones, daily refit, expanding window aligned to 2022-01-01,
+366 folds, config fingerprint `a366a760e269bba6`, lightgbm 4.7.0. **Scored on the
+common hours** — the hours every arm of both models predicted (DE-LU 8 782, ES
+8 591, NO2 8 783; ES drops the most, chiefly FINDING C7-C's 120-hour December
+2024 solar gap, which LEAR declines and the GBM routes).
+
+MAE / RMSE in EUR/MWh:
+
+| Series | DE-LU MAE | RMSE | ES MAE | RMSE | NO2 MAE | RMSE |
+|---|---|---|---|---|---|---|
+| `naive_last_week` | 32.791 | 55.213 | 26.958 | 37.513 | 21.192 | 41.757 |
+| `gbm_price_only` | 22.787 | 36.339 | 18.348 | 24.354 | 14.035 | 25.907 |
+| `gbm_load_only` | 22.749 | 36.085 | 18.376 | 24.472 | 14.005 | 25.846 |
+| `gbm_res_persistence` | 22.556 | 35.998 | 18.171 | 24.329 | 14.004 | 25.696 |
+| `gbm_res_as_published` *(late)* | **17.151** | **29.077** | **14.932** | **19.572** | **13.517** | **24.625** |
+| `lear_price_only` | 23.525 | 37.416 | 18.126 | 24.075 | 14.737 | 26.894 |
+| `lear_load_only` | 23.715 | 37.425 | 18.015 | 23.992 | 14.746 | 26.915 |
+| `lear_res_persistence` | 23.588 | 37.199 | 17.930 | 23.892 | 14.817 | 26.938 |
+| `lear_res_as_published` *(late)* | 21.610 | 32.699 | 15.906 | 20.650 | 14.809 | 26.273 |
+
+### FINDING C9-C — the vintage premium is 2-3x larger for the booster
+
+| Zone | capturable gain, GBM (`load_only − price_only`) | vintage premium, GBM | vintage premium, LEAR (C8) | ratio |
+|---|---|---|---|---|
+| DE-LU | +0.16% of MAE | **+23.96%** | +8.39% | **2.9x** |
+| ES | −0.15% | **+17.82%** | +11.28% | **1.6x** |
+| NO2 | +0.21% | +3.48% | +0.06% | — |
+
+C8 measured the vintage premium with a per-hour LASSO and found 8-11% of MAE in
+the two RES-exposed zones. The same columns, the same vintages, the same rows,
+the same folds, under a tree ensemble: **24% and 18%.** So FINDING C8-A does not
+merely survive a change of functional form — the leak is worth two to three
+times more to a non-linear model.
+
+The mechanism is visible in the model's own internals rather than only in the
+metric. Split-gain importance on `residual_load_forecast_mw`, DE-LU, last fold:
+
+| arm | share of total gain |
+|---|---|
+| `res_persistence` (leak-free) | 0.033 |
+| `res_as_published` (late) | **0.236** |
+
+The booster leans **seven times harder** on residual load when it is fed the
+vintage published after gate closure. That is what a non-linear model does with
+a merit-order driver it can actually trust, and it is exactly what the honest
+vintage denies it.
+
+The practical reading is the opposite of reassuring. A published result of the
+form *"gradient boosting beats LEAR on a RES-fed day-ahead price model"* may be
+substantially an artefact of the Art. 14 publication timestamp rather than of
+the functional form — because on these three zones the booster's advantage over
+the LASSO is concentrated almost entirely in the late arm:
+
+| `gbm − lear` MAE | DE-LU | ES | NO2 |
+|---|---|---|---|
+| `price_only` | −0.738 (−3.1%) | **+0.222 (+1.2%)** | −0.703 (−4.8%) |
+| `load_only` | −0.966 (−4.1%) | **+0.361 (+2.0%)** | −0.740 (−5.0%) |
+| `res_persistence` | −1.032 (−4.4%) | **+0.241 (+1.4%)** | −0.813 (−5.5%) |
+| `res_as_published` *(late)* | **−4.458 (−20.6%)** | −0.974 (−6.1%) | −1.291 (−8.7%) |
+
+Negative favours the GBM. On the honest arms there is **no uniform winner** — the
+booster wins DE-LU and NO2 by 3-5% and *loses* solar-dominated ES by 1-2%. On the
+late arm it wins everywhere, and on DE-LU by 21%. Remember the caveat from
+decision 1: this difference is functional form *and* pooling together. The
+*within*-model vintage premium above is not affected by that entanglement, which
+is why it is the number this cycle can actually settle.
+
+### NO2: the control holds in ratio, but is no longer exactly null
+
+C8's NO2 result was a clean zero in both directions (+0.06% premium), which is
+what made the other two zones credible — a method that invented a premium in a
+hydro zone with no solar fleet would be measuring its own machinery. Under the
+booster NO2's honest arms stay flat (+0.21%, and `price_only`/`load_only`/
+`res_persistence` land within 0.03 EUR/MWh of each other) but the premium is
+**+3.48%**, not zero.
+
+Reported, not smoothed. NO2 does carry ~1.3 GW of onshore wind, so same-day wind
+information the market had not yet seen is apparently worth a little to a model
+that can respond to it non-linearly, even where reservoir opportunity cost sets
+the price. The control still carries the finding in *ratio* — 24% and 18% against
+3.5%, a 5-7x gap — but "the hydro zone shows nothing" is a C8 sentence, not a C9
+one, and the write-up should say the C9 version instead.
+
+### Ladder monotonicity: both orderings now observed
+
+Each arm's information set contains the previous arm's, so MAE was expected to be
+non-increasing along the ladder. FINDING C8-B recorded that it is not, for DE-LU
+and NO2 under LEAR. Under the GBM it is monotone for DE-LU and NO2 and **not** for
+ES (`load_only` lands 0.028 EUR/MWh above `price_only`) — i.e. the flag flips
+relative to LEAR in all three zones.
+
+That is the strongest available evidence that these fractional non-monotonicities
+are noise around zero rather than structure: across 2 models x 3 zones both
+orderings occur, which is what to expect if the honest exogenous gain really is
+~0 and the sign of a 0.2% difference is a coin flip. **No action taken** on either
+— dropping a column or widening a model to rescue the ordering would be tuning
+against a visible validation metric, which PLAN.md forbids.
+
+### Early stopping did its job
+
+Across all 12 (zone, arm) runs of 366 folds each: the chosen round count ranged
+**43-624** with medians of 81-139 by arm, and **not one fold of any arm in any
+zone hit the 2 000-round cap.** So the round count is genuinely an in-fold choice
+rather than a fixed hyperparameter wearing its name. The fitting set was 24 119
+rows and the in-fold stopping set 2 161 rows on the last fold of every run.
+
+NO2 needs consistently more rounds (median 114-139) than DE-LU or ES (81-104),
+which is the kind of thing a per-zone tuning pass would have "fixed" and which is
+left alone here.
+
+### Bias, and why it matters later
+
+Every arm of every zone is biased **high** — GBM +2.6 to +8.7 EUR/MWh, LEAR +2.6
+to +5.7. This is the shared asinh VST, not a GBM defect: `sinh` is convex, so
+back-transforming a conditional-mean estimate in asinh space overshoots in price
+space, and the booster inherits the same effect LEAR already had (DE-LU
+`price_only`: GBM +5.20, LEAR +5.06). The late arm is the most biased, because it
+is the most confident.
+
+It is flagged here because C11/C12 dispatch against these curves, and a roughly
+uniform upward bias barely perturbs the *within-day ordering and spread* that a
+battery actually trades on. So the capture ratio may be far less sensitive to
+this bias than the MAE table suggests — which is a prediction to test in C11/C12,
+not a claim to make here.
+
+### Leakage assertion (i) on real prices
+
+| Zone | aligned MAE | one day staler | degradation | `staler_is_worse` |
+|---|---|---|---|---|
+| DE-LU | 22.786 | 26.104 | **+14.56%** | ✅ |
+| ES | 18.766 | 23.282 | **+24.07%** | ✅ |
+| NO2 | 14.035 | 16.956 | **+20.81%** | ✅ |
+
+Decisive in all three zones, which is the point of FINDING C9-A: the assertion
+has real content on real prices, and it was the synthetic week-periodic fixture
+that was vacuous, not the guard.
 
 ## Limitations, stated
 

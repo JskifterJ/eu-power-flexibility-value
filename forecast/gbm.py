@@ -466,12 +466,17 @@ class GbmModel:
             )
         else:
             self.booster_ = stopped
-        # `lgb.train` does not discard the ``early_stopping_rounds`` trees built
-        # *after* the best iteration — it only records which iteration was best.
-        # So the booster generally holds more trees than the model should use, and
-        # predicting with all of them would quietly serve the overfit tail that
-        # early stopping existed to reject. The round count is therefore carried
-        # explicitly and passed to every predict call.
+        # Carry the round count explicitly rather than reading it back off the
+        # booster. On lightgbm 4.7.0 `lgb.train` truncates the booster to the best
+        # iteration, so `num_trees() == best` and a bare `predict()` would already
+        # use the right trees — but that rollback is an implementation detail, not
+        # a documented guarantee, and if a version ever kept the
+        # `early_stopping_rounds` trees built after the best iteration then
+        # predicting with all of them would silently serve the exact overfit tail
+        # early stopping existed to reject. Passing `num_iteration` is correct
+        # either way; `test_the_booster_is_rolled_back_to_the_best_iteration`
+        # pins the current behaviour so a change in it surfaces as a failure
+        # rather than as a quiet shift in every result.
         self.n_iteration_ = best
         report.n_rounds_used = best
         report.n_trees_in_booster = int(self.booster_.num_trees())

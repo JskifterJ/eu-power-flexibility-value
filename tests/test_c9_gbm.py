@@ -349,15 +349,27 @@ def test_without_the_refit_the_model_is_the_early_stopped_booster(split):
     )
 
 
-def test_the_overfit_tail_after_the_best_iteration_is_never_predicted_with(split):
-    """``lgb.train`` keeps the trees built after the best iteration; we must not use them.
+def test_the_booster_is_rolled_back_to_the_best_iteration(split):
+    """lightgbm rolls the booster back to ``best_iteration``; this pins that contract.
 
-    LightGBM's early stopping records *which* iteration was best, it does not
-    discard the ``early_stopping_rounds`` trees built while discovering that. So
-    the booster holds more trees than the model should use, and predicting with
-    all of them would quietly serve the overfit tail that early stopping existed
-    to reject. This pins the gap and pins that the prediction uses the stopped
-    count rather than the tree count.
+    **This test began life asserting the opposite, and was wrong.** The worry was
+    reasonable — if ``lgb.train`` kept the ``early_stopping_rounds`` trees built
+    while discovering the best iteration, then predicting with ``num_trees()``
+    would quietly serve the exact overfit tail early stopping existed to reject,
+    and nothing would look wrong. So the model was written to carry the round
+    count explicitly and a test was written to pin the gap.
+
+    There is no gap. On lightgbm 4.7.0 ``lgb.train`` truncates the booster to the
+    best iteration, so ``num_trees() == best_iteration`` and a bare ``predict()``
+    already uses the right trees. The test caught the wrong hypothesis, which is
+    what it was for — see the retraction of FINDING C9-B in ``PROGRESS.md``.
+
+    What remains is worth pinning, in the other direction: the rollback is a
+    library implementation detail, not a documented guarantee this code should
+    lean on. ``GbmModel`` therefore still passes ``num_iteration`` explicitly, so
+    it is correct whether or not a future version rolls back — and this test
+    asserts the version in use *does* roll back, so a version that stops doing so
+    shows up here as a failure rather than as a silent change in every result.
     """
     train, test = split
     no_refit = GbmSpec(
@@ -366,23 +378,25 @@ def test_the_overfit_tail_after_the_best_iteration_is_never_predicted_with(split
     )
     model = GbmModel(no_refit).fit(train)
     report = model.fit_report()
-    assert report["n_trees_in_booster"] > report["best_iteration"]
+
+    # The round count the stopping set chose is what the model uses, and what the
+    # booster holds. All three agree.
     assert report["n_rounds_used"] == report["best_iteration"]
+    assert report["n_trees_in_booster"] == report["best_iteration"]
     assert model.n_iteration_ == report["best_iteration"]
+    # Early stopping actually fired, so the rollback had something to roll back.
+    assert report["n_rounds_capped"] is False
+    assert report["best_iteration"] < no_refit.num_boost_round
 
-    # The two round counts give different answers, so the choice is load-bearing.
-    best_only = model.predict(test)
-    with_tail = pd.Series(
-        model.booster_.predict(
-            model._design(test.features, model.feature_names_).to_numpy(dtype="float64"),
-            num_iteration=report["n_trees_in_booster"],
-        ),
-        index=test.index,
+    # And because the booster holds only those trees, asking for all of them
+    # (num_iteration=0 means "every tree") gives the same answer.
+    design = model._design(test.features, model.feature_names_).to_numpy(dtype="float64")
+    all_trees = _inverse_asinh(
+        np.asarray(model.booster_.predict(design, num_iteration=0), dtype="float64"),
+        model.target_centre_,
+        model.target_scale_,
     )
-    from forecast.lear import _inverse_asinh as _inv
-
-    with_tail = _inv(with_tail, model.target_centre_, model.target_scale_)
-    assert not np.allclose(best_only.to_numpy(), with_tail.to_numpy())
+    np.testing.assert_allclose(model.predict(test).to_numpy(), all_trees)
 
 
 # ---------------------------------------------------------------------------
