@@ -41,3 +41,14 @@ scipy>=1.11
 # C8 (exogenous features into LEAR, Tier A, + the RES-forecast degradation
 # sensitivity): no new dependencies. The exogenous columns are a join and a
 # vintage offset on top of C7's loader, and the model is C4's committed LEAR.
+
+# C9 (the gradient-boosted model: one fixed LightGBM config, in-fold early
+# stopping, Tier A only). The floor is 4.3 because `lgb.early_stopping` settled
+# into the callback form forecast/gbm.py uses there, and because 4.x is where
+# `deterministic=True` became reliable enough to assert bit-reproducibility on
+# (tests/test_c9_gbm.py::test_the_fit_is_bit_reproducible). PLAN.md forbids a
+# hyperparameter search across cycles, so the committed config lives in
+# `forecast.gbm.GbmSpec`, is fingerprinted into every result row, and is pinned
+# to literals by a test — a later cycle cannot tune a knob without editing a
+# test, which CLAUDE.md makes a flag-and-stop event.
+lightgbm>=4.3
