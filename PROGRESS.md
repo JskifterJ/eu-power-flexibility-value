@@ -3240,8 +3240,9 @@ realignment.
 failed** — the failure being C9's own new `test_the_overfit_tail_...`, which disproved
 FINDING C9-B (see its retraction above). That test was rewritten as
 `test_the_booster_is_rolled_back_to_the_best_iteration` and verified passing, and the
-suite was re-run to confirm all 432 green; the confirming run's result is recorded in
-the commit that carries this entry.
+full suite was then re-run clean: **432 passed, 0 failed, 51 warnings, 591s** (the
+warnings are all pre-existing sklearn LARS convergence notices from the C8 LEAR tests).
+That is the run that closes C9.
 
 - `forecast/gbm.py` — `GbmSpec` (the frozen, fingerprinted config), `GbmModel`
   (pooled booster, categorical calendar, LEAR's asinh target VST imported rather than
