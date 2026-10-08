@@ -97,6 +97,15 @@ sources:
       retry_backoff_seconds: [5, 15, 45]
       max_window: P1Y
     expected_unit: MAW               # megawatt; anything else is a FLAG
+    # C8: the *publication clock* of each document, declared so the C3
+    # gate-closure guard can check these columns instead of trusting the prose
+    # in `leakage_note`. `published_day_offset: -1` with `published_local:
+    # "18:00"` reads "the forecast for market day D was public at 18:00 local on
+    # D-1". These are facts about the source, which is why they live here beside
+    # the document that has them, and they are what makes the FLAGGED status of
+    # A69 *measurable* (18:00 on D-1 is after gate closure at 12:00 on D-1)
+    # rather than only asserted.
+    publication_tz: "Europe/Brussels"
     # The two document types PLAN.md C7 asks for. `domain_param` differs between
     # them (A65 is an out-zone load document, A69 an in-zone generation
     # document) and getting it wrong yields an empty Acknowledgement, so it is
@@ -117,6 +126,12 @@ sources:
         leakage_note: >
           Published at latest 2h before day-ahead gate closure, so the archived
           vintage is information a bidder genuinely held. Safe.
+        # Art. 6.1.B requires publication at the latest two hours before the
+        # day-ahead gate closes. The *latest* permitted instant is taken, not a
+        # typical one: a guard built on an optimistic publication time would
+        # pass a column that a real bidder was still waiting for.
+        published_day_offset: -1
+        published_local: "10:00"
         series:
           load_forecast_da_mw:
             psr_types: []
@@ -133,6 +148,12 @@ sources:
           day-ahead gate closure — and is revised intraday, so the archived
           vintage is NOT what a bidder had. Usable only alongside the mandatory
           C8 degradation sensitivity, and stated in the write-up's Limits.
+        # 18:00 local on D-1 — six hours AFTER gate closure. Declaring it is the
+        # point: with this here, the guard *finds* the violation on every
+        # as-published row, and C8's degradation experiment measures what the
+        # violation is worth instead of arguing about it.
+        published_day_offset: -1
+        published_local: "18:00"
         series:
           solar_forecast_da_mw:
             psr_types: [B16]

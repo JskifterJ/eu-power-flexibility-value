@@ -2,54 +2,78 @@
 
 ## Current status
 
-- **Next cycle to run:** **C8.** C7 complete (ENTSO-E client, Tier-A D-1 load +
-  wind/solar forecasts, exogenous manifest and contracts). See the C7 entry for the
-  five data pathologies it found and how each was resolved.
+- **Next cycle to run:** **C9.** C8 complete (exogenous features into LEAR for Tier A,
+  plus the RES-forecast degradation sensitivity). See the C8 entry for FINDING C8-A —
+  the headline result of the project so far — and for NOTE C8-01, the one open
+  question for a human, which does not block C9.
 - **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
   closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
-- **`ENTSOE_API_KEY` is set and was used for the first time in C7.** 18 of 18
-  (zone, document, year) pulls succeeded. The value was never read, logged or
-  written to disk; every stored URL and every error message is redacted (see
-  `docs/entsoe_layer.md` "Token hygiene"). PLAN.md's "ENTSO-E API key note" is now
-  spent — the Tier-B-only fallback was never needed.
+- **FINDING C8-A — read this before any later cycle reports an exogenous number.**
+  At an honest vintage the entire ENTSO-E exogenous block is worth **nothing** on
+  2024 MAE for all three Tier-A zones (−0.8% to +0.7%). Fed the as-published
+  Art. 14 archive — published 18:00 on D-1, six hours *after* gate closure — the
+  same columns in the same model buy **+8.4% (DE-LU)** and **+11.3% (ES)** of MAE,
+  and nothing in NO2 (the hydro control). Almost all of the apparent value of the
+  literature's standard RES-forecast source is the **vintage**, not the information.
+  The headline arm for later cycles is therefore `res_persistence` (leak-free);
+  `res_as_published` travels alongside it only as the labelled measurement of the
+  leak, and its numbers are never reportable as achievable.
+- **`ENTSOE_API_KEY` is set.** C8 used it only to re-populate the cache: 36/36 pulls
+  (18 price, 18 ENTSO-E) succeeded, 0 FLAGs. The value was never read, logged or
+  written to disk; every stored URL and error message is redacted.
 - **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch LP.
   **RESOLVED at Checkpoint B (2026-10-07): option (b)** — keep the pure LP as the
   default and carry the artefact as a stated limitation in the write-up. It biases
   capture *against* the model by ~0.16pp (LP 0.9187 vs MILP 0.9203), so it is
-  conservative. Unchanged by C7, which touched no dispatch code.
-- **New in C7 — all resolved in-cycle, none blocking, all recorded in the C7 entry
-  and `docs/entsoe_layer.md`:** **FINDING C7-A** (curveType A03 sparse block
-  semantics), **FINDING C7-B** (ES changed resolution PT60M→PT15M mid-2022),
-  **FINDING C7-C** (autumn-DST-day publication gaps, DE-LU and ES),
-  **FINDING C7-D** (NO2 offshore wind is an all-zero stub), **FINDING C7-E**
-  (negative residual load is signal, not a defect). **NOTE C7-01** is the one
-  open question for a human, and it is a presentation choice, not a blocker.
+  conservative. Unchanged by C7 and C8, neither of which touched dispatch code.
+- **Findings from C7 (all resolved in-cycle, recorded in `docs/entsoe_layer.md`):**
+  **C7-A** curveType A03 sparse block semantics; **C7-B** ES changed resolution
+  PT60M→PT15M mid-2022; **C7-C** autumn-DST-day publication gaps (DE-LU, ES);
+  **C7-D** NO2 offshore wind is an all-zero stub; **C7-E** negative residual load is
+  signal, not a defect.
+- **Findings from C8 (all recorded in the C8 entry and `docs/exogenous_model.md`):**
+  **C8-A** the vintage premium above; **C8-B** the MAE ladder is not monotone for
+  DE-LU and NO2 (reported, not smoothed — no action taken, since fixing it would be
+  tuning against a visible metric); **C8-C** the 24h persistence offset is itself late
+  on the autumn DST long day, and for DE-LU the hour it would read is the very hour
+  FINDING C7-C recorded as missing.
 - **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07):**
   - **NOTE C3-01** — daily-aggregate feature names say `lag_24h` but the leak-free
     window is `D-2`. Closed: keep the names; `docs/forecast_harness.md` documents the
-    real window. C7 did not touch `config/features.yaml`.
+    real window. C8 did not touch `config/features.yaml`.
   - **NOTE C4-01** — `destroys_skill()` not re-based on `TrainMedianBaseline`. Closed:
-    leave the PLAN.md leakage-assertion file untouched. C7 did not touch it.
+    leave the PLAN.md leakage-assertion file untouched. C8 did not touch it.
   - **NOTE C4-02** — the one declined hour a year is excluded and the day reported
     excluded. Confirmed by J.
+  - **NOTE C7-01** — `config/features.yaml` says `load_forecast_da`, the built column
+    is `load_forecast_da_mw`. Closed as option (a) — keep both spellings and document
+    the mapping. C8 makes the mapping *executable*:
+    `forecast.exog_features.exogenous_feature_names()` derives it from both files, so a
+    rename in either surfaces as a failing test instead of as drift.
   - **NOTE C2-02** — the raw cache does not survive a container, so every cycle
-    re-pulls DE-LU prices (~1 MB). Closed: no change. **18th recurrence** (C7 did not
-    need prices, so nothing was re-pulled).
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C7, before and after the
+    re-pulls. Closed: no change. **19th recurrence** (C8 re-pulled all 36 files and
+    verified every one of C7's 27 series fingerprints reproduces exactly — only
+    `fetched_at_utc` and `gzip_bytes` differ, the latter because ENTSO-E stamps a fresh
+    random `mRID` into each response header).
+- **Open question for a human — NOTE C8-01** (presentation, not a blocker): given
+  FINDING C8-A, should Tier A keep the exogenous block in C9/C10? **Proceeding as
+  PLAN.md describes** (keep it; a GBM may use residual load where a LASSO cannot, and
+  the metric that decides is a spread metric, not MAE). Say so if you would rather
+  Tier A ran `load_only` or price-only until a spread metric justifies the RES columns.
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C8, before and after the
   work: marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
-  `sealed_years()` = `{2025}`, and no `*2025*` file exists anywhere under `data/`.
-  C7 **strengthened** the guard: `data/entsoe.py` now asserts positively that no
-  parsed timestamp falls in a sealed year, so the exclusive-`periodEnd` argument is
-  checked rather than trusted. No 2025 data has been fetched, loaded, dispatched or
-  computed against at any point in C2-C7.
-- **Config hash:** **`28ebdd1ca5e72913`** (was `84f7bf31591d1e7f`). It moved because
-  C7 added the `sources.entsoe` document/request/series block to `config/data.yaml`.
-  No other `config/*.yaml` file was modified.
-- **Repo-state note:** the detached-HEAD trap recurred again in C7 — the container
-  arrived detached at `38cd939` with the local `master` ref stale 5 commits behind.
-  `git checkout -B master 38cd939` was **permitted this time** (it was denied in the
-  13th and 14th Checkpoint B waits), so no `HEAD:master` push path was needed.
-  **22 recurrences out of 29 containers.** Keep checking
+  `sealed_years()` = `{2025}`, `assert_not_sealed({2025})` raises, and no `*2025*` file
+  exists anywhere under `data/`. Every C8 arm was evaluated on `[2024]` only. No 2025
+  data has been fetched, loaded, dispatched or computed against at any point in C2-C8.
+- **Config hash:** **`515d4e8d98887256`** (was `28ebdd1ca5e72913`). It moved because C8
+  added `sources.entsoe.publication_tz` and the two `published_day_offset`/
+  `published_local` pairs to `config/data.yaml` — the publication clock the
+  gate-closure guard needs in order to check the exogenous columns at all. No other
+  `config/*.yaml` file was modified.
+- **Repo-state note:** the detached-HEAD trap recurred again in C8 — the container
+  arrived detached at `bb8e67c` with the local `master` ref stale 6 commits behind.
+  `git checkout -B master bb8e67c` was permitted, so no `HEAD:master` push path was
+  needed. **23 recurrences out of 30 containers.** Keep checking
   `git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the
   start of every cycle.
 
@@ -2614,3 +2638,273 @@ experiment. C8 must read the gap/NaN notes in
 `data/manifest/exogenous_contract_report.json` before building these columns in: the
 FLAGGED Art. 14 vintage is only usable alongside that sensitivity, and ~0.4% of
 hours are NaN by design.
+
+### C8 — 2026-10-08 (scheduled cycle) — exogenous features into LEAR + the RES vintage premium
+
+Scope per PLAN.md C8: exogenous features into LEAR for Tier A, plus the
+RES-forecast degradation sensitivity (as-published vs persistence-degraded) as a
+first-class experiment. Both done, for all three Tier-A zones. No checkpoint, no
+blocker, no FLAG raised. `ENTSOE_API_KEY` is set and was used only to re-populate
+the cache (see "Cache re-pull" below).
+
+#### The headline finding — FINDING C8-A: the vintage, not the information
+
+`config/features.yaml` has marked the Art. 14.1.D wind/solar forecast **FLAGGED**
+since C1 because it is published at 18:00 local on D-1, *after* the 12:00 gate
+closure the model is predicting. C8 turns that from a caveat into a measurement by
+running the same LEAR four times per zone over the same rows, changing only which
+exogenous columns are present and at which **vintage**:
+
+| Arm | Columns added | Vintage | Leak-free? |
+|---|---|---|---|
+| `price_only` | — | — | yes (C4's feature set) |
+| `load_only` | `load_forecast_da_mw` | target day's own (public 10:00 D-1) | **yes** |
+| `res_persistence` | `+` wind, solar, residual load | the vintage published 24h earlier | **yes** |
+| `res_as_published` | `+` wind, solar, residual load | target day's own (public 18:00 D-1) | **no — acknowledged** |
+
+2024 validation year, MAE/RMSE in EUR/MWh, scored on the **common hours** (the
+hours every arm predicted), LEAR at C4's committed spec, refit daily, every arm
+training from 2022-01-01:
+
+| Arm | DE-LU MAE | RMSE | ES MAE | RMSE | NO2 MAE | RMSE |
+|---|---|---|---|---|---|---|
+| `naive_last_week` | 32.799 | 55.219 | 27.316 | 38.135 | 21.195 | 41.758 |
+| `price_only` | 23.525 | 37.416 | 18.126 | 24.075 | 14.737 | 26.894 |
+| `load_only` | 23.715 | 37.425 | 18.015 | 23.992 | 14.746 | 26.915 |
+| `res_persistence` | 23.588 | 37.199 | 17.930 | 23.892 | 14.817 | 26.938 |
+| `res_as_published` *(late)* | **21.610** | **32.699** | **15.906** | **20.650** | 14.809 | 26.273 |
+
+| Zone | Capturable gain (`load_only − price_only`) | Vintage premium (`as_published − persistence`) |
+|---|---|---|
+| DE-LU | **−0.19** EUR/MWh (−0.81% of MAE) | **+1.98** EUR/MWh (**+8.39%**) |
+| ES | **+0.11** EUR/MWh (+0.61%) | **+2.02** EUR/MWh (**+11.28%**) |
+| NO2 | **−0.01** EUR/MWh (−0.06%) | **+0.01** EUR/MWh (+0.06%) |
+
+**At an honest vintage the entire ENTSO-E exogenous block is worth nothing** —
+between −0.8% and +0.7% of MAE, in all three price-formation regimes. Fed the
+as-published Art. 14 archive, the *same columns in the same model* buy 8-11% of
+MAE in the two RES-exposed zones. So a backtest that uses the archived Art. 14
+forecast without this split reports roughly a tenth of its MAE improvement as
+skill when it is a publication timestamp. That is the write-up's surprising
+finding arriving at C8 instead of C15, and it is a finding *about the literature's
+standard data source*, which makes it the most portfolio-relevant thing the
+project has produced so far.
+
+Three supporting observations, all in the committed summaries:
+
+- **RMSE moves more than MAE.** `res_as_published` improves RMSE by 12.6% (DE-LU)
+  and 14.2% (ES) against 8.4% and 11.3% on MAE. RES forecast information mostly
+  kills the *large* errors — high-wind, negative-price hours — which MAE
+  under-weights and which are exactly the hours a battery earns in. The vintage
+  premium should therefore be **larger** in captured-value terms than it looks
+  here. C11/C12 measure that; C8 does not guess at it.
+- **History beats features.** Aligning every arm to the 2022 exogenous start costs
+  `price_only` +0.66 (DE-LU), +0.26 (ES) and +1.10 (NO2) EUR/MWh of MAE against
+  C4's full 2019+ window. Three extra years of *price history* is worth several
+  times the whole exogenous block at an honest vintage. C4's DE-LU number
+  (MAE 22.864) reproduced exactly as the `full_history_reference` row, which also
+  re-verifies the C4 pipeline end to end on a freshly re-pulled cache.
+- **NO2 shows nothing in either direction**, which is the control that makes the
+  other two credible. A hydro zone with ~1.3 GW onshore wind, no solar fleet and
+  reservoir-set prices has nothing for a RES forecast to explain at any vintage —
+  a method that invented a premium there would be measuring its own machinery.
+
+#### FINDING C8-B — the MAE ladder is not monotone for DE-LU and NO2
+
+Each arm's information set contains the previous arm's, so MAE was expected to be
+non-increasing along the ladder. It is for ES (`mae_monotone_non_increasing: true`)
+and **is not** for DE-LU or NO2: `load_only` and `res_persistence` land
+fractionally *above* `price_only` (−0.19 and −0.06 EUR/MWh respectively on DE-LU).
+
+Reported, not smoothed — the runner carries the flag in every summary. The reading
+is that these columns buy nothing a LASSO can use once the price lags are present
+(the day-ahead load forecast is largely a restatement of the daily and weekly cycle
+`price_lag_24h`/`price_lag_168h` already carry) and so cost a little in parameters.
+A finding about the features, not a defect in the plumbing — and ES, where solar
+genuinely sets the midday price, is monotone. **No action taken**: dropping the
+column, or widening the model to rescue it, would be tuning against a visible
+validation metric, which PLAN.md forbids.
+
+#### FINDING C8-C — the persistence offset is itself late on the autumn DST day
+
+The 24-hour degradation offset is applied by explicit UTC-instant reindexing, and
+its information time is then read back off the publication clock rather than
+assumed safe. On the autumn DST day that matters: the local market day has **25**
+hours, so its last hour minus 24 hours is its own *first* hour, whose RES forecast
+was published at 18:00 on D-1 — after the gate. The guard catches exactly those
+rows and the mask blanks them.
+
+NO2 and ES blank all three such days (2022-10-30, 2023-10-29, 2024-10-27). DE-LU
+blanks only **2022-10-30**, because for 2023 and 2024 the source hour is already
+NaN — and it is already NaN for a reason: FINDING C7-C recorded that DE-LU's wind
+and solar publications drop the hour `22:00Z-23:00Z` on 2023-10-28 and 2024-10-26,
+and *that hour is the long day's first local hour*. The two findings describe the
+same hour from opposite ends. Nobody would have special-cased this; the clock
+arithmetic found it, and it is pinned by a test.
+
+#### How the late arm is allowed to run at all
+
+`res_as_published` is the only place in this repo where a post-gate-closure column
+reaches a model, and the door is deliberately narrow.
+
+- The three leak-free arms get nothing special: late cells are blanked by
+  `forecast.leakage.mask_unavailable` exactly as C3 blanks a late price lag, and
+  the **unmodified** `assert_no_leakage` then has to pass clean.
+  `test_leak_free_variants_pass_the_plain_guard` asserts it.
+- For the late arm, `assert_only_acknowledged_leakage` replaces the plain guard and
+  permits a violation only if its column was named in advance, its kind is
+  `after_gate_closure`, **and** its worst lateness equals what the declared
+  publication clock predicts to the minute. It also refuses a *silent*
+  acknowledgement. Measured on all three zones: exactly 3 acknowledged columns,
+  worst lateness exactly 6h, on 26 158-26 301 rows each — nothing else anywhere.
+- That check is **stricter** than the plain guard on that matrix, not weaker: it
+  pins the leak's shape instead of tolerating one, and a genuine leak in a price
+  lag cannot hide behind the RES acknowledgement (asserted by
+  `test_acknowledgement_refuses_an_unrelated_leak`, plus four more refusal tests).
+- The harness's per-fold check is skipped for that one arm only
+  (`check_leakage=False`, the same door `backtest/diagnostics.py` already uses for
+  the deliberate misalignment experiments) and replaced by one pass over the whole
+  arm matrix, which implies it: the guard is a per-(row, column) predicate, so a
+  violation in any subset is a violation of the whole.
+  `test_the_whole_matrix_check_implies_every_row_subset_s` asserts that on real
+  subsets rather than arguing it. Sealed-year refusal and the "training targets
+  must be public" guard are untouched and run on every fold of every arm.
+- `test_a_leading_res_column_is_worth_a_lot_to_lear` measures what the guard is
+  protecting: a wind column derived from the target hour's own price more than
+  halves MAE. The guard is not defending a technicality.
+
+#### The publication clock moved from a comment into config
+
+C7 recorded "published 18:00 on D-1" in a `leakage_note:` prose field. A comment
+cannot be checked. C8 adds, beside each document in `config/data.yaml`:
+`publication_tz: Europe/Brussels`, and per document `published_day_offset: -1`
+with `published_local: "10:00"` (A65) / `"18:00"` (A69). The Art. 6.1.B time is
+the **latest** instant the regulation permits (2h before gate closure), not a
+typical one — a guard built on an optimistic publication time would pass a column
+a bidder was still waiting for. `test_the_declared_clock_is_what_makes_the_leak_visible`
+pins both numbers against the gate convention, so a later edit to either is caught
+rather than quietly re-basing the experiment.
+
+#### Three design choices that were easy to get wrong
+
+- **The residual-load column is derived *after* degradation.** Under
+  `res_persistence` a bidder holds the load forecast for D *and* the RES forecast
+  for D-1, so their best residual-load estimate is
+  `load(t) − wind(t−24h) − solar(t−24h)`, which is what is built. Lagging C7's
+  already-derived residual column by 24h instead would discard the load forecast
+  they did hold. Its information time is the element-wise **maximum** of its three
+  inputs' — a derived value is knowable only once its last input is.
+- **Every arm trains from the same day.** The exogenous series start in 2022 and
+  LEAR drops a training row with any missing design cell, so an exogenous arm on a
+  2019-start expanding window would silently train on 2022+ while `price_only`
+  trained on 2019+, making the comparison partly "more features" and partly "less
+  history". All four arms run from `2022-01-01`; `price_only` is *additionally* run
+  on the full history as a labelled `full_history_reference`, which is not part of
+  the ladder.
+- **The arms are compared on hours every arm predicted.** The committed LEAR
+  declines an hour whose design has a hole, and the exogenous columns bring
+  FINDING C7-C's source gaps with them (ES loses 193 hours this way — chiefly the
+  120-hour December 2024 solar gap). Each arm's own scores are reported *and* a
+  `common_hours` block re-scores every arm on the intersection; the degradation
+  table is computed from the latter. Both are in the summary, neither is hidden.
+
+#### Built and committed (42 new tests, 381 passing in total)
+
+- `forecast/exog_features.py` — the four variants, the publication clock, the
+  vintage offsets, the derived-after-degradation residual load, the masking split
+  and `assert_only_acknowledged_leakage`.
+- `backtest/run_c8_exogenous.py` — the CLI: four arms × three zones, the
+  common-hours table, the degradation table, the monotonicity flag, the
+  full-history reference.
+- `tests/test_c8_exogenous_features.py` — 42 offline tests. No network, no cached
+  file, no sealed year.
+- `docs/exogenous_model.md` — the full write-up of everything above.
+- `backtest/results/c8_exog_{DE-LU,ES,NO2}_2024_{predictions.csv.gz,folds.csv,summary.json}`.
+- `config/data.yaml` — the publication clocks (additive; see below).
+- `requirements.txt` — a note that C8 adds no dependency.
+
+**No frozen file was edited.** `tests/` gained one new file and no existing test
+was modified. `forecast/leakage.py`, `forecast/features.py`, `data/contracts.py`,
+`data/aggregate.py` and `config/features.yaml` are **untouched** — verified by
+`git diff --stat HEAD` over exactly those paths before committing. The only edit
+to an existing file is the additive `config/data.yaml` block above; the
+acknowledgement mechanism is built out of `find_leakage` and `mask_unavailable`
+rather than by relaxing either.
+
+#### Cache re-pull — NOTE C2-02, 19th recurrence, and a stronger statement than usual
+
+`data/raw/` was empty again (the container does not keep it), so C8 re-pulled 18
+(zone, year) price files and 18 (zone, document, year) ENTSO-E files. 36/36
+succeeded, 0 FLAGs. Then `data.build_exog_manifest` and `data.build_exog_contracts`
+were re-run against the fresh cache and diffed against C7's committed artefacts:
+of 27 (zone, document, series, year) rows × 35 columns, **the only fields that
+differ are `fetched_at_utc` (27 rows) and `gzip_bytes` (24 rows)**. Every
+`payload_sha256`, count, coverage figure, gap count, NaN count, negative count and
+distribution statistic is **identical**, and the contract report body is byte-identical.
+`gzip_bytes` moves by a few bytes because ENTSO-E stamps a fresh random `mRID` into
+each response's header, which the series fingerprint correctly ignores.
+
+The regenerated manifest artefacts were therefore **reverted** rather than
+committed: they describe the same data, they are correctly labelled `"cycle": "C7"`
+with C7's git SHA and config hash, and committing a new timestamp every cycle would
+churn the manifest forever with no information gain. The verification above is the
+durable record.
+
+#### LP invariants
+
+C8 touched no dispatch, LP or settlement code, so the battery-LP invariants apply
+to no new artefact. They remain executable and green as part of the full suite:
+`assert_oracle_dominates` and the rolling commit-then-settle assertions in
+`tests/test_c5_battery_lp.py` and `tests/test_c6_commit_then_settle.py` all pass
+(381 tests, 0 failures). No LP objective from a forecast-priced solve is reported
+anywhere as a realised value. **FLAG C5-01** (simultaneous charge/discharge) is
+unchanged and still resolved as option (b) per Checkpoint B.
+
+#### Sealed holdout
+
+**SEALED.** Verified armed before and after the work: marker-alone-on-a-line count
+**0**, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`,
+`assert_not_sealed({2025})` raises `SealedHoldoutError`, and no `*2025*` file
+exists anywhere under `data/`. Every arm of every zone was evaluated on `[2024]`
+only; the exogenous window is 2022-01-01..2024-12-31 and the price window
+2018-12-31..2024-12-31. `test_no_arm_can_be_evaluated_against_a_sealed_year`
+asserts the new arms inherit the refusal. No 2025 data has been fetched, loaded,
+dispatched or computed against at any point in C2-C8.
+
+#### Config hash
+
+**`515d4e8d98887256`** (was `28ebdd1ca5e72913`). It moved because C8 added
+`sources.entsoe.publication_tz` and the two `published_*` pairs to
+`config/data.yaml`. No other `config/*.yaml` file was modified; in particular
+`config/features.yaml` is unchanged, so **NOTE C7-01 stays closed as option (a)** —
+the two spellings (`load_forecast_da` there, `load_forecast_da_mw` in the built
+columns) remain, and `forecast.exog_features.exogenous_feature_names()` *is* the
+mapping, derived from both files rather than written down twice, so a rename in
+either surfaces as a failing test instead of as drift.
+
+#### Repo-state note
+
+The detached-HEAD trap recurred: the container arrived detached at `bb8e67c` with
+local `master` stale 6 commits behind. `git checkout -B master bb8e67c` was
+permitted, so no `HEAD:master` push path was needed. **23 recurrences out of 30
+containers.** Keep checking `git rev-parse --abbrev-ref HEAD` and
+`git rev-list --count master..HEAD` at the start of every cycle.
+
+#### Open question for a human — NOTE C8-01 (presentation, not a blocker)
+
+FINDING C8-A says the honest exogenous block is worth ~0 on MAE for all three Tier-A
+zones. PLAN.md's C9 (GBM) and C10 (scale-out) both assume Tier A runs "with exogenous
+features". Nothing in C8 contradicts that — a GBM may extract from residual load what
+a LASSO cannot, and the capture-ratio metric that actually matters is a spread
+metric, not MAE, so the C8 result does not settle the question. **Proceeding as
+PLAN.md describes**: C9 and C10 keep the exogenous block for Tier A, and the arm
+that goes into the headline results is `res_persistence` (leak-free), with
+`res_as_published` carried alongside as the labelled vintage-premium measurement.
+If a human would rather Tier A ran `load_only` or price-only until a spread metric
+justifies the RES columns, say so and C9 will follow.
+
+**Next:** C9 — GBM, one fixed LightGBM config, in-fold early stopping, Tier A only,
+no hyperparameter search. Note that `lightgbm` is not yet in `requirements.txt` and
+will need adding. C9 should read FINDING C8-A first: the GBM must be run on the same
+four arms (or at minimum on `res_persistence` and `res_as_published`) so the vintage
+premium is measured for the non-linear model too rather than inherited from LEAR.
