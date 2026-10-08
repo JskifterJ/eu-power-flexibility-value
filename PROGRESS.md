@@ -2,12 +2,43 @@
 
 ## Current status
 
-- **Next cycle to run:** **C10.** C9 complete (the gradient-boosted model — one fixed
-  LightGBM config, in-fold early stopping, Tier A, run on all four of C8's exogenous
-  arms). See the C9 entry for **FINDING C9-C**, which is now the project's headline
-  result, and for the partial answer to NOTE C8-01. No open blocker.
+- **Next cycle to run:** **C11.** C10 complete (the scale-out: all nine zones, Tier A
+  ingested from C8/C9's committed artefacts with every metric recomputed and
+  cross-checked, Tier B computed fresh, everything written into the new append-only
+  results store). See the C10 entry for **FINDING C10-A** and **FINDING C10-B**, and
+  for the substantial answer to NOTE C9-01. No open blocker.
 - **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
   closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
+- **Results now live in one append-only table: `backtest/results/results.csv`**
+  (447 rows after C10, `backtest/results_store.py`, written up in
+  `docs/results_store.md`). Long format, so **a new metric is a new value, not a new
+  column** — C11's capture ratios and C12's spread/Spearman/CI metrics need no schema
+  change and no test edit. Every row carries `git_sha`, `config_hash`, the model's own
+  fingerprint and a `library_fingerprint`; `vintage` (`honest` /
+  `after_gate_closure`) is a **required key column**, so FINDING C9-C's late-arm
+  numbers cannot be read as achievable. Call `verify_append_only()` before trusting
+  anything in there, and append with `append_rows` — never edit a row in place.
+- **FINDING C10-A — the *relative* skill of a price-only model is near-constant across
+  nine regimes; the *level* of difficulty is not.** Absolute MAE spans 2.73x across the
+  nine zones; the LEAR/naive ratio spans 1.11x (0.6435 NO2 to 0.7160 NL, mean 0.6757,
+  sd 0.0248), and is three times tighter than either error normalised by the zone's own
+  price sd. **This gives C11/C12 a prediction to test:** if the capture ratio is also
+  regime-insensitive, then regime differences do not reach flexibility value through
+  forecastability and the cross-zone story must come from price *shape*; if it
+  diverges while rMAE does not, that is the sharper finding. n = 9, one year, a ratio
+  of correlated quantities — C12's block-bootstrap CIs decide whether the 7.3pp band
+  is wider than noise.
+- **FINDING C10-B — three extra years of price history beat the entire honest exogenous
+  block, and beat the switch to a booster, in all three Tier-A zones.** Window
+  (2019+ vs 2022+, LEAR price-only): +2.80% / +3.53% / +7.45% of MAE. Honest exogenous
+  block (GBM): +1.0% / +1.0% / +0.2%. Model class (GBM−LEAR, honest arms): −3.1% /
+  +1.2% / −4.8%. The plain full-history price-only LEAR beats the best honest arm of
+  either model on the aligned window in ES and NO2. Stated honestly: the exogenous arms
+  *cannot* run on a 2019 start (no archived vintage), so the claim is "at the only
+  window where the block can be measured it is worth ~1%, and moving to a window it
+  cannot occupy is worth 3-7%". With FINDING C9-C, the two things that actually moved
+  this model were **more history** and **a publication timestamp** — and only one of
+  them is available to a bidder.
 - **FINDING C9-C — read this before any later cycle reports a GBM number, and before
   the C18 write-up ranks the models.** C8 measured the Art. 14 **vintage premium**
   (as-published vs leak-free persistence) with a per-hour LASSO: +8.4% of MAE on DE-LU,
@@ -34,14 +65,16 @@
   `test_the_committed_config_is_exactly_what_plan_md_froze` — **a cycle that wants to
   tune a knob has to edit a test, which CLAUDE.md makes a flag-and-stop event.** Do not
   edit it; flag instead.
-- **`ENTSOE_API_KEY` is set.** C9 used it only to re-populate the cache: 36/36 pulls
-  (18 price, 18 ENTSO-E) succeeded, 0 FLAGs. The value was never read, logged or
-  written to disk.
+- **`ENTSOE_API_KEY` is set.** C9 used it only to re-populate the cache (36/36 pulls,
+  0 FLAGs); the value was never read, logged or written to disk. **C10 did not need it
+  at all** — Tier A came from C8/C9's committed artefacts and Tier B has no exogenous
+  block, so the only network traffic was 54 Energy-Charts price pulls, 54/54 successful,
+  0 FLAGs.
 - **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch LP.
   **RESOLVED at Checkpoint B (2026-10-07): option (b)** — keep the pure LP as the
   default and carry the artefact as a stated limitation in the write-up. It biases
   capture *against* the model by ~0.16pp (LP 0.9187 vs MILP 0.9203), so it is
-  conservative. Unchanged by C7, C8 and C9, none of which touched dispatch code.
+  conservative. Unchanged by C7, C8, C9 and C10, none of which touched dispatch code.
 - **Findings from C9 (all recorded in the C9 entry and `docs/gbm_model.md`):**
   **C9-A** PLAN.md leakage assertion (i) is *vacuous* for a pooled booster on the
   synthetic week-periodic fixture (the staler matrix scores *better*, 1.716 vs 1.759)
@@ -70,10 +103,14 @@
   (daily-aggregate feature names), NOTE C4-01 (`destroys_skill()` not re-based), NOTE
   C4-02 (the one declined hour a year), NOTE C7-01 (the `load_forecast_da` spelling
   mapping, now executable). **NOTE C2-02** (the raw cache does not survive a container)
-  — no change, **20th recurrence**; C9 re-pulled all 36 files and every one of C7's 27
-  series fingerprints reproduced exactly, with `fetched_at_utc` and `gzip_bytes` the only
-  differing fields. C9's LEAR-reference loader adds a stronger check: C8's committed
-  realised prices agree with C9's to **0.0 EUR/MWh** in all three zones.
+  — no change, **21st recurrence**; C10 re-pulled all 54 price files and the **first full
+  nine-zone re-verification since C2** came back clean: every `payload_sha256`, count and
+  distribution statistic identical, `fetched_at_utc` the only differing field, and the
+  contract report's CSV body byte-identical with 0 violations across all nine zones.
+  C10's ingest adds the strongest check yet: C8's and C9's committed realised prices
+  agree with each other **and** with a freshly loaded series to **0.000000 EUR/MWh** in
+  all three Tier-A zones, and all 264 recomputed metrics agree with their committed
+  values to within **3e-6**.
 - **NOTE C8-01 — partially answered, still open for C11/C12.** PLAN.md kept the
   exogenous block for Tier A on the argument that "a GBM may use residual load where a
   LASSO cannot". Measured: it does, by ~1% of MAE, which is nowhere near enough to
@@ -81,27 +118,51 @@
   **C11/C12 should settle it** — test whether `res_persistence` improves the *capture
   ratio* over `price_only` by more than its 1% of MAE suggests, since RES information
   mostly kills the large errors and those sit in the high-wind, negative-price hours a
-  battery earns in.
-- **NOTE C9-01 (new, for C11/C12, not a blocker):** every model arm is biased **high**
-  (GBM +2.6..+8.7, LEAR +2.6..+5.7 EUR/MWh), which is the shared convex `sinh`
-  back-transform, not a GBM defect. A roughly uniform upward bias barely perturbs the
-  within-day ordering and spread a battery trades on, so the capture ratio may be far
-  less sensitive to it than the MAE table suggests. A prediction to test, not a claim.
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C9, before and after the
+  battery earns in. C10 did not touch this (it is a dispatch question, not a scale-out
+  one) but it is now half of C11's experiment, FINDING C10-A being the other half.
+- **NOTE C10-01 (new, for C11, not a blocker):** the store's `common_hours` scope is
+  defined per zone over the series that zone has — nine for Tier A, three for Tier B —
+  which is correct for within-zone model comparison and is why the cross-zone table uses
+  `own_coverage`. **C11 should decide once whether a capture ratio belongs at
+  `own_coverage` or at a common-hours scope**, rather than per zone. The real question
+  underneath is which NaN policy C11 dispatches the LEAR curve under, since an LP needs a
+  complete 24-hour vector and C4 measured both (`decline` leaves one hole a year,
+  `impute` fills it with the in-fold column median). That choice should be a labelled row
+  in the store, not an implicit default.
+- **NOTE C9-01 — substantially answered by C10, prediction still open for C11/C12.**
+  C9 found every model arm biased high (GBM +2.6..+8.7, LEAR +2.6..+5.7 EUR/MWh) and
+  attributed it to the shared convex `sinh` back-transform. C10 separates that from the
+  training window: the *same* LEAR, zone and year at a 2019 start is biased **2-4x
+  less** (DE-LU +5.06 -> +2.60, ES +3.56 -> +1.10, NO2 +2.99 -> +0.81), and the six
+  Tier-B zones on the full history run **−0.03 to +3.00**. The VST mechanism is right,
+  but the overshoot scales with the in-fold MAD and a half-crisis-year window has a much
+  larger one. **So the nine-zone comparable curves C11/C12 dispatch against carry a bias
+  of −0.03 to +3.0 EUR/MWh, not +2.6 to +8.7.** The prediction C9 asked for — that a
+  roughly uniform upward bias barely perturbs the within-day ordering a battery trades
+  on — is unchanged and still for C11/C12 to test. Not acted on: correcting a bias by
+  looking at a 2024 metric is tuning against the validation year.
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C10, before and after the
   work: marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
-  `sealed_years()` = `{2025}`, `assert_not_sealed({2025})` raises, and no `*2025*` file
-  exists anywhere under `data/`. Every C9 arm was evaluated on `[2024]` only. No 2025
-  data has been fetched, loaded, dispatched or computed against at any point in C2-C9.
-- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C9 modified no
-  `config/*.yaml`; the GBM's configuration is code, tracked by its own fingerprint.
-- **Repo-state note:** the detached-HEAD trap recurred in C9 — the container arrived
-  detached at `24e01c6` with local `master` stale 7 commits behind. **24 recurrences out
-  of 31 containers.** This time `git checkout -B master` was **denied by the permission
-  classifier**, so the cycle worked detached and pushed `HEAD:master`, which was safe
-  only because `origin/master` equalled `HEAD` at session start. **If a future container
-  arrives detached *and* genuinely behind the remote, that fallback does not exist** —
-  flag rather than improvise. Keep checking `git rev-parse --abbrev-ref HEAD` and
-  `git rev-list --count master..HEAD` at the start of every cycle.
+  `sealed_years()` = `{2025}`, `assert_not_sealed({2025})` raises, no `*2025*` file
+  exists anywhere under `data/`, and **no row of the results store mentions 2025**. Every
+  series of every zone was evaluated on `[2024]` only. The store adds an independent
+  tripwire: a metric whose `evaluation_years` touches a sealed year **cannot be
+  written**. No 2025 data has been fetched, loaded, dispatched or computed against at any
+  point in C2-C10.
+- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. Neither C9 nor C10
+  modified any `config/*.yaml`; the GBM's configuration is code, tracked by its own
+  fingerprint (`a366a760e269bba6`). C10's library fingerprint is **`856fb19ac0c4eecd`**
+  (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1,
+  lightgbm 4.7.0).
+- **Repo-state note:** the detached-HEAD trap recurred in C10 — the container arrived
+  detached at `144ecf5` with local `master` stale 13 commits behind. **25 recurrences out
+  of 32 containers.** This time `git checkout -B master` **was** permitted (C9's attempt
+  was denied as "Git Destructive"), so C10 worked on a properly attached `master`.
+  `origin/master` equalled `HEAD` at session start, so nothing was at risk either way.
+  C9's warning still stands: **if a future container arrives detached *and* genuinely
+  behind the remote, and `checkout -B` is refused, flag rather than improvise.** Keep
+  checking `git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at
+  the start of every cycle.
 
 ## Log
 
@@ -3375,3 +3436,334 @@ and config hash. Read FINDING C9-C first: the headline arm for Tier A is
 labelled vintage-premium measurement, and the GBM's apparent edge over LEAR must never
 be quoted from the late arm. Note also that C10's Tier-B scale-out needs the six Tier-B
 zones' price cache, which this cycle did not pull (Tier A only).
+
+### C10 — 2026-10-08 (scheduled cycle) — the scale-out: nine zones, one append-only results store
+
+Scope per PLAN.md C10: *"Scale the harness: Tier A (3 models, exogenous features) +
+Tier B (naive + LEAR, price-only). Results written append-only, each row tagged with
+git SHA + config hash."* Done for all nine zones. No checkpoint, no blocker, no FLAG
+raised. No new dependency. `ENTSOE_API_KEY` was **not needed and not read**: C10's
+Tier-A rows come from C8's and C9's committed artefacts, and Tier B has no exogenous
+block, so the only network traffic this cycle was the 54 Energy-Charts price pulls.
+
+**Full suite: 505 passed, 0 failed, 51 warnings, 624.59s** (432 before C10 + 73 new).
+The 51 warnings are the pre-existing sklearn LARS convergence notices from the C8 LEAR
+tests. `tests/`, `config/`, `forecast/`, `dispatch/`, `data/contracts.py`,
+`data/aggregate.py`, `backtest/walk_forward.py` and `backtest/metrics.py` are
+**untouched** — verified with `git diff --stat HEAD` over exactly those paths before
+committing. The only modified existing file in the whole cycle is `requirements.txt`
+(a comment block recording that C10 added no dependency and why).
+
+#### The headline numbers — all nine zones, 2024, like-for-like
+
+C4's committed LEAR (per-hour LASSO, price-history and calendar features only,
+expanding window over the whole cached history) against the naive floor. MAE in
+EUR/MWh, each series on its own coverage (LEAR 8 783 hours, naive 8 784 — LEAR declines
+the one autumn DST hour whose 24-hour lag the gate-closure mask blanks, FINDING C3-A):
+
+| zone | tier | regime | naive MAE | LEAR MAE | LEAR/naive |
+|---|---|---|---|---|---|
+| NO2 | A | hydro-dominated | 21.195 | 13.639 | **0.6435** |
+| FR | B | nuclear-dominated | 27.790 | 17.897 | 0.6440 |
+| ES | A | solar-dominated | 27.316 | 17.866 | 0.6541 |
+| DK1 | B | wind-dominated | 37.746 | 25.393 | 0.6727 |
+| PL | B | coal-dominated | 29.822 | 20.207 | 0.6776 |
+| BE | B | gas-nuclear-mixed | 28.217 | 19.376 | 0.6867 |
+| IT-North | B | gas-dominated | 13.833 | 9.539 | 0.6896 |
+| DE-LU | A | thermal-RES-mixed | 32.799 | 22.864 | 0.6971 |
+| NL | B | gas-RES-mixed | 29.941 | 21.437 | **0.7160** |
+
+#### FINDING C10-A — the *relative* skill of a price-only model is near-constant across nine regimes; the *level* of difficulty is not
+
+Absolute MAE spans **2.73x** across the nine zones (IT-North 13.83 to DK1 37.75 on the
+naive floor; 9.54 to 25.39 on LEAR). The ratio spans **1.11x** — 0.6435 to 0.7160,
+mean 0.6757, sd 0.0248. A standard price-only LEAR removes **28-36% of the naive
+floor's MAE in every zone**, whether the marginal unit is a reservoir, a reactor, a
+wind farm, a solar fleet, a lignite block or a CCGT.
+
+Some of that tightness is mechanical — both errors scale with the zone's price
+volatility — but **not all of it, and that is the part worth keeping.** Normalising by
+each zone's own 2024 price standard deviation leaves real cross-zone variation, and the
+ratio is still three times tighter than either normalised error:
+
+| quantity | mean | sd | CV | max/min |
+|---|---|---|---|---|
+| naive MAE / sd(price) | 0.6246 | 0.0723 | 0.116 | 1.548x |
+| LEAR MAE / sd(price) | 0.4216 | 0.0472 | 0.112 | 1.510x |
+| **LEAR MAE / naive MAE** | **0.6757** | **0.0248** | **0.037** | **1.113x** |
+
+So the zones genuinely differ in how hard they are *relative to their own volatility*
+(DK1's naive floor costs 0.75 sd, IT-North's 0.49 sd), and the model still removes a
+near-constant fraction of whatever that floor is. Read plainly: on point error, this
+model is not finding zone-specific structure beyond scale.
+
+**Caveats that must travel with it.** n = 9, one validation year, and it is a ratio of
+two strongly correlated quantities (Pearson 0.990 between the two MAE columns; the
+zone ordering by naive difficulty is *identical* to the ordering by LEAR difficulty,
+Spearman 1.00 — which mostly says volatility drives both, and is not itself a
+surprising statistic). Whether a 7.3pp band is wider than sampling noise is exactly
+what **C12's block-bootstrap CIs over daily blocks** are for, and C12 should answer it
+before the C18 write-up makes anything of it.
+
+**Why this matters for C11/C12.** PLAN.md's premise is a comparison "across zones with
+genuinely different price-formation regimes". If the capture ratio turns out to be
+*also* near-constant, then regime differences do not reach flexibility value through
+forecastability at all, and the cross-zone story has to come from the price *shape* —
+spread, number of profitable cycles per day, negative-hour count — not from how well
+the curve can be forecast. If the capture ratio *diverges* while rMAE does not, that is
+the sharper finding and the better one: it would mean a point-error metric is blind to
+the thing a battery actually trades. **Either way C11/C12 now has a specific prediction
+to test rather than a table to admire.**
+
+#### FINDING C10-B — three extra years of price history beat the entire honest exogenous block, and beat the switch to a booster, in all three Tier-A zones
+
+C10 puts three gains on one comparable scale for the first time. Per-cent of MAE,
+Tier A, 2024:
+
+| zone | window: 2019+ vs 2022+ (LEAR, price-only) | honest exogenous block (GBM, `res_persistence` vs `price_only`, C9) | model class (GBM − LEAR, honest arms, C9) |
+|---|---|---|---|
+| DE-LU | **+2.80%** (23.522 -> 22.864) | +1.0% | −3.1% (GBM better) |
+| ES | **+3.53%** (18.521 -> 17.866) | +1.0% | +1.2% (LEAR better) |
+| NO2 | **+7.45%** (14.737 -> 13.639) | +0.2% | −4.8% (GBM better) |
+
+And the full-history price-only LEAR — the simplest honest model in the project — beats
+the **best honest arm of either model fitted on the aligned window** in two of the
+three Tier-A zones (ES by 0.209 EUR/MWh, NO2 by 0.366) and loses DE-LU by only 0.308
+(1.3%, to `gbm_res_persistence`).
+
+**The honest statement of this, which is not quite the dramatic one.** It is not a
+controlled test of window length against features, because the exogenous arms *cannot*
+run on a 2019 start — no archived ENTSO-E D-1 forecast vintage exists before 2022
+(PLAN.md, `features.yaml` `available_from`). So the claim is the one a desk actually
+faces: *at the only window where the exogenous block can be measured it is worth ~1% of
+MAE, and moving to a window it cannot occupy is worth 3-7%.* Combined with FINDING C9-C
+(the as-published Art. 14 vintage buys 18-24% that no bidder could have had), the C18
+write-up's model section now has a clear spine: the two things that actually moved this
+model were **more history** and **a publication timestamp**, and only one of them is
+available to a bidder.
+
+C8 had already committed the per-zone window gain as
+`full_history_reference.mae_vs_aligned_price_only` (0.658 / 0.654 / 1.099 EUR/MWh,
+which C10 reproduces to 1e-6). C10's contribution is putting it beside the exogenous
+and model-class gains on one scale, which is what makes the ranking visible.
+
+#### NOTE C9-01, substantially answered — the upward bias is a property of the 2022-aligned window, not of the models
+
+C9 flagged that every model arm is biased high (+2.6 to +8.7 EUR/MWh) and attributed it
+to the shared convex `sinh` back-transform. C10 can now separate that from the training
+window, because the same model and the same zone exist at two starts:
+
+| zone | LEAR price-only, train from 2022-01-01 | train from 2019-01-01 |
+|---|---|---|
+| DE-LU | +5.063 | **+2.600** |
+| ES | +3.555 | **+1.100** |
+| NO2 | +2.989 | **+0.813** |
+
+A factor of 2-4 smaller on the longer window, with the model, the features and the
+evaluation year all identical. The six Tier-B zones, all on the full history, land in
+the same low range: IT-North **−0.027**, PL +0.156, DK1 +0.412, FR +1.837, BE +2.640,
+NL +2.999.
+
+The VST mechanism C9 named is still the right one — `sinh` is convex, so
+back-transforming a conditional-mean estimate in asinh space overshoots in price space
+— but the *size* of the overshoot scales with the in-fold MAD, and a window that is
+half crisis-year rows has a much larger one. **The practical consequence for C11/C12 is
+that the nine-zone comparable curves carry a bias of −0.03 to +3.0 EUR/MWh, not C9's
++2.6 to +8.7.** The prediction NOTE C9-01 asked C11/C12 to test (that a roughly uniform
+upward bias barely perturbs the within-day ordering a battery trades on) is unchanged,
+but the bias it has to be robust to on the comparable row set is a good deal smaller
+than the Tier-A aligned arms suggested. Not acted on — correcting a bias by looking at
+a 2024 metric is tuning against the validation year.
+
+#### The results store — `backtest/results/results.csv`, 447 rows, 1 run
+
+`backtest/results_store.py`. Long format: a row is
+`(run, zone, model, arm, scope, metric) -> value`. Four decisions are load-bearing and
+all four are written up in `docs/results_store.md`.
+
+- **Long, not wide.** The wide alternative reads better and breaks on the first cycle
+  that adds a metric: C11's capture ratios and C12's spread error, within-day Spearman
+  and bootstrap bounds would each be a column every earlier row lacks. **The extension
+  point is the metric name, never the column list** —
+  `test_the_metrics_c11_and_c12_will_write_need_no_schema_change` pins exactly that,
+  parameterised over the ten metric names those cycles are expected to want.
+- **Append-only is verified twice, not promised.** `append_rows` reads the file's
+  existing bytes, appends, then asserts the new file still *starts with* those exact
+  bytes; and every run records in `results_runs.json` the SHA-256 of the whole file as
+  it stood after it appended, which is the hash of its first `n_rows_after` data rows.
+  `verify_append_only()` replays those hashes against the file's own prefixes, so an
+  edit to **any earlier row is detectable long after the run that wrote it is gone**.
+  Tests cover an edited row, a deleted row, a row hand-appended with no manifest entry,
+  and a manifest out of append order. A column change is refused as a *migration* with
+  the route spelled out, not absorbed.
+- **Provenance includes the libraries** — the C9 entry's closing suggestion, taken up.
+  Every row carries `git_sha`, `config_hash` (PLAN.md's requirement), the model's own
+  fingerprint where it has one (`a366a760e269bba6` on every C9-sourced GBM row), and a
+  16-hex `library_fingerprint` over `{python, numpy, pandas, scikit-learn, scipy,
+  lightgbm}`; the run manifest keeps the full version dict. This cycle's fingerprint is
+  **`856fb19ac0c4eecd`** = python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn
+  1.9.1, scipy 1.17.1, **lightgbm 4.7.0** (the version C9's numbers were produced on,
+  so the ingested rows are correctly labelled).
+- **`vintage` is a required key column**, taking `honest` or `after_gate_closure`, and
+  an unknown value is refused. FINDING C9-C makes an unlabelled late-arm number the
+  single most misleading thing this project could publish, so `honest_rows()` is the
+  default filter and a cycle that wants the Art. 14 arm has to ask for it by name. Of
+  the 447 rows, **60 are `after_gate_closure`** (the `res_as_published` arm, 2 models x
+  3 Tier-A zones x 2 scopes x 5 metrics) and 387 are honest.
+
+The store also runs `data.holdout.assert_not_sealed` on every row's `evaluation_years`,
+so **a metric computed against 2025 cannot be written** even if some later caller
+computes one by mistake — and a spelling the guard cannot read (`"validation"`) is
+refused rather than waved through.
+
+#### Why Tier A is ingested from C8/C9 rather than refitted
+
+`backtest/run_c10_scale.py` runs in two phases. `compute` is Tier B — the only new
+fitting in this cycle, six zones x (naive + train_mean + LEAR), independent per zone so
+it takes `--zones` and three processes ran it in parallel; nothing is appended to the
+store there, which is what makes that safe. `ingest` is one process, one append.
+
+Refitting Tier A's 24 model-arms would have spent hours reproducing committed numbers
+and — worse — would have let the store's Tier-A rows drift from the artefacts the
+findings were written against if any spec had moved. C9 set the precedent by reading
+C8's LEAR predictions instead of refitting them; C10 extends it, and **every metric is
+recomputed from the prediction columns rather than copied out of a summary**, then
+asserted equal to the number its source cycle committed:
+
+- **264 recomputed-vs-committed cross-checks, worst absolute delta 3e-6** against a
+  tolerance of 5e-4 (the artefacts' own `%.4f` precision — the tolerance is the
+  artefact's precision, not a margin chosen to let a disagreement pass). The whole
+  check report is in `c10_scale_summary.json`, so the store shows its own working.
+- C8's and C9's prediction **indices are asserted equal** per zone — a mismatch means
+  the two cycles did not evaluate the same hours and is refused, never realigned.
+- Their committed realised prices agree with each other **and** with a freshly loaded
+  price series to **0.000000 EUR/MWh in all three zones**.
+- The intersection of C9's nine prediction columns is asserted equal to the `n_hours`
+  C9's summary committed (DE-LU 8 782, ES 8 591, NO2 8 783), so artefact and summary
+  cannot disagree about what was compared.
+
+#### Why Tier B trains on the full price history
+
+Tier A's four arms are cut from 2022-01-01 because no archived forecast vintage exists
+earlier. Tier B has no exogenous block and therefore no such constraint, so it runs
+C4's committed `LearSpec` on everything cached (2019+). That makes the nine-zone
+comparable row set `lear` / `price_only` / `train_from=2019-01-01`, which **exists for
+Tier A too**: C8 ran exactly that as its `full_history_reference` and committed it as
+`y_pred_price_only_full_history`. The cross-zone table is therefore like-for-like by
+construction rather than by assertion, and
+`test_the_comparable_table_refuses_a_row_trained_from_a_different_date` pins that a
+2022-aligned row cannot sneak into it.
+
+`scope` in the store: `own_coverage` is each series on the hours it answered;
+`common_hours` re-scores every series of that zone on the intersection of all of them —
+for Tier A, over exactly the nine series C9's artefact carries, which is what makes the
+recomputation checkable against C9's committed `common_hours` block. The two tiers'
+intersections are over different series sets, which is why the nine-zone table is built
+from `own_coverage` rows and carries `n_scored` beside every number rather than a
+footnote.
+
+#### Data: 54/54 price pulls, and the first full nine-zone re-verification since C2
+
+NOTE C2-02, **21st recurrence** — `data/raw/` was empty again. C10 re-pulled all 54
+(zone, year) Energy-Charts price files: **54/54 succeeded, 0 FLAGs**. No ENTSO-E pull
+was needed or made.
+
+`data.build_manifest` and `data.build_contracts` were then re-run over all nine zones
+and diffed against the committed artefacts. This is the first time since C2 that the
+six Tier-B zones have been re-verified, and the result is clean:
+
+- **price manifest** (54 rows x 28 columns): the only field that differs is
+  `fetched_at_utc`, on all 54 rows. Every `payload_sha256`, count, coverage figure,
+  distribution statistic and negative-hour count is **identical**.
+- **contract report**: the CSV body is **byte-identical**, and "all data contracts
+  hold" — 9 zones, 52 608 hours each, 0 duplicate timestamps, 0 NaN prices, 0 missing
+  intervals, 0 UTC-day violations, 0 local-day violations, 12 DST days seen per zone,
+  0 resolution changes, 0 cutover violations, **0 violations total**. The JSON differs
+  only in `generated_at_utc`, `git_sha` and `config_hash` (the committed copy was
+  generated at C2, before C8 added the publication clocks).
+
+The regenerated manifest artefacts were therefore **reverted** rather than committed,
+as in C8 and C9: they describe the same data, they are correctly labelled `"cycle":
+"C2"`, and committing a fresh timestamp every cycle would churn the manifest forever
+for no information gain.
+
+#### LP invariants
+
+C10 touched no dispatch, LP or settlement code, so the battery-LP invariants apply to
+no new artefact. They remain executable and green as part of the full suite:
+`assert_oracle_dominates` and the rolling commit-then-settle assertions in
+`tests/test_c5_battery_lp.py` and `tests/test_c6_commit_then_settle.py` pass (re-run
+separately as a 33-test subset to confirm). No LP objective from a forecast-priced
+solve is reported anywhere as a realised value. **FLAG C5-01** (simultaneous
+charge/discharge) is unchanged and still resolved as option (b) per Checkpoint B.
+
+#### Sealed holdout
+
+**SEALED.** Verified armed before and after the work: marker-alone-on-a-line count
+**0**, `holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`,
+`assert_not_sealed({2025})` raises `SealedHoldoutError`, no `*2025*` file exists
+anywhere under `data/`, and **no row of the results store mentions 2025** (grep count
+0). Every series of every zone was evaluated on `[2024]` only. The store adds a new,
+independent tripwire: a metric whose `evaluation_years` touches a sealed year cannot be
+written at all. No 2025 data has been fetched, loaded, dispatched or computed against
+at any point in C2-C10.
+
+#### Config hash
+
+**`515d4e8d98887256`** — unchanged from C8/C9. C10 modified no `config/*.yaml` file;
+verified with `git diff --stat HEAD -- config/` (empty).
+
+#### Built and committed (73 new tests, 505 in total)
+
+- `backtest/results_store.py` — the append-only store: `SCHEMA`, `ResultRow`,
+  `append_rows`, `verify_append_only`, `read_results`, `latest_results`,
+  `honest_rows`, `pivot_metric`, `rows_from_scores`, `library_versions`,
+  `library_fingerprint`.
+- `backtest/run_c10_scale.py` — the two-phase CLI: Tier-B compute, Tier-A/Tier-B
+  ingest with the recompute-and-cross-check guards, the nine-zone comparable table.
+- `tests/test_c10_results_store.py` — 46 offline tests (append-only, provenance,
+  validation, sealed-year refusal, reading).
+- `tests/test_c10_scale_out.py` — 27 offline tests (the cross-check tolerance, the
+  vintage labelling, the common-hours mask, the comparable table's like-for-like rule,
+  the artefact provenance guards).
+- `docs/results_store.md` — the full write-up of all of the above.
+- `backtest/results/results.csv` (447 rows) + `results_runs.json` (1 run,
+  `C10-20261008T183636Z-8e556310`) + `c10_scale_summary.json`.
+- `backtest/results/c10_tierb_{FR,NL,BE,IT-North,DK1,PL}_2024_{predictions.csv.gz,folds.csv,summary.json}`.
+- `requirements.txt` — a comment block recording that C10 added no dependency, and why
+  the store is deliberately plain csv/json/hashlib.
+
+#### NOTE C10-01 (new, for C11 — not a blocker)
+
+The store's `common_hours` scope is defined per zone over the series that zone has, so
+Tier A's intersection is over nine series and Tier B's over three. That is correct for
+within-zone model comparison and is why the cross-zone table uses `own_coverage`, but
+**C11 will add nine zones x three curves of dispatch results and should decide once
+whether a capture ratio belongs at `own_coverage` or at a common-hours scope**, rather
+than per zone. A battery LP needs a complete 24-hour vector, so the question is really
+which NaN policy C11 dispatches the LEAR curve under (C4 measured both; `decline`
+leaves one hole a year, `impute` fills it with the in-fold column median) — and that
+choice should be a labelled row in the store, not an implicit default.
+
+#### Repo-state note
+
+The detached-HEAD trap recurred: the container arrived detached at `144ecf5` with local
+`master` stale 13 commits behind. **25 recurrences out of 32 containers.** This time
+`git checkout -B master` **was permitted** (it was denied as "Git Destructive" in C9),
+so the cycle worked on a properly attached `master` throughout. `origin/master` equalled
+`HEAD` at session start, so nothing was at risk either way. The C9 entry's warning still
+stands for a future container that arrives detached *and* genuinely behind the remote:
+flag rather than improvise. Keep checking `git rev-parse --abbrev-ref HEAD` and
+`git rev-list --count master..HEAD` at the start of every cycle.
+
+**Next:** C11 — the LP across all nine zones x all curves (oracle / model / naive),
+persisting per-day capture ratios. Read FINDING C10-A first: it gives C11 a specific
+prediction to test (is the capture ratio as regime-insensitive as rMAE, or does it
+diverge?), and NOTE C8-01's open question — whether `res_persistence` buys more capture
+ratio than its 1% of MAE suggests — is the other half of the same experiment. Note
+NOTE C10-01 on the NaN policy for the dispatched LEAR curve, and FINDING C10-B/NOTE
+C9-01: the comparable nine-zone curves carry a bias of −0.03 to +3.0 EUR/MWh, not the
++2.6 to +8.7 the Tier-A aligned arms showed. Write every dispatch result into
+`backtest/results/results.csv` via `backtest.results_store.append_rows` — the metric
+name is the extension point, no schema change is needed, and
+`verify_append_only()` should be called before trusting anything already in there.

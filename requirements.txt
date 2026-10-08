@@ -52,3 +52,12 @@ scipy>=1.11
 # to literals by a test — a later cycle cannot tune a knob without editing a
 # test, which CLAUDE.md makes a flag-and-stop event.
 lightgbm>=4.3
+
+# C10 (scale the harness to all nine zones + the append-only results store): no
+# new dependencies. The store is csv/json/hashlib from the standard library on
+# top of pandas, deliberately — a results table that a later cycle must be able
+# to read, diff and verify by hand should not need a database or a serialisation
+# library to open. Note that every row records the installed versions of
+# numpy/pandas/scikit-learn/scipy/lightgbm as a `library_fingerprint`: the
+# model config fingerprints pin the values this project sets, and a library
+# default moving underneath them would otherwise change a result invisibly.
