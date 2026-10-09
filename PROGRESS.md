@@ -2,120 +2,170 @@
 
 ## Current status
 
-- **Next cycle to run:** **C12.** C11 complete (the battery LP across all nine zones and
-  every committed curve — 45 rolled dispatch runs, every invariant green, the per-day
-  capture ratios persisted). See the C11 entry for **FINDING C11-A** (the capture ratio
-  diverges across zones where rMAE does not), **FINDING C11-B** (NO2 is the outlier and
-  the mechanism is *not* established), **FINDING C11-C** (the same-start capture ratio
-  cannot rank two curves — the headline is the rolled-oracle ratio) and **FINDING
-  C11-D** (among honest arms, MAE does not predict capture). No open blocker.
+- **Next cycle to run:** **C13.** C12 complete (the metrics layer and the daily-block
+  bootstrap: the two PLAN.md decision-relevant metrics built, and intervals put on every
+  C11 headline). It answered all three of NOTE C11-01's questions and **two of the three
+  answers are "no"** — see **FINDING C12-A** (the capture band *is* wider than noise and
+  rMAE's is not — C11-A's inequality-of-bands claim confirmed), **FINDING C12-B** (the
+  eight-zone band is **NOT established**: p = 0.078 at PLAN.md's daily block),
+  **FINDING C12-C** (the within-day Spearman is the **only** point-forecast metric whose
+  cross-zone ranking tracks capture, +0.70 [+0.35, +0.93] — and it gives NO2's outlier
+  status a rival mechanism), **FINDING C12-D** (capture decides 1 of 15 arm contrasts at
+  one year, so C11-D is **undetermined, not contradicted**), **FINDING C12-E** (the
+  GBM-exogenous capture gain survives a CI in ES only — **NOTE C8-01 re-opened**) and
+  **FINDING C12-F** (all nine zones under-predict the daily spread). No open blocker.
 - **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
   closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
-- **Read this before quoting any capture number: FINDING C11-C.** The project's headline
-  capture ratio is **`capture_rolled_oracle_cash`** — settled cash over the *rolled*
-  perfect-foresight run's cash on the same days, which is one denominator per zone and
-  therefore comparable across curves. **`capture_same_start_pooled` is the exact per-day
-  bound and must never be used to rank two curves**: its denominator is re-solved from
-  each curve's own opening SoC, so a curve that arrives at a day with a fuller battery is
-  scored against an easier ceiling. Demonstrated, not argued: on DE-LU two LEAR arms
-  settle 0.35 EUR apart over 365 days yet their same-start captures differ by 4.0pp
-  (mean opening SoC 0.454 vs 0.216 MWh), while the rolled ratio ties them at 0.9123.
+- **Read these three before quoting any number from C10 or C11.**
+  1. **FINDING C11-C** — the headline capture ratio is **`capture_rolled_oracle_cash`**
+     (settled cash over the *rolled* perfect-foresight run's cash on the same days: one
+     denominator per zone, comparable across curves). **`capture_same_start_pooled` is the
+     exact per-day bound and must never be used to rank two curves** — its denominator is
+     re-solved from each curve's own opening SoC, so a curve arriving with a fuller
+     battery is scored against an easier ceiling. Demonstrated: two DE-LU LEAR arms settle
+     0.35 EUR apart over 365 days yet their same-start captures differ by 4.0pp, while the
+     rolled ratio ties them at 0.9123.
+  2. **FINDING C12-D** — **do not rank two arms on capture at one validation year.** One
+     of the fifteen honest capture deltas has an interval excluding zero, against seven
+     for MAE and eight for the within-day Spearman; the median capture delta is 0.46 of
+     its own bootstrap sd. Rank on the **within-day Spearman**, translate to EUR/MW/yr
+     with capture (**FINDING C12-C**).
+  3. **NOTE C12-03** — three earlier claims now carry a required label: C11-A's
+     eight-zone band is *not established*, C11-D is *undetermined not contradicted*, and
+     C10-A's "near-constant" is now the stronger *"indistinguishable from constant"*.
+- **FINDING C12-A — the capture band across the nine regimes is 4-6x its own sampling
+  noise; rMAE's band is not distinguishable from noise at all.** Noise-only null-band
+  p < 1e-4 for capture at every block length (1 / 7 / 14 days), between/within 4.18-6.10;
+  for rMAE p = 0.196 / 0.367 / 0.284, between/within 0.69-0.95. Capture band 30.40pp
+  [23.27, 40.35]; rMAE band 7.42pp [5.65, 14.19]. C11's "capture's CV is 3.0x rMAE's"
+  survives as **CV ratio 2.97 [1.53, 4.30]**, excluding 1 at every block. 17 of 36 zone
+  pairs separate on a paired capture difference (21 of 36 at 7 days). This also sharpens
+  **FINDING C10-A** from "near-constant relative skill" to **"indistinguishable from
+  constant"** — nine zones' rMAE cannot be told apart from nine draws of one number.
+- **FINDING C12-B — the eight-zone capture band (NO2 excluded) is NOT established.**
+  8.29pp, noise-only p = **0.078** at PLAN.md's literal daily block, 0.001 at 7 days,
+  0.003 at 14 days. A conclusion that depends on the block length is not established, and
+  the longer rungs are the least trustworthy at n = 365 (~26 independent blocks). With NO2
+  out the capture CV and the rMAE CV are indistinguishable (ratio 0.96 [0.51, 1.77]).
+  **So FINDING C11-A is a finding about NO2 plus a direction. C18 must not quote the
+  8.3pp band as established; C13's second year is the test.**
+- **FINDING C12-C — the within-day Spearman is the only point-forecast metric that tracks
+  capture across regimes.** Cross-zone rank correlation against capture, nine zones:
+  within-day Spearman **+0.70 [+0.35, +0.93]** (expected sign, excludes zero at every
+  block length and with NO2 removed: +0.57 [+0.07, +0.91]); rMAE +0.60 [−0.08, +0.85]
+  with the **wrong** sign; MAE +0.05 [−0.25, +0.50]; spread MAE +0.08; spread bias +0.20 —
+  all spanning zero. **A rival candidate mechanism for FINDING C11-B:** NO2's mean
+  within-day Spearman is **0.578** against 0.71-0.89 elsewhere (DK1, second-worst capture,
+  is second-worst at 0.706), and unlike every spread-based correlate C11 tried, this one
+  survives dropping NO2. So the candidate is "**in NO2 the forecast puts the hours in the
+  wrong order**", not "NO2's spread is too thin". **Candidate, not established** (n = 9,
+  one year) — see NOTE C12-02 for how C15 distinguishes the two.
+- **FINDING C12-D — capture cannot rank arms at one validation year, which is what
+  FINDING C11-D actually rests on.** Intervals excluding zero across the fifteen honest
+  contrasts: capture **1/15** (median |delta|/sd 0.46), EUR/MW/yr 1/15, spread MAE 5/15,
+  MAE 7/15 (1.91), **within-day Spearman 8/15 (2.23)** — ordering stable at every block
+  length. C11's MAE/capture rank correlation of +0.02 now has interval **[−0.53, +0.56]**;
+  Pearson −0.11 [−0.58, +0.59]; sign agreements 9/15 [5, 12] against 7.5 under
+  independence. **The honest statement is "one year decides 1 of 15 capture deltas, so it
+  can neither establish nor rule out that MAE predicts capture" — undetermined, not
+  contradicted.** The apparent disagreement is largely that capture is ~4x noisier per
+  unit of effect.
+- **FINDING C12-E — the GBM-exogenous capture gain survives a CI in ES only.** DE-LU
+  +0.35pp [−1.83, +2.53] and NO2 +2.71pp [−2.50, +8.03] contain zero at every block length
+  (NO2 despite the largest point estimate — its per-day capture is the noisiest of the
+  nine, boot sd 4.19pp vs 1.50-2.60). ES +2.04pp misses at the daily block by a hair
+  ([−0.26, +4.38], P(≤0) = 0.042, so the one-sided reading NOTE C8-01's directional
+  question licenses does clear 5%) and excludes zero at 7 and 14 days. **The one honest
+  contrast established at every block length is ES `gbm_price_only − lear_price_only` =
+  −2.22pp [−4.25, −0.29]** — the booster captures *less* than the LASSO in the zone where
+  it also has the lower MAE. The headline honest Tier-A arm **stays `res_persistence`**.
+- **FINDING C12-F — all nine zones under-predict the daily spread**, by 7.9 (ES) to 23.7
+  (NL) EUR/MWh, no exceptions. The regularised forecast day is flatter than the day that
+  arrives, which biases the battery towards **under**-trading (conservative) and is part
+  of why capture sits near 0.9 rather than near 1 where the ordering is good.
 - **FINDING C11-A — the capture ratio diverges across the nine regimes; rMAE does not.**
-  Capture spans 0.6146 (NO2) to 0.9187 (DE-LU): band **30.4pp**, CV **0.1114**, max/min
-  1.495x — against rMAE's 7.2pp / 0.0367 / 1.113x. The CV is **3.0x** rMAE's and the band
-  **4.2x** as wide, which answers FINDING C10-A's prediction in the sharper direction: a
-  point-error metric is blind to what a battery trades. The rankings do not line up and
-  if anything run the wrong way (**NO2 has the best rMAE of the nine and the worst
-  capture; DE-LU is second-worst on rMAE and best on capture**; Spearman +0.58, p=0.099 —
-  *positive*, the opposite sign of what forecastability implies). **Caveat that must
-  travel with it:** n = 9, one year, the +0.58 is not significant, and the 30.4pp band is
-  substantially one zone — drop NO2 and the other eight sit in 0.8358–0.9187, an 8.3pp
-  band with CV 0.0335. The defensible claim is the inequality of the bands and the
-  non-alignment of the rankings, not a law about regimes. **C12 decides.**
-- **FINDING C11-D — among honest arms, MAE does not predict capture.** Across the 15
-  honest paired comparisons (MAE recomputed on *exactly* the dispatched hours, so the
-  comparison is paired by construction) the two metrics agree on the sign **9 times — a
-  coin flip** — Spearman +0.02 (p=0.95), Pearson −0.11 (p=0.69). Consequences that bind
-  later cycles: (i) **NOTE C8-01 is answered affirmatively for the booster** — the honest
-  exogenous block buys +0.35 / +2.04 / +2.71pp of capture (+262 / +924 / +706 EUR/MW/yr)
-  in DE-LU / ES / NO2 under the GBM, far more than its ~1% of MAE suggested and with the
-  zone ordering *inverted*; (ii) **"gradient boosting beats LEAR" does not survive the
-  move to a dispatch metric** — at an honest vintage, price-only, the GBM loses on capture
-  in all three zones despite the lower MAE in two of them; (iii) **FINDING C10-B is an
-  MAE claim and must be labelled as one** — the window gain worth +2.8/+3.6/+7.4% of MAE
-  is +0.86 / −0.27 / −1.31pp of capture; (iv) the Art. 14 leak worth 8–11% of MAE to the
-  LEAR buys +0.00 / −0.84 / −0.76pp of capture. **Caveat:** most deltas are under 1pp;
-  the honest reading today is "MAE is not a reliable proxy for capture", **not** "MAE is
-  anti-correlated with capture". C12's bootstrap turns the table into a finding.
-- **FINDING C11-B — NO2 is the outlier and the mechanism is NOT established.** Lowest
-  spread (46.28), lowest oracle value (26 022 EUR/MW/yr), fewest oracle cycles (418), and
-  the model loses money on **25.8%** of dispatched days against 0.8–7.4% elsewhere. The
-  thin-spread story is consistent with all four but every spread-based correlate collapses
-  when NO2 is dropped (spread +0.60 -> +0.00, oracle value +0.66 -> −0.01). With n = 9
-  this is one zone, not a relationship. **C15's throughput-cost ladder (0/2/5 EUR/MWh) is
-  the direct test** and should be read as such; C13 should say whether NO2's capture is a
-  2024 hydrology artefact.
-- **Results live in one append-only table: `backtest/results/results.csv`** (**2 085 rows
-  after C11**, 2 runs, `backtest/results_store.py`, written up in `docs/results_store.md`
-  and `docs/dispatch_results.md`). Long format, so **a new metric is a new value, not a
-  new column** — C11 added 17 dispatch metrics and needed no schema change and no test
-  edit, and C12's spread/Spearman/CI metrics will not either. Every row carries
-  `git_sha`, `config_hash`, the model's fingerprint and a `library_fingerprint`;
-  `vintage` (`honest` / `after_gate_closure`) is a **required key column**. Call
-  `verify_append_only()` before trusting anything in there, and append with `append_rows`
-  — never edit a row in place. The 447 C10 rows are byte-for-byte unchanged after C11's
-  append (verified directly against `git show HEAD:`).
-- **The per-day dispatch artefact C12 needs is `backtest/results/c11_capture_daily_2024.csv.gz`**
-  — 16 440 rows, one per (zone, curve, dispatched day), with both oracle ceilings, both
-  capture ratios, the opening/closing SoC, the realised spread and an `in_common_day_set`
-  flag. It is already in the shape a daily-block bootstrap needs.
-- **FINDING C9-C — read this before any later cycle reports a GBM number, and before the
-  C18 write-up ranks the models.** C8 measured the Art. 14 **vintage premium**
-  (as-published vs leak-free persistence) with a per-hour LASSO: +8.4% of MAE on DE-LU,
-  +11.3% on ES. C9 re-measured it with a tree ensemble on the same rows, vintages and
-  folds: **+23.96% (DE-LU) and +17.82% (ES)** — two to three times larger. The leak is
+  Capture spans 0.6146 (NO2) to 0.9187 (DE-LU): band 30.4pp, CV 0.1114, max/min 1.495x —
+  against rMAE's 7.2pp / 0.0367 / 1.113x. The rankings do not line up and if anything run
+  the wrong way (NO2 best rMAE and worst capture; DE-LU second-worst rMAE and best
+  capture). **C12 confirmed the inequality of the bands (FINDING C12-A) and did NOT
+  confirm the eight-zone band (FINDING C12-B); the +0.58 rMAE/capture correlation's
+  interval contains zero and its sign is wrong.**
+- **FINDING C11-B — NO2 is the outlier.** Lowest spread (46.28), lowest oracle value
+  (26 022 EUR/MW/yr), fewest oracle cycles (418), model loses money on **25.8%** of
+  dispatched days against 0.8-7.4% elsewhere. C11 found every spread-based correlate
+  collapses when NO2 is dropped. **C12 adds a rival candidate that does not collapse: the
+  within-day ordering (FINDING C12-C).** C15's throughput-cost ladder tests the
+  thin-spread story only — see NOTE C12-02.
+- **FINDING C11-D — among honest arms, MAE does not predict capture.** 9 sign agreements
+  of 15, Spearman +0.02, Pearson −0.11. **Superseded in strength by FINDING C12-D: this
+  is "undetermined", not "contradicted".** Its four specifics still stand as point
+  estimates and must now travel with their intervals: the honest exogenous block under the
+  GBM (+0.35 / +2.04 / +2.71pp — now FINDING C12-E, ES only); "gradient boosting beats
+  LEAR" not surviving the move to a dispatch metric (established in ES, undetermined in
+  DE-LU and NO2); FINDING C10-B's window gain being an MAE claim; and the Art. 14 leak
+  buying ~nothing a battery can trade except on DE-LU under the GBM (+3.47pp
+  [+0.43, +6.60], and unachievable).
+- **Results live in one append-only table: `backtest/results/results.csv`** (**3 426 rows
+  after C12**, 3 runs, `backtest/results_store.py`, written up in `docs/results_store.md`,
+  `docs/dispatch_results.md` and `docs/metrics_layer.md`). Long format, so **a new metric
+  is a new value, not a new column** — C11 added 17 dispatch metrics and C12 added 7 point
+  metrics, 18 interval bounds and the paired contrasts, and **neither needed a schema
+  change or a test edit.** Every row carries `git_sha`, `config_hash`, the model's
+  fingerprint and a `library_fingerprint`; `vintage` (`honest` / `after_gate_closure`) is a
+  **required key column**. Call `verify_append_only()` before trusting anything in there
+  and append with `append_rows` — never edit a row in place. The 2 085 C10+C11 rows are
+  byte-for-byte unchanged after C12's append (verified against `git show HEAD:`).
+- **The per-day artefacts later cycles should read rather than rebuild:**
+  `backtest/results/c11_capture_daily_2024.csv.gz` (16 440 rows, the dispatch columns) and
+  **`c12_daily_metrics_2024.csv.gz`** (16 440 rows, the same rows with the per-day shape
+  columns joined on: `sum_abs_error`, `sum_sq_error`, `sum_error`, `realised_spread`,
+  `forecast_spread`, `spread_error`, `spearman`). Every column in the C12 file is
+  **day-additive**, which is what makes `backtest/bootstrap.py` usable on it directly:
+  a pooled MAE, a capture ratio and a mean Spearman are all `counts @ column`.
+- **`backtest/bootstrap.py` is reusable as-is for C13/C15.** Circular moving-block over
+  market days, **paired** (one draw applied to every zone, curve and statistic in a
+  replicate), 10 000 replicates, seed 20261009, percentile intervals, plus
+  `noise_only_spread` (the null-band test, calibration-tested) and `spearman_rows`.
+  **Warning: a wider block does not mean a wider interval.** At n = 365 a 14-day block
+  leaves ~26 independent blocks and the long-run variance estimate gets noisy — here it
+  comes out *narrower*. The ladder (1 / 7 / 14) is a robustness check, not an ordering;
+  read the rung **least favourable to the claim being made**.
+- **FINDING C9-C — read this before any later cycle reports a GBM number.** C8 measured
+  the Art. 14 **vintage premium** (as-published vs leak-free persistence) with a per-hour
+  LASSO: +8.4% of MAE on DE-LU, +11.3% on ES. C9 re-measured it with a tree ensemble on
+  the same rows, vintages and folds: **+23.96% (DE-LU) and +17.82% (ES)**. The leak is
   worth *more* to a non-linear model, and the booster's whole advantage over the LASSO is
-  concentrated in the late arm. **C11 adds the dispatch half of this**: the same leak is
-  worth +3.47 / +0.95 / −0.84pp of capture under the GBM and ~0 under the LEAR, and on
-  the *honest* arms the GBM loses to the LEAR on capture in all three zones. So a result
-  of the form "gradient boosting beats LEAR on a RES-fed day-ahead model" is
-  substantially an artefact of a publication timestamp, and does not reappear when the
-  metric is the one a battery trades on.
-- **FINDING C8-A still stands and is the reason C9-C matters.** At an honest vintage the
-  entire ENTSO-E exogenous block is worth ~nothing on 2024 **MAE** for all three Tier-A
-  zones (under the booster, +1.0% DE-LU and ES, +0.2% NO2). **C11 qualifies this**: on
-  *capture* the same honest block is worth +0.35 / +2.04 / +2.71pp under the booster, so
-  "worth nothing" is an MAE sentence and not a dispatch one. The headline honest arm for
-  Tier A remains `res_persistence`; `res_as_published` travels **only** as the labelled
-  measurement of the leak and its numbers are never reportable as achievable.
-- **FINDING C10-A — the *relative* skill of a price-only model is near-constant across
-  nine regimes; the *level* of difficulty is not.** Absolute MAE spans 2.73x across the
-  nine zones; the LEAR/naive ratio spans 1.11x (0.6435 NO2 to 0.7160 NL, mean 0.6757, sd
-  0.0248). **C11 tested the prediction this finding set and the capture ratio diverged
-  instead** — see FINDING C11-A, which is the resolution of it.
+  concentrated in the late arm. On capture the same leak is worth +3.47 / +0.95 / −0.84pp
+  under the GBM and ~0 under the LEAR, and C12 finds only the DE-LU one survives a CI. So
+  "gradient boosting beats LEAR on a RES-fed day-ahead model" is substantially an artefact
+  of a publication timestamp.
+- **FINDING C8-A still stands.** At an honest vintage the entire ENTSO-E exogenous block
+  is worth ~nothing on 2024 **MAE** for all three Tier-A zones (+1.0% DE-LU and ES, +0.2%
+  NO2 under the booster). C11 qualified it on *capture* (+0.35 / +2.04 / +2.71pp) and C12
+  bounds that: ES only. The headline honest arm for Tier A remains `res_persistence`;
+  `res_as_published` travels **only** as the labelled measurement of the leak.
 - **FINDING C10-B — three extra years of price history beat the entire honest exogenous
-  block, and beat the switch to a booster, in all three Tier-A zones — *on MAE*.** Window
-  (2019+ vs 2022+, LEAR price-only): +2.80% / +3.53% / +7.45% of MAE; honest exogenous
-  block (GBM) +1.0% / +1.0% / +0.2%; model class (GBM−LEAR, honest arms) −3.1% / +1.2% /
-  −4.8%. **C11 shows this does not carry to capture** (+0.86 / −0.27 / −1.31pp), so the
-  "more history wins" claim must be labelled an MAE claim wherever C18 uses it.
+  block and the switch to a booster, in all three Tier-A zones — *on MAE*** (+2.80% /
+  +3.53% / +7.45%). On capture it is +0.86 / −0.27 / −1.31pp, none of which survives a CI,
+  so this is an **MAE claim** and must be labelled as one wherever C18 uses it.
 - **The GBM config is frozen and tripwired.** `forecast.gbm.GbmSpec`, fingerprint
   **`a366a760e269bba6`**, lightgbm 4.7.0. PLAN.md forbids a hyperparameter search across
   cycles, so the config is pinned to literals by
   `test_the_committed_config_is_exactly_what_plan_md_froze` — **a cycle that wants to tune
   a knob has to edit a test, which CLAUDE.md makes a flag-and-stop event.** Do not edit
   it; flag instead.
-- **`ENTSOE_API_KEY` is set but C10 and C11 did not need it.** C11's Tier-A curves come
-  from C8's and C9's committed artefacts and Tier B has no exogenous block, so the only
-  network traffic was 18 Energy-Charts price pulls, 18/18 successful, 0 FLAGs.
+- **`ENTSOE_API_KEY` is set but C10, C11 and C12 did not need it.** **C12 opened no price
+  file at all** — the realised prices it needs are the committed prediction artefacts'
+  own `y_true` column (which C11 verified equal to the price cache to 0 EUR/MWh), so C12
+  made **0 network requests, 0 FLAGs**. This is the shape later reporting cycles should
+  prefer.
 - **Open FLAGs:** **FLAG C5-01** — simultaneous charge/discharge in the dispatch LP.
   **RESOLVED at Checkpoint B (2026-10-07): option (b)** — keep the pure LP as the default
-  and carry the artefact as a stated limitation in the write-up. **C11 measured it across
-  nine zones for the first time and it supports that decision more strongly than DE-LU
-  alone did**: present in seven of nine zones but tiny everywhere — at worst FR with 9 of
-  365 days (2.5%), 2.70 MWh burned over a year and 0.14% of settled cash; NO2 and
-  IT-North show none. It still biases capture *against* the model (~0.16pp on DE-LU), so
-  it is conservative. Unchanged by C7–C11, none of which touched dispatch code.
+  and carry the artefact as a stated limitation in the write-up. C11 measured it across
+  nine zones: present in seven of nine but tiny everywhere — at worst FR with 9 of 365
+  days (2.5%), 2.70 MWh burned over a year and 0.14% of settled cash; NO2 and IT-North
+  show none. It biases capture *against* the model (~0.16pp on DE-LU), so it is
+  conservative. Unchanged by C7-C12, none of which touched dispatch code.
 - **Earlier findings that still bind:** C9-A (PLAN.md leakage assertion (i) is vacuous for
   a pooled booster on the synthetic fixture; re-sited, `tests/test_c3_leakage_harness.py`
   untouched), **C9-B RETRACTED** (the claim that `lgb.train` keeps post-best-iteration
@@ -125,58 +175,63 @@
   mean-reference contamination of the target-permutation probe).
 - **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07):** NOTE C3-01,
   NOTE C4-01, NOTE C4-02, NOTE C7-01. **NOTE C2-02** (the raw cache does not survive a
-  container) — no change, **22nd recurrence**; C11 re-pulled only the 18 (zone, year)
-  files it needed rather than all 54, and all 18 `payload_sha256` values matched the
-  committed C2 manifest exactly.
-- **NOTE C8-01 — ANSWERED by C11, affirmatively, for the booster only.** The question was
-  whether `res_persistence` improves the *capture ratio* by more than its ~1% of MAE
-  suggests. It does, under the GBM: +0.35 / +2.04 / +2.71pp (+262 / +924 / +706
-  EUR/MW/yr), with the zone ordering inverted relative to MAE. Under the LEAR it still
-  buys nothing. Closed.
-- **NOTE C9-01 — ANSWERED by C10 and C11.** C10 attributed the upward bias to the
-  training window rather than the models (2-4x smaller at a 2019 start; the nine-zone
-  comparable curves carry −0.03 to +3.0 EUR/MWh). C11 tested the prediction that a
-  roughly uniform upward bias barely perturbs the within-day ordering a battery trades
-  on: confirmed, and generalised by FINDING C11-D — most point-error gains do not reach
-  the ordering either. Closed.
-- **NOTE C10-01 — ANSWERED by C11.** Both halves decided and recorded in
-  `docs/dispatch_results.md`: the NaN policy stays `decline` with hole-days skipped and
-  counted; the capture ratio is written at **both** store scopes, the within-zone arm
-  comparison is read at `common_hours` and the cross-zone table at `own_coverage`, and
-  the cost of that choice is measured per curve per zone in `scope_sensitivity` (the
-  comparable arm is scope-invariant in eight of nine zones and moves −0.2394pp in ES,
-  whose nine-curve intersection drops to 357 days). No new scope value was added and
-  `backtest/results_store.py` was not touched. Closed.
-- **NOTE C11-01 (new, for C12 — and it is the whole job).** Every C11 headline is one
-  validation year and either n = 9 zones or n = 15 paired comparisons, with most capture
-  deltas under 1pp. C12's block bootstrap over daily blocks must decide three things
-  before C18 quotes any of them: (i) is FINDING C11-A's eight-zone 8.3pp capture band
-  (NO2 excluded) wider than noise, (ii) is FINDING C11-D's near-zero MAE/capture rank
-  correlation distinguishable from a real relationship, (iii) does the GBM-exogenous
-  capture gain (+2.04 / +2.71pp) survive a CI. The paired point error is already in the
-  store as `{mae,rmse,bias}_on_dispatched_hours` at `common_hours`, on the same hours as
-  the capture ratios, so C12's spread-error and within-day Spearman metrics should be
-  computed on that same hour set.
-- **NOTE C11-02 (new, for C13/C15).** FINDING C11-B's thin-spread mechanism for NO2 is
-  untested. C15's throughput-cost ladder (0 / 2 / 5 EUR/MWh) is the direct test, not
-  merely a sensitivity; C13 should report whether NO2's capture is stable across years.
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C11, before and after the
+  container) — no change, **23rd recurrence**, and **the first time it did not matter**:
+  C12 needed no price data at all.
+- **NOTE C8-01 — RE-OPENED by C12.** C11 closed it affirmatively for the booster on point
+  estimates of +0.35 / +2.04 / +2.71pp of capture. Two of the three intervals contain zero
+  at every block length and the third (ES) depends on the block length. The question is
+  now "is the honest exogenous block worth having under the booster *outside ES*", and it
+  needs a second evaluation year, not more arms. C13 should report the three deltas per
+  year.
+- **NOTE C9-01, NOTE C10-01, NOTE C11-01 — all ANSWERED and closed.** NOTE C11-01's three
+  questions are FINDINGs C12-B (no), C12-D (undetermined) and C12-E (ES only).
+- **NOTE C12-01 (new, for C13 — read it first).** Every one of C12's unresolved questions
+  reduces to the same thing: one validation year decides too little. FINDING C12-B
+  (p = 0.078), FINDING C12-D ([−0.53, +0.56]) and FINDING C12-E (two unestablished zones)
+  all want a second year. C13's per-year tables should report, per year: the eight-zone
+  capture band with its noise-only p, the three GBM-exogenous capture deltas with
+  intervals, and NO2's capture and within-day Spearman. `backtest/bootstrap.py` takes any
+  day-additive column, so the machinery is reusable — **but it needs per-day dispatch rows
+  for the other years, which do not exist yet** (C11 dispatched 2024 only). That is the
+  one piece of new computation C13 would need, and whether it is in C13's scope or a C15
+  item is C13's call.
+- **NOTE C12-02 (new, for C13/C15; refines NOTE C11-02).** FINDING C11-B's thin-spread
+  mechanism for NO2 now has a rival with better cross-zone support: the within-day
+  ordering (FINDING C12-C). C15's throughput-cost ladder (0 / 2 / 5 EUR/MWh) is the direct
+  test of the **thin-spread** story and should be read as such; it is **not** a test of the
+  ordering story, which predicts instead that NO2's capture stays low at zero throughput
+  cost while its within-day Spearman stays the lowest of the nine. Running both predictions
+  against the same ladder is cheap and distinguishes them.
+- **NOTE C12-03 (new, for C18 — wording, not computation).** Required labels: FINDING
+  C11-A's eight-zone band is **not established**; FINDING C11-D is **undetermined, not
+  contradicted**; FINDING C10-A's "near-constant" is now the stronger **"indistinguishable
+  from constant"**. And FINDING C12-C gives C18 its model-ranking instrument: rank arms on
+  the within-day Spearman, translate to EUR/MW/yr with capture, never rank on capture at
+  one year.
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C12, before and after the
   work: marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
   `sealed_years()` = `{2025}`, `assert_not_sealed({2025})` raises, no `*2025*` file exists
-  anywhere under `data/`, only 2023 and 2024 price files were fetched, every `market_day`
-  in every C11 artefact is in 2024, and `evaluation_years` = `2024` on all 2 085 store
-  rows. The 18 occurrences of the string `2025` in `c11_capture_daily_2024.csv.gz` were
-  each inspected and are digits inside float values (`30.402025`, `0.2025`). The store
-  adds an independent tripwire: a metric whose `evaluation_years` touches a sealed year
-  **cannot be written**. No 2025 data has been fetched, loaded, dispatched or computed
-  against at any point in C2–C11.
-- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C11 modified no
-  `config/*.yaml`. C11's library fingerprint is **`856fb19ac0c4eecd`**, identical to
-  C10's (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1,
-  lightgbm 4.7.0), so C10's and C11's rows are directly comparable.
-- **Repo-state note:** the detached-HEAD trap recurred in C11 — the container arrived
-  detached at `e30892d` with local `master` stale 14 commits behind. **26 recurrences out
-  of 33 containers.** `HEAD` equalled `origin/master` exactly, so nothing was at risk, and
+  anywhere under `data/`, **no price file was opened at all**, every `market_day` in every
+  C12 artefact is in 2024, and `evaluation_years` = `2024` on all 3 426 store rows. The 48
+  occurrences of the string `2025` across the C12 artefacts and the store were checked
+  **programmatically** (each one's full delimited token matched against a numeric literal)
+  rather than by eye: all 48 are digits inside floats, **zero non-numeric `2025` tokens**.
+  The store adds an independent tripwire: a metric whose `evaluation_years` touches a
+  sealed year **cannot be written**. No 2025 data has been fetched, loaded, dispatched or
+  computed against at any point in C2-C12.
+- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C12 modified no
+  `config/*.yaml`. C12's library fingerprint is **`856fb19ac0c4eecd`**, identical to C10's
+  and C11's (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1,
+  lightgbm 4.7.0), so C10, C11 and C12 rows are directly comparable.
+- **`backtest/metrics.py` was extended in C12, additively.** 225 lines added; the only
+  removed line is `from dataclasses import dataclass` becoming
+  `from dataclasses import asdict, dataclass`. No existing function changed, so C3's
+  leakage assertions and C4's skill score read exactly the code they read before. A *new*
+  file under `tests/` follows C11's precedent and is not a flag-and-stop event; editing a
+  **pre-existing** test still is.
+- **Repo-state note:** the detached-HEAD trap recurred in C12 — the container arrived
+  detached at `c9a9ef8` with local `master` stale 15 commits behind. **27 recurrences out
+  of 34 containers.** `HEAD` equalled `origin/master` exactly, so nothing was at risk and
   `git checkout -B master` was permitted. C9's warning still stands: **if a future
   container arrives detached *and* genuinely behind the remote, and `checkout -B` is
   refused, flag rather than improvise.** Keep checking
@@ -4180,3 +4235,363 @@ as the capture ratios, so the spread and Spearman metrics C12 adds should be com
 that same hour set. Call `verify_append_only()` before trusting the store and append with
 `append_rows` — the metric name is still the extension point and no schema change is
 needed.
+
+### C12 — 2026-10-09 (scheduled cycle) — the metrics layer, and two of C11's three questions answered "no"
+
+Scope per PLAN.md C12: *"Metrics layer: MAE, RMSE, rMAE vs naive, daily-spread error,
+within-day Spearman; capture ratio; EUR/MW/yr; block-bootstrap CIs over daily blocks."*
+Done, all nine zones, every committed curve. No checkpoint, no blocker, no FLAG raised,
+no new dependency. **No price file was opened at all** — the realised prices came from
+the committed artefacts' own `y_true` — so this is the first cycle since C1 with **zero
+network requests**, and `ENTSOE_API_KEY` was neither needed nor read.
+
+NOTE C11-01 said C12 "is not a formatting cycle, it is the cycle that decides whether
+C11's three findings are real." It decided. **One survives decisively, one is at the
+edge, one is downgraded to undetermined** — and the cycle turned up a metric nobody had
+computed yet that does better than any of them.
+
+**Full suite: 607 passed, 0 failed, 51 warnings, 620.66s** (556 before C12 + 51 new). The
+51 warnings are the same pre-existing sklearn LARS convergence notices from the C8 LEAR
+tests. `tests/` (every pre-existing file), `config/`,
+`forecast/`, `dispatch/`, `data/`, `backtest/walk_forward.py` and
+`backtest/results_store.py` are **untouched** — verified with `git diff --stat HEAD`
+over exactly those paths, which came back empty. `backtest/metrics.py` **was** modified
+and the diff is **purely additive**: 225 lines added, and the only removed line is
+`from dataclasses import dataclass` becoming `from dataclasses import asdict, dataclass`.
+No existing function was changed, so C3's leakage assertions and C4's skill score read
+exactly the code they read before. A new file under `tests/` follows C11's precedent
+(C11 added `tests/test_c11_dispatch.py` and recorded `tests/` as untouched meaning every
+*pre-existing* file); no pre-existing test was edited, so this is not a CLAUDE.md
+flag-and-stop event.
+
+#### Reproduction first: C12 bounds C11's numbers, not near neighbours of them
+
+A CI around a number nobody published is worse than no CI, so the run **exits non-zero**
+if its point estimates do not match C11's committed store rows. Seven metrics × 27
+(zone, curve) pairs, joined on the store's own key rather than on C11's internal curve
+label. `mae/rmse/bias_on_dispatched_hours` and `realised_spread_mean` reproduce at
+**exactly 0.0**; `capture_rolled_oracle_cash` at 5.2e-10. The two EUR/MW/yr figures
+carry a *relative* tolerance for a stated reason — C11 formed them as
+`sum(cash)/span*365.25` and C12 as `mean(cash)*(n_days*365.25/span)`, the same number
+summed in a different order (~1e-9 relative), and the lost-value figure one order worse
+because it is a ~6 000 EUR difference of two ~70 000 EUR sums. **7/7 hold.**
+`test_the_c11_reproduction_check_can_actually_fail` nudges one capture ratio by 1e-6 and
+confirms the check catches it.
+
+#### FINDING C12-A — the capture band is wider than noise; rMAE's band is not. CONFIRMED.
+
+FINDING C11-A's *inequality of bands* claim survives decisively, at all three block
+lengths. A band is a max minus a min, so it is positively biased and its own interval
+never excludes zero even when every zone is identical; the test is therefore a
+**noise-only null band** — remove the zone effect, keep each zone's own bootstrap
+deviation, and ask how often sampling noise alone produces a band this wide.
+
+| block | capture band | noise-only p | between/within | rMAE band | noise-only p | between/within |
+|---|---|---|---|---|---|---|
+| 1 day | 30.40pp [23.27, 40.35] | **<1e-4** | 4.18 | 7.42pp [5.65, 14.19] | 0.196 | 0.95 |
+| 7 days | 30.40pp [24.47, 37.75] | **<1e-4** | 6.10 | 7.42pp [5.93, 15.91] | 0.367 | 0.69 |
+| 14 days | 30.40pp [24.92, 37.56] | **<1e-4** | 5.88 | 7.42pp [6.23, 15.37] | 0.284 | 0.71 |
+
+The capture ratio's cross-zone spread is **4–6 times** the sampling noise of its own
+estimates; rMAE's is at or below it. That **sharpens FINDING C10-A from "near-constant"
+to "indistinguishable from constant"**: nine zones' relative forecast skill cannot be
+told apart from nine draws of one number, while the dispatch metric sitting on top of it
+is 4–6σ wide. C11's "capture's CV is 3.0x rMAE's" survives as an interval:
+**CV ratio 2.97 [1.53, 4.30]**, excluding 1 at every block. 17 of 36 zone pairs have a
+paired capture difference excluding zero (21 of 36 at 7 days).
+
+#### FINDING C12-B — the eight-zone band is NOT established. (NOTE C11-01 (i): answered, no.)
+
+| block | capture band ex-NO2 | noise-only p | between/within |
+|---|---|---|---|
+| **1 day (PLAN.md's literal "daily blocks")** | 8.29pp [6.51, 15.18] | **0.078** | 1.45 |
+| 7 days | 8.29pp [6.75, 12.38] | 0.001 | 2.20 |
+| 14 days | 8.29pp [6.89, 12.42] | 0.003 | 2.06 |
+
+At the block length PLAN.md names it does not clear 5%. It clears at 7 and 14 days — but
+a conclusion that depends on the block length is by definition not established, and the
+longer rungs are the ones whose long-run variance estimate is least trustworthy at
+n = 365 (~26 independent blocks). With NO2 out, the capture CV and the rMAE CV become
+indistinguishable (**ratio 0.96 [0.51, 1.77]**).
+
+**So FINDING C11-A is a finding about NO2 plus a direction.** The 30.4pp band and the
+inequality of the bands are real and large; the claim that the other eight regimes differ
+in capture by more than noise is at the edge of what one validation year supports.
+**C18 must not quote the 8.3pp eight-zone band as established, and C13's second year is
+the test.**
+
+#### FINDING C12-C — the within-day Spearman is the only point-forecast metric that tracks capture. NEW.
+
+C11 asked whether *rMAE* tracks capture across regimes. The better question was whether
+**any** point-forecast metric does, and one of them does — the one closest in meaning to
+what the LP actually reads off a curve. Cross-zone rank correlation against capture, nine
+zones, daily block:
+
+| forecast metric | ρ vs capture | 95% CI | sign a forecastability story predicts | sign right? | excludes 0? |
+|---|---|---|---|---|---|
+| **within-day Spearman** | **+0.70** | **[+0.35, +0.93]** | + | yes | **yes** |
+| rMAE vs naive | +0.60 | [−0.08, +0.85] | − | **no** | no |
+| MAE | +0.05 | [−0.25, +0.50] | − | no | no |
+| daily spread MAE | +0.08 | [−0.37, +0.58] | − | no | no |
+| daily spread bias | +0.20 | [−0.55, +0.42] | + | yes | no |
+
+Holds at every block length and with NO2 removed (**+0.57 [+0.07, +0.91]**); every other
+candidate spans zero everywhere. Note that **rMAE's +0.60 has the wrong sign** — zones
+where the model is relatively worse than naive capture *more* — so C11 was right to
+refuse to lean on it, and now the interval contains zero too.
+
+**A candidate mechanism for FINDING C11-B, which C11 could not offer.** NO2's mean
+within-day Spearman is **0.578** against 0.71–0.89 in the other eight; DK1, the
+second-worst capture, has the second-worst Spearman (0.706). C11 found every
+*spread-based* correlate of NO2's low capture collapsed when NO2 was dropped. The
+ordering metric does not — it survives the drop. So the candidate mechanism is **not**
+"NO2's spread is too thin to clear the round-trip cost" but "**in NO2 the forecast puts
+the hours in the wrong order**", the one error a battery cannot trade around. **This is a
+candidate, not established** (n = 9, one year, and a rank correlation is not a mechanism),
+but it changes what C15's throughput-cost ladder should be read against — see NOTE C12-02.
+
+#### FINDING C12-D — capture cannot rank arms at one validation year. (NOTE C11-01 (ii): answered.)
+
+FINDING C11-D was "among honest arms, MAE does not predict capture", with C11's own
+caveat that most deltas were under 1pp. **The bootstrap says the caveat was the finding.**
+Across the fifteen honest contrasts, at the daily block:
+
+| contrast metric | intervals excluding 0 | median \|delta\|/boot sd | max |
+|---|---|---|---|
+| **capture (pp)** | **1 / 15** | **0.46** | 2.21 |
+| EUR/MW/yr | 1 / 15 | 0.46 | 2.23 |
+| daily spread MAE | 5 / 15 | 0.93 | 3.88 |
+| MAE (%) | 7 / 15 | 1.91 | 6.33 |
+| **within-day Spearman** | **8 / 15** | **2.23** | 5.01 |
+
+The ordering (capture fewest, Spearman most) holds at every block length. C11's rank
+correlation of +0.02 now has interval **[−0.53, +0.56]** — it excludes essentially
+nothing; Pearson −0.11 [−0.58, +0.59]; sign agreements 9 of 15 with interval [5, 12]
+against 7.5 under independence.
+
+**The honest statement is therefore not "MAE does not predict capture". It is "one
+validation year decides 1 of 15 capture deltas, so it can neither establish nor rule out
+that MAE predicts capture."** FINDING C11-D must be restated in C18 as **undetermined,
+not contradicted**. The apparent disagreement between the two metrics is largely that one
+of them is ~4x noisier per unit of effect.
+
+That is not an argument for MAE. It is an argument for **ranking arms on the within-day
+Spearman** — decidable, and the only metric whose cross-zone behaviour tracks capture —
+and using capture for the economic translation (EUR/MW/yr) rather than for the ranking.
+
+#### FINDING C12-E — the GBM-exogenous capture gain mostly does not survive. (NOTE C11-01 (iii): answered, one of three.)
+
+C11 answered NOTE C8-01 affirmatively on +0.35 / +2.04 / +2.71pp (DE-LU / ES / NO2,
+under the GBM). Paired intervals:
+
+| zone | delta | 1 day | 7 days | 14 days |
+|---|---|---|---|---|
+| DE-LU | +0.35pp | [−1.83, +2.53] | [−0.68, +1.40] | [−0.54, +1.24] |
+| ES | +2.04pp | [−0.26, +4.38] *(P(≤0)=0.042)* | **[+0.74, +3.60]** | **[+0.88, +3.44]** |
+| NO2 | +2.71pp | [−2.50, +8.03] | [−0.79, +6.63] | [−0.68, +6.56] |
+
+DE-LU and NO2 contain zero at every block length — **NO2 despite the largest point
+estimate**, because its per-day capture is the noisiest of the nine zones (boot sd 4.19pp
+against 1.50–2.60 elsewhere). ES misses at the daily block by a hair and clears at 7 and
+14 days; since NOTE C8-01 asked a *directional* question, the one-sided reading (4.2% of
+replicates at or below zero) clears 5% even at the daily block.
+
+**NOTE C8-01 is therefore RE-OPENED** (see below): the honest exogenous block under the
+booster is supported in ES and unestablished in DE-LU and NO2. The headline honest Tier-A
+arm **stays `res_persistence`** — it is not worse anywhere and FINDING C8-A already said
+the block costs nothing on MAE — but "it buys +2pp of capture" is one zone's result, not
+three.
+
+**The one honest contrast that *is* established** at every block length is
+**ES, `gbm_price_only − lear_price_only` = −2.22pp [−4.25, −0.29]**: the booster captures
+*less* than the LASSO in the zone where it also has the lower MAE (−1.15%). That is the
+one piece of FINDING C11-D's claim (ii) a single validation year does establish, and it
+runs against the booster.
+
+#### FINDING C12-F — every zone under-predicts the daily spread
+
+`daily_spread_bias` is **negative in all nine zones**, by 7.9 (ES) to 23.7 (NL) EUR/MWh,
+with no exceptions and no near-misses. The forecast day is reliably flatter than the day
+that arrives — the regularised model shrinking towards the mean. The direction matters for
+C18: it biases the battery towards **under**-trading, which is conservative, and it is
+part of why capture sits near 0.9 rather than near 1 even where the ordering is good.
+`n_days_spearman_undefined` is 0 in every zone, so no day was dropped for want of an
+ordering.
+
+#### The two new metrics, and the shape they are built on
+
+`backtest/metrics.py` gains `spearman_rho`, `daily_shape_table`, `ShapeScores`,
+`shape_scores`, `daily_spread_error`, `within_day_spearman` — all additive. Two
+properties are load-bearing:
+
+* **A pooled MAE is a ratio of column sums, never a mean of per-day MAEs.** A 23-hour and
+  a 25-hour day do not carry equal weight; a mean of daily MAEs says they do. That is the
+  DST bug the one-row-per-day shape exists to prevent, and a test pins it.
+  `shape_scores` agrees with C3's `score` to 1e-12 on the same hours, which is what lets
+  a point error and a dispatch metric sit on one row.
+* **Everything is day-additive**, so the bootstrap is a resample of rows and the replicate
+  statistic is computed by the same formula as the point estimate.
+
+Ties are averaged (Pearson on average ranks *is* Spearman) rather than broken in index
+order — the test uses a case where the two rules give 0.9487 and 0.8, because European
+market days carry identical consecutive clearing prices often. A flat day's rho is `nan`
+and is **counted**, never dropped into a flattering denominator.
+
+Every metric is computed on **exactly the hours the capture ratio is pooled over** —
+C11's discipline carried forward, and not cosmetic: ES's exogenous join has 145 missing
+hours, so reusing C10's own-coverage MAE would pair a capture delta with an MAE delta from
+a different sample and make the whole of FINDING C11-D an artefact of two samples.
+
+#### The bootstrap, and the one warning in it
+
+`backtest/bootstrap.py`: circular moving-block, **paired** (one draw applied to every
+zone, curve and statistic in a replicate), 10 000 replicates, seed 20261009, percentile
+interval. The day is the resampling unit because the day is this project's unit of
+everything else. Two bases: each zone's `common_hours` day set (365, or 357 in ES), and
+the nine-zone comparable arm's 365 days — **verified to be the same calendar days in all
+nine zones**, which is what makes the cross-zone band a paired statistic. ES's 357-day set
+is a subset of that basis, so the FINDING C11-D correlation draws on the 365-day basis and
+projects; ES contributes ~357/365 of each replicate's draws, which widens its own interval
+slightly and is recorded rather than hidden.
+
+**Warning for C13/C15: a wider block does not mean a wider interval.** At n = 365 a
+14-day block leaves ~26 independent blocks and the long-run variance estimate gets noisy —
+here it comes out *narrower*, not wider. So the ladder (1 / 7 / 14) is a robustness check,
+not an ordering, and the conservative reading is **the rung least favourable to the claim
+being made**, which for FINDING C12-B is the 1-day rung and not the 7-day one.
+
+The null-band test is the load-bearing statistical primitive, so it is tested for
+**calibration**: on eight groups drawn from one distribution it must not call the band
+significant (at most 2 of 12 draws below 0.05), and on one group shifted far out it must
+return p < 0.01. A band test that cried wolf would make FINDING C12-A an artefact of the
+test file.
+
+#### The results store
+
+**1 341 rows appended**, run `C12-20261009T102850Z-4d32f5e9`; the store is now
+**3 426 rows across 3 runs**, `verify_append_only()` green, and the 2 085 committed
+C10+C11 rows are **byte-for-byte unchanged** (the new file's first 608 226 bytes are
+identical to `git show HEAD:backtest/results/results.csv`, and the diff is 1 341
+insertions / **0 deletions**). **No schema change and no test edit were needed** — the
+third cycle running in which long format made the metric name the extension point.
+
+New point metrics at both scopes: `daily_spread_{mae,bias,rmse}_eur_per_mwh`,
+`within_day_spearman_{mean,median,p05}`, `rmae_vs_naive_on_dispatched_hours`. Interval
+bounds (`_ci_low` / `_ci_high` / `_boot_sd`) at the **headline block length only** for six
+metrics — the block length, replicate count and seed live in the run note and the
+artefacts, because a metric name that encoded them would make the ladder unreadable; the
+full ladder is in `c12_intervals.csv`. Paired contrasts are written on the **treatment**
+row as `{capture_delta_pp,mae_pct_gain}_vs_<baseline curve>`, with the baseline in the
+name because the store's key identifies one series and a difference is about two.
+`evaluation_years` is `2024` on all 3 426 rows.
+
+#### Data: no fetch at all
+
+NOTE C2-02 — `data/raw/` was empty on arrival again, and **for the first time it did not
+matter**: C12 reads C11's per-day dispatch artefact and the C4/C8/C9/C10 prediction files,
+and the realised prices it needs are those files' own `y_true` column (which C11 had
+already verified equal to the price cache, hour for hour, to 0 EUR/MWh). So no
+Energy-Charts pull, no ENTSO-E pull, no manifest regeneration, and no `payload_sha256`
+re-verification was possible or needed. **0 network requests, 0 FLAGs.** This is the
+shape later reporting cycles should prefer.
+
+#### Sealed holdout
+
+**SEALED.** Verified armed before and after the work: marker-alone-on-a-line count **0**,
+`holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`,
+`assert_not_sealed({2025})` raises `SealedHoldoutError`, no `*2025*` file exists anywhere
+under `data/`, no price file was opened at all, every `market_day` in every C12 artefact
+is in 2024, and `evaluation_years` = `2024` on all 3 426 store rows. The 48 occurrences of
+the string `2025` across the C12 artefacts and the store were checked **programmatically**
+rather than by eye — each one's full comma/quote-delimited token was matched against a
+numeric literal, and all 48 are digits inside floats (`-68.12025300000002`, `34.220252`,
+`20250.5689464276`, `0.9062025870440182`); **zero non-numeric `2025` tokens.** No 2025
+data has been fetched, loaded, dispatched or computed against at any point in C2–C12.
+
+#### Config hash and libraries
+
+Config hash **`515d4e8d98887256`** — unchanged from C8; C12 modified no `config/*.yaml`
+(verified with `git diff --stat HEAD -- config/`, empty). Library fingerprint
+**`856fb19ac0c4eecd`** — identical to C10's and C11's (python 3.11.17, numpy 2.4.6,
+pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1, lightgbm 4.7.0), so C10, C11 and C12 rows
+are directly comparable. The GBM config fingerprint `a366a760e269bba6` was not touched.
+
+#### Built and committed (51 new tests, 607 in total)
+
+- `backtest/metrics.py` — **additive only**: the per-day shape table and the two PLAN.md
+  decision-relevant metrics.
+- `backtest/bootstrap.py` — the circular moving-block day bootstrap, the paired interval,
+  the `noise_only_spread` null-band test and row-wise Spearman.
+- `backtest/run_c12_metrics.py` — the CLI: `CurveDays`, `Basis` (with `restricted`),
+  `point_metrics`, `curve_replicates`, `check_c11_reproduction`, `contrast_intervals`,
+  `cross_zone_analysis` over `CANDIDATE_METRICS`, `mae_vs_capture_correlation`,
+  `decidability`, `store_rows`.
+- `tests/test_c12_metrics.py` — 51 offline tests: the two new metrics on hand-made price
+  vectors, the pooled-MAE-is-a-ratio-of-sums property, tie averaging, the bootstrap's two
+  analytic end points, the null-band **calibration** test, and FINDINGs C12-A..C12-F each
+  pinned against the artefacts this cycle committed so a later cycle cannot quietly
+  promote MAE back or re-report a gain this one could not establish.
+- `docs/metrics_layer.md` — the full write-up, including a **Limitations** section (one
+  year, approximate percentile coverage, the block-ladder warning, n = 9 and n = 15, no
+  multiplicity correction, what the null-band test assumes).
+- `backtest/results/c12_daily_metrics_2024.csv.gz` (**16 440 rows** — the dispatch columns
+  joined to the shape columns, the artefact C13/C15 should read rather than rebuilding the
+  join), `c12_metrics_table.csv` (90 rows), `c12_intervals.csv` (1 269 rows, the full
+  ladder), `c12_contrasts.csv` (63 rows), `c12_metrics_summary.json`, and the 1 341 new
+  store rows.
+- `requirements.txt` — a comment block recording that C12 added no dependency, and why
+  the Spearman is not `scipy.stats.spearmanr`.
+
+#### Notes for later cycles
+
+**NOTE C8-01 — RE-OPENED by C12.** C11 closed it affirmatively for the booster on point
+estimates of +0.35 / +2.04 / +2.71pp. Two of the three intervals contain zero at every
+block length and the third (ES) depends on the block length. The question is now "is the
+honest exogenous block worth having under the booster *outside ES*", and the answer needs
+a second evaluation year, not more arms. C13 should report the three deltas per year.
+
+**NOTE C12-01 (new, for C13).** Both of C12's unresolved questions reduce to the same
+thing: one validation year decides too little. FINDING C12-B's eight-zone band (p = 0.078
+at the daily block), FINDING C12-D's rank correlation ([−0.53, +0.56]) and FINDING C12-E's
+two unestablished zones all want a second year. C13's per-year tables should therefore
+report, for each year: the eight-zone capture band with its noise-only p, the three
+GBM-exogenous capture deltas with intervals, and NO2's capture and within-day Spearman.
+The machinery is reusable as-is — `backtest/bootstrap.py` takes any day-additive column —
+but **it needs per-day dispatch rows for the other years, which do not exist yet**: C11
+dispatched 2024 only. That is the one piece of new computation C13 would need, and it is
+C13's call whether that is in scope or a C15 item.
+
+**NOTE C12-02 (new, for C13/C15, supersedes nothing in NOTE C11-02).** FINDING C11-B's
+thin-spread mechanism for NO2 now has a **rival** candidate with better cross-zone support:
+the within-day ordering (NO2 ρ = 0.578 vs 0.71–0.89). C15's throughput-cost ladder
+(0 / 2 / 5 EUR/MWh) is the direct test of the *thin-spread* story and should be read as
+such; it is **not** a test of the ordering story, which predicts instead that NO2's capture
+stays low at zero throughput cost while its within-day Spearman stays the lowest of the
+nine. Running both predictions against the same ladder is cheap and distinguishes them.
+
+**NOTE C12-03 (new, for C18 — wording, not computation).** Three C11/C10 claims now have
+a required label and must not travel without it: FINDING C11-A's eight-zone band is **not
+established** (FINDING C12-B); FINDING C11-D is **undetermined, not contradicted**
+(FINDING C12-D); FINDING C10-A's "near-constant relative skill" is now
+**"indistinguishable from constant"**, which is stronger and should be stated that way.
+And FINDING C12-C gives C18 its model-ranking instrument: rank arms on the within-day
+Spearman, translate to EUR/MW/yr with capture, and do not rank on capture at one year.
+
+#### Repo-state note
+
+The detached-HEAD trap recurred: the container arrived detached at `c9a9ef8` with local
+`master` stale 15 commits behind. **27 recurrences out of 34 containers.** `HEAD` equalled
+`origin/master` exactly (0 ahead, 0 behind), so nothing was at risk and
+`git checkout -B master` was permitted; the cycle worked on a properly attached `master`
+throughout. C9's warning still stands for a container that arrives detached *and*
+genuinely behind the remote: flag rather than improvise. Keep checking
+`git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the start of
+every cycle.
+
+**Next:** C13 — regime analysis: the 2022 crisis year reported separately, per-year tables,
+pre/post 2025-10-01 flagged, negative-hour counts per zone. Read **NOTE C12-01 first**: the
+per-year tables are also the second-year test that FINDINGs C12-B, C12-D and C12-E are all
+waiting on, and the per-day dispatch rows for years other than 2024 **do not exist yet**
+(C11 dispatched 2024 only), so C13's first decision is whether producing them is in scope.
+Quote `capture_rolled_oracle_cash`, never `capture_same_start_pooled` (FINDING C11-C), and
+carry the labels NOTE C12-03 requires. The 2025 holdout stays SEALED until Checkpoint C.

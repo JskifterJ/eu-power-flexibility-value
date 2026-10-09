@@ -68,3 +68,15 @@ lightgbm>=4.3
 # library and no plotting. scipy.stats is used only in the PROGRESS.md analysis
 # of the cross-zone table, not in the committed code path; C12's block bootstrap
 # is numpy resampling and will not need one either.
+
+# C12 (the metrics layer + block-bootstrap CIs over daily blocks): no new
+# dependencies, as the C11 note predicted. The two new metrics are pandas
+# groupby plus `Series.rank` (a Spearman is Pearson on average ranks, which is
+# the definition — deliberately not `scipy.stats.spearmanr`, whose p-value this
+# project has no use for at a per-day n of 24, and whose per-call overhead would
+# dominate a 10 000-replicate loop). The bootstrap is `numpy.random.default_rng`
+# plus one matrix product: a circular moving-block resample is drawn once as a
+# (n_replicates x n_days) count matrix, and every day-additive statistic is then
+# `counts @ column`, so no resampling library is needed and the replicate
+# statistic is computed by the same formula as the point estimate. No plotting
+# and no solver: C12 re-dispatches nothing.

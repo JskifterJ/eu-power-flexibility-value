@@ -16,7 +16,8 @@ forecast/features.py      the feature matrix + an information time per cell
 forecast/leakage.py       the gate-closure guard, and the availability mask
 forecast/models.py        the Model protocol, naive same-hour-last-week, train-mean
 backtest/walk_forward.py  folds, the three per-fold guards, the run loop
-backtest/metrics.py       MAE / RMSE / rMAE / skill (C12 owns the full layer)
+backtest/metrics.py       MAE / RMSE / rMAE / skill, + C12's daily-spread error
+                          and within-day Spearman (see docs/metrics_layer.md)
 backtest/diagnostics.py   PLAN.md's three leakage experiments as library functions
 backtest/run_c3_naive.py  CLI: python -m backtest.run_c3_naive
 tests/test_c3_timing_features.py    19 offline tests
