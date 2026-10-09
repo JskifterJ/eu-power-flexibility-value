@@ -80,3 +80,14 @@ lightgbm>=4.3
 # `counts @ column`, so no resampling library is needed and the replicate
 # statistic is computed by the same formula as the point estimate. No plotting
 # and no solver: C12 re-dispatches nothing.
+
+# C13 (the regime analysis: per-year tables 2020-2024, the crisis year reported
+# separately, the cutover flag, negative-hour counts): no new dependency, and
+# nothing in the existing set moved. The cycle is 36 walk-forward runs of C4's
+# committed LEAR, 36 runs of C5/C6's dispatch LP, and C12's metric and bootstrap
+# layer imported rather than re-derived — so a 2022 capture ratio is produced by
+# the same lines of Python as the 2024 one already in results.csv. The
+# library_fingerprint is unchanged from C10/C11/C12 (856fb19ac0c4eecd), which is
+# what makes C10-C13 rows directly comparable; a new version of numpy, pandas,
+# scikit-learn, scipy or lightgbm here would have made the five per-year columns
+# incomparable to each other as well as to the published 2024 ones.

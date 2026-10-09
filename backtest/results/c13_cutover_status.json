@@ -1,0 +1,19 @@
+{
+  "sdac_15min_golive": "2025-10-01",
+  "main_backtest_end": "2025-09-30",
+  "evaluated_years": [
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "last_evaluated_market_day": "2024-12-31",
+  "every_evaluated_row_is_pre_cutover": true,
+  "resolution_seconds_seen_in_manifest": [
+    3600
+  ],
+  "all_hourly": true,
+  "post_cutover_rows": 0,
+  "why_no_comparison": "the cutover falls inside the sealed 2025 holdout, and config/data.yaml stops fetching at 2024, so there is no post-cutover row in this project to compare against. The flag is therefore a statement about the evaluated window, not a split: every price hour behind every number in C13 was served at 60-minute resolution (manifest resolution_seconds=3600 on all 54 zone-years) and falls before 2025-10-01. data/contracts.py carries the resolution-change detection that would catch a post-cutover file if a later cycle fetched one; PLAN.md C15+ keeps native 15-minute analysis as a labelled stretch goal that is never blended into these results."
+}

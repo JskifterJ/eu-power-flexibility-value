@@ -1,0 +1,137 @@
+{
+  "cycle": "C13",
+  "generated_at_utc": "2026-10-09T18:47:40+00:00",
+  "git_sha": "01164404d43e70945f5c1ce4a7ae7f9a82048a58",
+  "config_hash": "515d4e8d98887256",
+  "libraries": {
+    "python": "3.11.17",
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.17.1",
+    "lightgbm": "4.7.0"
+  },
+  "library_fingerprint": "856fb19ac0c4eecd",
+  "zone": "FR",
+  "tier": "B",
+  "regime": "nuclear-dominated",
+  "evaluation_years": [
+    2022
+  ],
+  "train_from": "2019-01-01",
+  "walk_forward_spec": {
+    "refit_every_days": 1,
+    "min_train_days": 365,
+    "train_window_days": null
+  },
+  "lear_spec": {
+    "selector": "aic",
+    "hour_key": "local",
+    "hour_column": "hour_of_day_local",
+    "nan_policy": "decline",
+    "cv_splits": 5,
+    "cv_alphas": 50,
+    "max_iter": 20000,
+    "min_fit_rows": 120,
+    "vst": true
+  },
+  "price_series": {
+    "zone": "FR",
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "n_points": 52608,
+    "n_duplicate_timestamps": 0,
+    "first_ts_utc": "2018-12-31T23:00:00+00:00",
+    "last_ts_utc": "2024-12-31T22:00:00+00:00"
+  },
+  "feature_build": {
+    "zone": "FR",
+    "n_rows": 52608,
+    "first_target_utc": "2018-12-31T23:00:00+00:00",
+    "last_target_utc": "2024-12-31T22:00:00+00:00",
+    "price_columns": [
+      "price_lag_24h",
+      "price_lag_48h",
+      "price_lag_72h",
+      "price_lag_168h",
+      "price_daily_mean_lag_24h",
+      "price_daily_min_lag_24h",
+      "price_daily_max_lag_24h"
+    ],
+    "calendar_columns": [
+      "hour_of_day_local",
+      "hour_of_day_utc",
+      "day_of_week",
+      "is_weekend",
+      "month"
+    ],
+    "deferred_columns": [
+      "is_public_holiday"
+    ],
+    "daily_aggregate_source": {
+      "price_daily_mean_lag_24h": "latest fully public UTC calendar day (mean); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_min_lag_24h": "latest fully public UTC calendar day (min); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_max_lag_24h": "latest fully public UTC calendar day (max); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)"
+    },
+    "n_incomplete_utc_days": 2,
+    "mask": {
+      "total_masked": 6,
+      "masked_per_column": {
+        "price_lag_24h": 6
+      },
+      "first_masked_per_column": {
+        "price_lag_24h": "2019-10-27T22:00:00+00:00"
+      }
+    }
+  },
+  "n_rows": 52608,
+  "n_evaluation_days": 365,
+  "first_day": "2022-01-01",
+  "last_day": "2022-12-31",
+  "scores": {
+    "naive_last_week": {
+      "n": 8760,
+      "n_scored": 8760,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 72.736732,
+      "rmse": 111.10595,
+      "bias": 1.742839
+    },
+    "lear_price_only": {
+      "n": 8760,
+      "n_scored": 8759,
+      "n_missing_prediction": 1,
+      "coverage": 0.999886,
+      "mae": 41.718421,
+      "rmse": 67.408477,
+      "bias": -11.514064
+    }
+  },
+  "rmae_vs_naive": 0.573536,
+  "n_folds": 365,
+  "walk_forward": {
+    "model": "lear",
+    "zone": "FR",
+    "spec": {
+      "refit_every_days": 1,
+      "min_train_days": 365,
+      "train_window_days": null
+    },
+    "n_folds": 365,
+    "n_rows": 8760,
+    "n_predicted": 8759,
+    "first_target_day": "2022-01-01",
+    "last_target_day": "2022-12-31",
+    "n_skipped_days": 0,
+    "skipped_days": [],
+    "skipped_reason": {}
+  },
+  "note": "C13's per-year arm is exactly C10's nine-zone comparable arm \u2014 C4's committed LearSpec on price-history and calendar features, expanding window over the whole cached history \u2014 run on one earlier evaluation year. PLAN.md calls 2020-2023 training years: these predictions are out-of-sample (a fold never sees its own day) but the model configuration was chosen while looking at 2024, so this is not a configuration holdout. 2025 remains sealed."
+}

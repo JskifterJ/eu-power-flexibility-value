@@ -2,20 +2,32 @@
 
 ## Current status
 
-- **Next cycle to run:** **C13.** C12 complete (the metrics layer and the daily-block
-  bootstrap: the two PLAN.md decision-relevant metrics built, and intervals put on every
-  C11 headline). It answered all three of NOTE C11-01's questions and **two of the three
-  answers are "no"** — see **FINDING C12-A** (the capture band *is* wider than noise and
-  rMAE's is not — C11-A's inequality-of-bands claim confirmed), **FINDING C12-B** (the
-  eight-zone band is **NOT established**: p = 0.078 at PLAN.md's daily block),
-  **FINDING C12-C** (the within-day Spearman is the **only** point-forecast metric whose
-  cross-zone ranking tracks capture, +0.70 [+0.35, +0.93] — and it gives NO2's outlier
-  status a rival mechanism), **FINDING C12-D** (capture decides 1 of 15 arm contrasts at
-  one year, so C11-D is **undetermined, not contradicted**), **FINDING C12-E** (the
-  GBM-exogenous capture gain survives a CI in ES only — **NOTE C8-01 re-opened**) and
-  **FINDING C12-F** (all nine zones under-predict the daily spread). No open blocker.
+- **Next cycle to run:** **C14.** C13 complete (the regime analysis: PLAN.md's per-year
+  tables built for the first time — nine zones x **five** evaluation years, 2020-2024,
+  36 new walk-forward runs and 36 new LP runs, with 2024 read from C12's committed
+  artefact and **reproduced against the published store rows** in 291 checks). It
+  settles two open C12 questions and adds a mechanism: **FINDING C13-A** (a zone's
+  capture ratio moves across years by as much as the eight zones differ within a year,
+  2.3-5.4x a single year's noise — so a one-year capture band is **not** a regime
+  effect), **FINDING C13-B** (FINDING C12-B settled: the eight-zone band clears 5% in
+  **one of five years**, p = 0.846 in 2021 and 0.523 in 2022 — **not established**),
+  **FINDING C13-C** (NO2 is bottom on capture *and* on within-day ordering in **all
+  five** years, 10 of 10 year pairs — the one C11/C12 claim five years makes
+  *stronger*), **FINDING C13-D** (**neither MAE nor the spread predicts capture; their
+  ratio does** — `error_over_headroom` rho = **-0.74** over 44 cells against MAE's
+  **-0.015**), **FINDING C13-E** (**NOTE C12-02 closed**: NO2 sits 18-36pp and 2.9-5.6
+  residual sd *below* the eight-zone spread line in every usable year, so the
+  thin-spread story does **not** explain it and the ordering story survives) and
+  **FINDING C13-F** (the 2022 crisis multiplied the prize and the loss by ~2.5x and left
+  the captured *share* alone — 8 of 9 zones lower, 1 interval excluding zero). **One
+  open FLAG: FLAG C13-01**, explained and not a bug (below). No open blocker.
 - **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
   closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
+- **Two labels every later cycle must attach, now evidenced rather than cautionary.**
+  **(i) 2024 is the most favourable year of the five** — highest capture in six of nine
+  zones — so every C10-C12 headline travels with "in the validation year, which is the
+  best of the five evaluated". **(ii) A capture band measured in one year is not a
+  regime effect** (FINDING C13-A). See NOTE C13-01.
 - **Read these three before quoting any number from C10 or C11.**
   1. **FINDING C11-C** — the headline capture ratio is **`capture_rolled_oracle_cash`**
      (settled cash over the *rolled* perfect-foresight run's cash on the same days: one
@@ -105,23 +117,34 @@
   DE-LU and NO2); FINDING C10-B's window gain being an MAE claim; and the Art. 14 leak
   buying ~nothing a battery can trade except on DE-LU under the GBM (+3.47pp
   [+0.43, +6.60], and unachievable).
-- **Results live in one append-only table: `backtest/results/results.csv`** (**3 426 rows
-  after C12**, 3 runs, `backtest/results_store.py`, written up in `docs/results_store.md`,
-  `docs/dispatch_results.md` and `docs/metrics_layer.md`). Long format, so **a new metric
-  is a new value, not a new column** — C11 added 17 dispatch metrics and C12 added 7 point
-  metrics, 18 interval bounds and the paired contrasts, and **neither needed a schema
-  change or a test edit.** Every row carries `git_sha`, `config_hash`, the model's
-  fingerprint and a `library_fingerprint`; `vintage` (`honest` / `after_gate_closure`) is a
-  **required key column**. Call `verify_append_only()` before trusting anything in there
-  and append with `append_rows` — never edit a row in place. The 2 085 C10+C11 rows are
-  byte-for-byte unchanged after C12's append (verified against `git show HEAD:`).
+- **Results live in one append-only table: `backtest/results/results.csv`** (**8 250 rows
+  after C13**, 4 runs, `backtest/results_store.py`, written up in `docs/results_store.md`,
+  `docs/dispatch_results.md`, `docs/metrics_layer.md` and `docs/regime_analysis.md`). Long
+  format, so **a new metric is a new value, not a new column** and **a new evaluation year
+  is new rows** — C11 added 17 dispatch metrics, C12 added 7 point metrics plus interval
+  bounds, and C13 added 4 824 rows for 2020-2023 (1 206 per year) including
+  `error_over_headroom`; **none of the three needed a schema change or a test edit.**
+  Every row carries `git_sha`, `config_hash`, the model's fingerprint and a
+  `library_fingerprint`; `vintage` (`honest` / `after_gate_closure`) is a **required key
+  column**, and `evaluation_years` is now a single year on every C13 row. Call
+  `verify_append_only()` before trusting anything in there and append with `append_rows` —
+  never edit a row in place. The 3 426 C10-C12 rows are byte-for-byte unchanged after
+  C13's append (verified against `git show HEAD:`). **`scope` is a closed list**
+  (`own_coverage`, `common_hours`): C13's three-curve intersection is written as
+  `common_hours` because that *is* C11's definition applied to C13's curve set — which in
+  Tier A is **not** the same day set as C11's nine-curve 2024 `common_hours`, so read
+  `source_artefact` beside any Tier-A row.
 - **The per-day artefacts later cycles should read rather than rebuild:**
   `backtest/results/c11_capture_daily_2024.csv.gz` (16 440 rows, the dispatch columns) and
   **`c12_daily_metrics_2024.csv.gz`** (16 440 rows, the same rows with the per-day shape
   columns joined on: `sum_abs_error`, `sum_sq_error`, `sum_error`, `realised_spread`,
   `forecast_spread`, `spread_error`, `spearman`). Every column in the C12 file is
   **day-additive**, which is what makes `backtest/bootstrap.py` usable on it directly:
-  a pooled MAE, a capture ratio and a mean Spearman are all `counts @ column`.
+  a pooled MAE, a capture ratio and a mean Spearman are all `counts @ column`. **C13 adds
+  `c13_daily_by_year.csv.gz` (49 284 rows)** — the same columns for **five** years
+  (2020-2024) x nine zones x the three comparable curves, which is what C15 should
+  re-dispatch from and C17 should report from rather than re-fitting 36 walk-forward runs.
+  The 36 `c13_year_<ZONE>_<YEAR>_predictions.csv.gz` files are the forecasts themselves.
 - **`backtest/bootstrap.py` is reusable as-is for C13/C15.** Circular moving-block over
   market days, **paired** (one draw applied to every zone, curve and statistic in a
   replicate), 10 000 replicates, seed 20261009, percentile intervals, plus
@@ -165,7 +188,24 @@
   nine zones: present in seven of nine but tiny everywhere — at worst FR with 9 of 365
   days (2.5%), 2.70 MWh burned over a year and 0.14% of settled cash; NO2 and IT-North
   show none. It biases capture *against* the model (~0.16pp on DE-LU), so it is
-  conservative. Unchanged by C7-C12, none of which touched dispatch code.
+  conservative. Unchanged by C7-C13: C13 re-ran the dispatch code on 36 new zone-years
+  without modifying it.
+- **Open FLAGs (cont.): FLAG C13-01 — NO2 2020 fails CLAUDE.md's pooled naive-dominance
+  invariant, and it is a regime fact, not a bug.** The comparable LEAR arm settles
+  **-402 EUR/MW** over the year against the naive floor's **+253**; the
+  *perfect-foresight* battery earns only **769 EUR/MW/yr**; the mean realised daily spread
+  is **3.41 EUR/MWh** against a 2 EUR/MWh throughput cost and a 12% round trip; capture is
+  **-0.5222**. NO2's 2020 mean price was 9.3 EUR/MWh (Nordic hydro glut) — there is no
+  headroom to trade, so which of two curves trades *less* is luck, and CLAUDE.md's own
+  qualification ("on average, not per-day") is the operative one. **The assertion was not
+  weakened**: it still reports `holds: false`, the failure is recorded in
+  `backtest/results/c13_invariant_flags.json`, the dispatch phase **exits non-zero**, and
+  the cell is excluded from every band statistic and baseline under a declared floor
+  (oracle < 2 000 EUR/MW/yr; 1 of 45 cells, and no floor between ~1 000 and ~8 000 moves a
+  label). The per-day same-start oracle bound — the actual theorem — **held on all 26 262
+  (curve, day) checks, worst excess exactly 0.0 EUR**. **Needs a human only if the human
+  disagrees that this is a regime fact**; no later cycle should "fix" it by relaxing the
+  check.
 - **Earlier findings that still bind:** C9-A (PLAN.md leakage assertion (i) is vacuous for
   a pooled booster on the synthetic fixture; re-sited, `tests/test_c3_leakage_harness.py`
   untouched), **C9-B RETRACTED** (the claim that `lgb.train` keeps post-best-iteration
@@ -175,17 +215,26 @@
   mean-reference contamination of the target-permutation probe).
 - **Decision requests — all closed "as-is" at Checkpoint B (2026-10-07):** NOTE C3-01,
   NOTE C4-01, NOTE C4-02, NOTE C7-01. **NOTE C2-02** (the raw cache does not survive a
-  container) — no change, **23rd recurrence**, and **the first time it did not matter**:
-  C12 needed no price data at all.
+  container) — no change, **24th recurrence**, and it mattered again: C13 needed prices
+  for 36 walk-forward runs, so it re-pulled all 54 (zone, year) files and verified **all
+  54 `payload_sha256` identical to C1's** before fitting anything. The manifest was
+  therefore not regenerated or re-committed.
 - **NOTE C8-01 — RE-OPENED by C12.** C11 closed it affirmatively for the booster on point
   estimates of +0.35 / +2.04 / +2.71pp of capture. Two of the three intervals contain zero
   at every block length and the third (ES) depends on the block length. The question is
   now "is the honest exogenous block worth having under the booster *outside ES*", and it
-  needs a second evaluation year, not more arms. C13 should report the three deltas per
-  year.
+  needs a second evaluation year, not more arms. **C13 did not close it** — only 2023 is
+  available for a 2022-aligned arm and it needs a fresh ENTSO-E pull; see **NOTE C13-04**,
+  which hands it to **C14**, the next cycle that must re-pull those series anyway.
 - **NOTE C9-01, NOTE C10-01, NOTE C11-01 — all ANSWERED and closed.** NOTE C11-01's three
   questions are FINDINGs C12-B (no), C12-D (undetermined) and C12-E (ES only).
-- **NOTE C12-01 (new, for C13 — read it first).** Every one of C12's unresolved questions
+- **NOTE C12-01 — ANSWERED by C13**, except for its GBM-exogenous clause, which NOTE
+  C13-04 re-homes in C14. The per-year tables exist (nine zones x five years): FINDING
+  C12-B is settled as **not established** (FINDING C13-B), FINDING C12-D's "MAE cannot be
+  told apart from noise" has a cross-cell answer (**rho = -0.015**, FINDING C13-D), and
+  NO2's per-year capture and within-day Spearman are in `c13_per_year_metrics.csv`
+  (FINDING C13-C). Original text follows.
+- **NOTE C12-01 (as written for C13).** Every one of C12's unresolved questions
   reduces to the same thing: one validation year decides too little. FINDING C12-B
   (p = 0.078), FINDING C12-D ([−0.53, +0.56]) and FINDING C12-E (two unestablished zones)
   all want a second year. C13's per-year tables should report, per year: the eight-zone
@@ -195,7 +244,13 @@
   for the other years, which do not exist yet** (C11 dispatched 2024 only). That is the
   one piece of new computation C13 would need, and whether it is in C13's scope or a C15
   item is C13's call.
-- **NOTE C12-02 (new, for C13/C15; refines NOTE C11-02).** FINDING C11-B's thin-spread
+- **NOTE C12-02 — CLOSED by FINDING C13-E.** Conditioning on the realised spread removes
+  almost none of NO2's capture deficit (-18 to -36pp, 2.9-5.6 residual sd below the
+  eight-zone log-spread line in every usable year), so the thin-spread mechanism does not
+  explain NO2 and the within-day-ordering mechanism survives. **NOTE C13-02 re-points
+  C15's throughput-cost ladder** at what it does measure: how much of the capture ratio is
+  friction. Original text follows.
+- **NOTE C12-02 (as written for C13/C15; refines NOTE C11-02).** FINDING C11-B's thin-spread
   mechanism for NO2 now has a rival with better cross-zone support: the within-day
   ordering (FINDING C12-C). C15's throughput-cost ladder (0 / 2 / 5 EUR/MWh) is the direct
   test of the **thin-spread** story and should be read as such; it is **not** a test of the
@@ -208,30 +263,92 @@
   from constant"**. And FINDING C12-C gives C18 its model-ranking instrument: rank arms on
   the within-day Spearman, translate to EUR/MW/yr with capture, never rank on capture at
   one year.
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C12, before and after the
-  work: marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
+- **FINDING C13-A — a zone's capture ratio moves across years by as much as the eight
+  zones differ from each other within a year.** Within-zone across-year band 9.6-20.0pp
+  (eight non-outlier zones) against a single year's bootstrap sd of 2.8-5.1pp, so
+  **2.3-5.4x its own sampling noise**; the eight-zone band within a year is 8.3-18.0pp —
+  the same size. **So a capture band measured in one year is not a regime effect.** 2024
+  is also the most favourable of the five years (highest capture in six of nine zones).
+- **FINDING C13-B — the eight-zone capture band is NOT established (FINDING C12-B
+  settled).** Noise-only p at PLAN.md's daily block: 0.095 (2020), **0.846** (2021),
+  **0.523** (2022), 0.015 (2023), 0.078 (2024) — **one of five years clears 5%**. The
+  nine-zone band clears in four of five, so FINDING C11-A is confirmed as **a finding
+  about NO2 plus a direction**. C18 must not quote the 8.3pp band as established.
+- **FINDING C13-C — NO2 is bottom on capture *and* on within-day ordering in all five
+  years.** Spearman 0.470 / 0.592 / 0.650 / 0.615 / 0.578 against 0.699-0.886 elsewhere,
+  every year; cross-year capture ranking +0.33 to +0.88 (positive in all ten year pairs),
+  NO2 last in 10 of 10. The one C11/C12 claim five years makes **stronger**.
+- **FINDING C13-D — neither the forecast error nor the price spread predicts capture;
+  their ratio does.** Over 44 usable (zone, year) cells: `error_over_headroom` (pooled MAE
+  / mean realised daily spread) **rho = -0.738** (-0.682 ex-NO2), within-day Spearman
+  +0.698, oracle value +0.331, spread +0.256, **MAE -0.015**. Per-year cross-zone
+  intervals exclude zero in 3 of 5 years at the daily block and 5 of 5 at 7 and 14 days.
+  It also explains FINDING C13-A's year effect. Now a store metric.
+- **FINDING C13-E — the thin-spread story does not explain NO2 (NOTE C12-02 closed).**
+  Against a log-spread line fitted on the *other eight* zones' 40 usable cells, NO2 sits
+  **-35.5 / -30.3 / -18.3 / -19.5pp** (2021-2024), i.e. 2.9-5.6 residual sd below it,
+  every usable year. Conditioning on the spread removes almost none of the deficit; the
+  within-day-ordering mechanism (FINDING C12-C) survives.
+- **FINDING C13-F — the 2022 crisis multiplied the prize and the loss by ~2.5x and left
+  the captured share alone.** Oracle value x1.72-2.71, EUR/MW/yr lost x2.4-4.2, capture
+  delta -8.04 to +4.95pp with **one of nine** intervals excluding zero (BE). Intervals are
+  **unpaired** — two years share no market day — and are labelled so everywhere.
+- **NOTE C13-01 (for C18, wording).** Two labels are now evidenced: **2024 is the best of
+  five years**, so every C10-C12 headline travels with that clause; and **a one-year
+  capture band is not a regime effect** (FINDING C13-A). Read with NOTE C12-03.
+- **NOTE C13-02 (for C15).** The throughput-cost ladder is no longer NO2's mechanism test
+  (FINDING C13-E settled that). Run it for **how much of the capture ratio is friction**,
+  with NO2 2020 as the stress cell (oracle 769 EUR/MW/yr, mean spread 3.41, capture
+  -0.52). `c13_daily_by_year.csv.gz` plus the 36 prediction artefacts mean the ladder
+  needs **no re-fitting**, only re-dispatch.
+- **NOTE C13-03 (for C14/C15).** `error_over_headroom` is the strongest cell-level
+  predictor of capture found so far. C14's residual-load chapter should ask whether
+  **residual-load forecast error explains it** across Tier-A zones and years, and C18
+  should use it as the bridge from a point metric to EUR/MW/yr beside the within-day
+  Spearman.
+- **NOTE C13-04 (for C14) — the Tier-A exogenous/GBM per-year deltas were NOT computed.**
+  Only 2023 is available for a 2022-aligned arm (no archived ENTSO-E D-1 vintage before
+  2022, plus 365 days of required history), it needs a fresh ENTSO-E pull, and PLAN.md
+  C13 is the regime analysis. **NOTE C8-01 stays RE-OPENED** and is handed to **C14**,
+  which must re-pull those series for its own chapter — fold the 2023 ladder in there or
+  say why not.
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C13 after the work:
+  marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
   `sealed_years()` = `{2025}`, `assert_not_sealed({2025})` raises, no `*2025*` file exists
-  anywhere under `data/`, **no price file was opened at all**, every `market_day` in every
-  C12 artefact is in 2024, and `evaluation_years` = `2024` on all 3 426 store rows. The 48
-  occurrences of the string `2025` across the C12 artefacts and the store were checked
-  **programmatically** (each one's full delimited token matched against a numeric literal)
-  rather than by eye: all 48 are digits inside floats, **zero non-numeric `2025` tokens**.
-  The store adds an independent tripwire: a metric whose `evaluation_years` touches a
-  sealed year **cannot be written**. No 2025 data has been fetched, loaded, dispatched or
-  computed against at any point in C2-C12.
-- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C12 modified no
-  `config/*.yaml`. C12's library fingerprint is **`856fb19ac0c4eecd`**, identical to C10's
-  and C11's (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1,
-  lightgbm 4.7.0), so C10, C11 and C12 rows are directly comparable.
+  anywhere under `data/`, the price cache holds exactly 2019-2024, every `market_day` in
+  every C13 artefact is in **2020-2024**, and `evaluation_years` is a single year in
+  {2020, 2021, 2022, 2023} on all 4 824 new store rows (2020-2024 across all 8 250). The
+  **362** occurrences of the string `2025` across the C13 artefacts and the store were
+  checked **programmatically** (each one's full delimited token matched against a numeric
+  literal) rather than by eye: 356 are digits inside floats and the remaining **6 are the
+  cutover date strings** `2025-10-01` / `2025-09-30`, copied from `config/data.yaml`'s
+  `structural_dates` into `c13_cutover_status.json` and `c13_regime_summary.json` — which
+  *is* PLAN.md C13's "flag the cutover" requirement and contains no 2025 **data**.
+  `load_daily_by_year` and `regime_price_table` both refuse a sealed year **before any
+  path is built** (two tests pin it), and the store's own tripwire stands: a metric whose
+  `evaluation_years` touches a sealed year **cannot be written**. No 2025 data has been
+  fetched, loaded, dispatched or computed against at any point in C2-C13.
+- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C13 modified no
+  `config/*.yaml`. C13's library fingerprint is **`856fb19ac0c4eecd`**, identical to
+  C10's, C11's and C12's (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1,
+  scipy 1.17.1, lightgbm 4.7.0), so C10-C13 rows are directly comparable.
+- **C13 modified no pre-existing module at all.** It is one new runner
+  (`backtest/run_c13_regime.py`), one new test file (`tests/test_c13_regime.py`, 33
+  tests), one new document (`docs/regime_analysis.md`), a `requirements.txt` comment and
+  new artefacts; `git diff --stat HEAD` over `tests/`, `config/`, `forecast/`,
+  `dispatch/`, `data/`, `backtest/walk_forward.py`, `backtest/metrics.py`,
+  `backtest/bootstrap.py`, `backtest/results_store.py` and every earlier runner came back
+  empty. C11's and C12's metric, bootstrap and capture code are **imported**, which is
+  what makes a 2022 capture ratio the same statistic as the 2024 one.
 - **`backtest/metrics.py` was extended in C12, additively.** 225 lines added; the only
   removed line is `from dataclasses import dataclass` becoming
   `from dataclasses import asdict, dataclass`. No existing function changed, so C3's
   leakage assertions and C4's skill score read exactly the code they read before. A *new*
   file under `tests/` follows C11's precedent and is not a flag-and-stop event; editing a
   **pre-existing** test still is.
-- **Repo-state note:** the detached-HEAD trap recurred in C12 — the container arrived
-  detached at `c9a9ef8` with local `master` stale 15 commits behind. **27 recurrences out
-  of 34 containers.** `HEAD` equalled `origin/master` exactly, so nothing was at risk and
+- **Repo-state note:** the detached-HEAD trap recurred in C13 — the container arrived
+  detached at `0116440` with local `master` stale 16 commits behind. **28 recurrences out
+  of 35 containers.** `HEAD` equalled `origin/master` exactly, so nothing was at risk and
   `git checkout -B master` was permitted. C9's warning still stands: **if a future
   container arrives detached *and* genuinely behind the remote, and `checkout -B` is
   refused, flag rather than improvise.** Keep checking
@@ -4595,3 +4712,377 @@ waiting on, and the per-day dispatch rows for years other than 2024 **do not exi
 (C11 dispatched 2024 only), so C13's first decision is whether producing them is in scope.
 Quote `capture_rolled_oracle_cash`, never `capture_same_start_pooled` (FINDING C11-C), and
 carry the labels NOTE C12-03 requires. The 2025 holdout stays SEALED until Checkpoint C.
+
+### C13 — 2026-10-09 (scheduled cycle) — five evaluation years, and the year effect nobody had measured
+
+Scope per PLAN.md C13: *"Regime analysis: 2022 crisis year reported separately; per-year
+tables; pre/post 2025-10-01 flagged; negative-hour counts per zone."* Done, all four
+parts, nine zones × five years. **One FLAG raised (FLAG C13-01, explained and not a
+bug)**, no checkpoint, no blocker, no new dependency. Full write-up in
+`docs/regime_analysis.md`.
+
+NOTE C12-01 left C13 one decision: the per-year tables need per-day dispatch rows for
+years other than 2024, which did not exist, and whether producing them was in scope was
+C13's call. **It was in scope and it ran**: 36 new walk-forward runs (nine zones ×
+2020-2023) of the nine-zone comparable arm, 36 new dispatch runs through the same
+rolling LP, and C12's metric and bootstrap layer imported rather than re-derived.
+
+**Full suite: 640 passed, 0 failed, 51 warnings** (607 before C13 + 33 new). The 51
+warnings are the same pre-existing sklearn LARS notices from the C8 LEAR tests.
+`tests/` (every pre-existing file), `config/`, `forecast/`, `dispatch/`, `data/`,
+`backtest/walk_forward.py`, `backtest/metrics.py`, `backtest/bootstrap.py`,
+`backtest/results_store.py` and every earlier cycle's runner are **untouched** —
+verified with `git diff --stat HEAD` over exactly those paths, which came back empty.
+The cycle is one new runner (`backtest/run_c13_regime.py`), one new test file
+(`tests/test_c13_regime.py`, C11/C12's precedent — a *new* file is not the
+flag-and-stop event, editing a pre-existing one is), one new document, a comment block
+in `requirements.txt`, and new artefacts.
+
+#### What was reused, and why the 2024 column is the published number
+
+2024 is **not** re-dispatched: C12's committed per-day artefact is re-pooled, and the
+result is checked against the committed store rows **before** any per-year claim is
+made, in two passes, with the run exiting non-zero on a disagreement:
+
+* **`own_coverage`, nine zones — 171 checks, worst absolute delta 1.24e-05, all hold.**
+* **`common_hours`, the six Tier-B zones — 120 checks, same worst delta, all hold.**
+  Tier B is where this works: C11's Tier-B curve inventory *is* C13's three curves, so
+  the day set is the same one and the **point-error** metrics (MAE, RMSE, bias, rMAE)
+  reproduce as well. Tier A's C11 intersection is over nine curves and deliberately is
+  not C13's basis.
+
+The worst delta is the known C11-vs-C12 annualisation-order difference on
+`eur_per_mw_year_lost_vs_oracle` (~1e-8 relative on a ~6 000 EUR figure), carried at
+C12's stated tolerances. `tests/test_c13_regime.py` nudges one capture ratio by 1e-6 and
+confirms the check catches it.
+
+#### FINDING C13-A — a zone's capture ratio moves across years by as much as the eight zones differ from each other within a year
+
+`capture_rolled_oracle_cash`, comparable LEAR arm, `common_hours`:
+
+| zone | 2020 | 2021 | 2022 | 2023 | 2024 | across-year band |
+|---|---|---|---|---|---|---|
+| BE | 0.8170 | 0.7443 | 0.7544 | 0.8733 | 0.9044 | 16.0pp |
+| DE-LU | 0.8652 | 0.7749 | 0.8238 | 0.8983 | 0.9187 | 14.4pp |
+| DK1 | 0.7660 | 0.7221 | 0.7539 | 0.8082 | 0.8358 | 11.4pp |
+| ES | 0.7522 | 0.7107 | 0.7980 | 0.8762 | 0.9109 | 20.0pp |
+| FR | 0.8672 | 0.8032 | 0.7757 | 0.8752 | 0.8526 | 10.0pp |
+| IT-North | 0.8302 | 0.8085 | 0.8553 | 0.8923 | 0.9042 | 9.6pp |
+| NL | 0.8080 | 0.7521 | 0.7996 | 0.8814 | 0.9031 | 15.1pp |
+| **NO2** | **−0.5222** | **0.4480** | **0.5230** | **0.6279** | **0.6146** | 18.0pp (ex-2020) |
+| PL | 0.6875 | 0.7238 | 0.8118 | 0.7541 | 0.8839 | 19.6pp |
+
+The within-zone across-year band is **9.6-20.0pp** in the eight non-outlier zones,
+against a single year's bootstrap sd of 2.8-5.1pp — so the year effect is **2.3-5.4× its
+own sampling noise**. The eight-zone band *within* a year is 8.3-18.0pp: **the same
+size**. **A capture band measured in one year cannot be read as a regime effect**,
+because re-measuring one zone in a different year produces a band just as wide. Note
+also that **2024 is the most favourable year in the sample** (highest capture in six of
+nine zones) — every C10-C12 headline rests on the best year of five, and C18 must say so.
+
+#### FINDING C13-B — FINDING C12-B is settled: the eight-zone capture band is NOT established
+
+Noise-only null band at PLAN.md's literal daily block:
+
+| year | band ex-NO2 | noise-only p | nine-zone band | noise-only p |
+|---|---|---|---|---|
+| 2020 | 17.98pp | 0.095 | 138.95pp | 0.053 |
+| 2021 | 9.78pp | **0.846** | 36.05pp | 0.0098 |
+| 2022 | 10.15pp | **0.523** | 33.23pp | 0.0004 |
+| 2023 | 14.42pp | 0.015 | 27.04pp | 0.0006 |
+| 2024 | 8.29pp | 0.078 | 30.40pp | <1e-4 |
+
+**One of five years clears 5%**, and in 2021 and 2022 the eight zones' capture ratios
+are indistinguishable from eight draws of one number. The **nine-zone** band clears in
+four of five. So FINDING C11-A is confirmed as **a finding about NO2 plus a direction**,
+now in five years rather than argued from one. C12's required label stands and is now
+evidenced: **C18 must not quote the 8.3pp eight-zone band as established.**
+
+#### FINDING C13-C — NO2 is bottom on capture *and* on within-day ordering in all five years
+
+NO2's within-day Spearman: 0.470 / 0.592 / 0.650 / 0.615 / 0.578 against 0.699-0.886
+elsewhere, **every year**. The cross-zone capture ranking replicates moderately between
+year pairs (Spearman +0.33 to +0.88, positive in all ten pairs) and NO2 is last in
+**10 of 10**. FINDING C11-B is the one C11/C12 claim five years makes *stronger*.
+
+#### FINDING C13-D — neither the forecast error nor the price spread predicts capture; their ratio does
+
+Across the 44 usable (zone, year) cells, rank correlation with capture:
+
+| cell predictor | ρ vs capture | ex-NO2 |
+|---|---|---|
+| **MAE ÷ mean realised daily spread** (`error_over_headroom`) | **−0.738** | **−0.682** |
+| within-day Spearman | +0.698 | +0.599 |
+| oracle value EUR/MW/yr | +0.331 | +0.249 |
+| mean realised daily spread | +0.256 | +0.203 |
+| MAE | **−0.015** | −0.071 |
+
+MAE alone carries **no** cross-cell information about capture — the flat version of what
+FINDING C11-D/C12-D could only call undetermined at one year — and the spread alone
+carries little. The per-year cross-zone version of the ratio has an interval excluding
+zero in **three of five years at the daily block and five of five at 7 and 14 days**
+(−0.43 to −0.73). It also explains FINDING C13-A's year effect: the mean
+error-to-headroom ratio falls 0.287 (2021) → 0.217 (2024) while mean capture rises
+0.721 → 0.859, and the mean spread rises six-fold from 2020 to 2022 with capture barely
+moving. `error_over_headroom` is now a store metric at every (zone, year, curve).
+
+#### FINDING C13-E — NOTE C12-02 answered: the thin-spread story does not explain NO2
+
+Fit capture on log(mean realised spread) over the **other eight** zones' 40 usable cells
+(slope +0.0196 per log unit, residual sd 6.35pp) and ask where NO2 lands:
+
+| year | NO2 capture | predicted from the eight-zone line | residual |
+|---|---|---|---|
+| 2021 | 0.4480 | 0.8030 | **−35.5pp** (−5.6 sd) |
+| 2022 | 0.5230 | 0.8264 | **−30.3pp** (−4.8 sd) |
+| 2023 | 0.6279 | 0.8111 | **−18.3pp** (−2.9 sd) |
+| 2024 | 0.6146 | 0.8101 | **−19.5pp** (−3.1 sd) |
+
+Conditioning on the realised spread removes **almost none** of NO2's deficit. A
+thin-spread mechanism predicts NO2 lands *on* the line; it sits 2.9-5.6 residual sd
+below it in every non-thin year, while its within-day Spearman is the lowest of the nine
+in all five. **The ordering mechanism (FINDING C12-C) survives and the thin-spread one
+does not.** C15's throughput-cost ladder now has a prior answer to beat rather than an
+open question — NOTE C12-02 is closed, and the ladder is still worth running for the
+*level* of the frictions (see FLAG C13-01).
+
+#### FINDING C13-F — the 2022 crisis multiplied the prize and the loss by ~2.5× and left the captured share alone
+
+Per zone, 2022 against the mean of that zone's other usable years (**unpaired**
+intervals — two years share no market day):
+
+| zone | capture 2022 | other years | Δ | oracle × | EUR/MW/yr lost 2022 vs others |
+|---|---|---|---|---|---|
+| DE-LU | 0.8238 | 0.8643 | −4.05pp [−12.58, +4.56] | ×2.35 | 21 092 vs 6 438 |
+| ES | 0.7980 | 0.8125 | −1.45pp [−13.52, +10.68] | ×1.72 | 10 732 vs 4 624 |
+| NO2 | 0.5230 | 0.5635 | −4.05pp [−19.83, +12.23] | ×2.53 | 25 796 vs 8 920 |
+| FR | 0.7757 | 0.8496 | −7.39pp [−17.97, +3.47] | ×2.39 | 22 567 vs 6 391 |
+| NL | 0.7996 | 0.8361 | −3.65pp [−9.66, +2.46] | ×2.52 | 27 771 vs 8 197 |
+| BE | 0.7544 | 0.8347 | **−8.04pp [−15.41, −0.81]** | ×2.71 | 32 108 vs 7 614 |
+| IT-North | 0.8553 | 0.8588 | −0.35pp [−9.95, +9.85] | ×2.65 | 12 564 vs 4 211 |
+| DK1 | 0.7539 | 0.7830 | −2.91pp [−11.88, +6.37] | ×2.42 | 27 302 vs 9 498 |
+| PL | 0.8118 | 0.7623 | +4.95pp [−2.76, +12.59] | ×2.37 | 16 638 vs 7 031 |
+
+Eight of nine captured a lower share, **one** interval excludes zero. The crisis is
+unmistakable in the levels (perfect foresight earned 1.7-2.7× its usual; the money left
+on the table rose to 2.4-4.2×) and close to invisible in the ratio. **A crisis is a
+bigger prize and a proportionally bigger loss, not a worse hit rate.**
+
+#### The negative-hour counts PLAN.md asks for, per (zone, year)
+
+| zone | 2020 | 2021 | 2022 | 2023 | 2024 |
+|---|---|---|---|---|---|
+| BE | 136 | 159 | 112 | 222 | 404 |
+| DE-LU | 298 | 139 | 69 | 301 | 457 |
+| DK1 | 192 | 87 | 38 | 281 | 375 |
+| ES | 0 | 0 | 0 | 0 | 247 |
+| FR | 102 | 64 | 4 | 147 | 352 |
+| IT-North | 0 | 0 | 0 | 0 | 0 |
+| NL | 97 | 70 | 85 | 316 | 458 |
+| NO2 | 5 | 5 | 0 | 174 | 206 |
+| PL | 0 | 0 | 0 | 43 | 197 |
+| **total** | **830** | **524** | **308** | **1 484** | **2 696** |
+
+Two structural facts to have before any cross-zone claim: negative prices nearly
+**vanish** in the crisis year (308 hours across nine zones, the fewest of the five) then
+rise **3.3×** from 2023 to 2024; and **ES printed its first negative hour of the whole
+window in 2024** (247 of them) while **IT-North has never printed one**. A claim about
+negative pricing is a claim about a year. Full regime table (mean/median/sd/min/max,
+zero hours, hours >200, daily-spread mean/median/p95) in `c13_regime_table.csv`.
+
+**The counts cross-check C1's committed manifest, hour by hour.** 42 of 45 zone-years
+agree exactly. The three that differ — DE-LU, NL and BE in 2023 — differ by exactly one
+hour, and the check *explains* rather than tolerates it: this cycle counts over the
+local market days of the year, C1's manifest over the fetched window starting 00:00Z on
+01-01, so the local market year reaches one hour further back, and that hour
+(2022-12-31T23:00Z = midnight local on 1 Jan 2023) cleared at **−5.17 / −3.61 / −4.39
+EUR/MWh** in those three zones and at exactly **0.00** in FR, which is why FR agrees.
+`0 unexplained differences`; an unexplained one fails the analyse phase.
+
+#### Pre/post 2025-10-01 — a flag, not a split (`c13_cutover_status.json`)
+
+Nothing in this project has crossed the SDAC 15-minute go-live: `config/data.yaml` stops
+fetching at 2024, the main hourly backtest ends 2025-09-30, and the cutover falls
+**inside the sealed 2025 holdout**. So the flag is a statement about the evaluated
+window: every price hour behind every C13 number was served at 60-minute resolution
+(`resolution_seconds = 3600` on all 54 manifest zone-years), every evaluated market day
+is before 2025-10-01, `post_cutover_rows = 0`. `data/contracts.py` already carries the
+resolution-change detection that would catch a post-cutover file. PLAN.md's native
+15-minute analysis stays a labelled C15+ stretch goal.
+
+#### FLAG C13-01 — NO2 2020 fails CLAUDE.md's pooled naive-dominance invariant
+
+**This is a regime fact, not a bug, and the assertion was not weakened.**
+
+The numbers: in NO2 2020 the comparable LEAR arm settles **−402 EUR/MW over the year**
+against the naive floor's **+253 EUR/MW** (margin −655 EUR, per-day win rate 15.9%); the
+**perfect-foresight** battery itself earns only **769 EUR/MW/yr**; the mean realised
+daily spread is **3.41 EUR/MWh** against a 2 EUR/MWh throughput cost and a 12%
+round-trip loss; capture is **−0.5222**. NO2's 2020 mean price was **9.3 EUR/MWh** — a
+Nordic hydro glut. A battery trading a 3.4 EUR/MWh daily range while paying 2 EUR/MWh
+per MWh discharged has no headroom at all, so which of two curves trades *less* is luck,
+and CLAUDE.md's own qualification of this invariant ("on average, not per-day") is the
+relevant one: it is an empirical claim about an average over regimes, and this is the
+regime where it fails.
+
+What the cycle did:
+
+* The check still runs on every zone-year and still reports `holds: false` here. **No
+  tolerance was widened and no test was edited** to make it pass.
+* The per-day **same-start oracle bound** — the actual theorem — **holds on all 26 262
+  (curve, day) checks across the 36 zone-years dispatched here, worst per-day excess
+  over perfect foresight exactly 0.0 EUR**, as do the settlement-is-not-a-readback and
+  decision-value-added checks on every curve of every zone-year.
+* The dispatch phase **records** the failure in `backtest/results/c13_invariant_flags.json`
+  and **exits non-zero**; it no longer aborts the remaining zone-years, so the failure
+  is neither swallowed nor allowed to skip work that does not depend on it.
+* The cell is reported everywhere and **excluded from the cross-zone band statistics and
+  from every baseline average**, under a **declared floor**: a (zone, year) whose
+  *perfect-foresight* battery earns under **2 000 EUR/MW/yr** is a cell where the capture
+  ratio's denominator is noise. One of 45 cells is flagged; the gap is an order of
+  magnitude (769 against 8 992 for the next thinnest), and `label_count_by_floor` shows
+  **no floor between ~1 000 and ~8 000 EUR/MW/yr changes a single label**.
+
+The economically interesting reading favours the write-up: **a 2 EUR/MWh throughput cost
+is not a rounding error in a thin market, it is the whole result.** C15's throughput-cost
+ladder now has a zone-year whose answer is known in advance.
+
+#### The results store
+
+**4 824 rows appended**, run `C13-20261009T192245Z-48a713ec`; the store is now **8 250
+rows across 4 runs**, `verify_append_only()` green, and the 3 426 committed C10-C12 rows
+are **byte-for-byte unchanged** (the new file's first 992 193 bytes are identical to
+`git show HEAD:backtest/results/results.csv`). **No schema change and no test edit were
+needed** — the fourth cycle running in which long format made the metric name the
+extension point, and the first in which a new *evaluation year* is simply new rows:
+1 206 per year, `evaluation_years` ∈ {2020, 2021, 2022, 2023}, two scopes, 42 distinct
+metric names including `error_over_headroom` and the headline-block interval bounds.
+**2024 rows are not rewritten** — C11 and C12 wrote them, and two rows with different
+provenance behind one number is what the append-only store exists to prevent.
+
+One contract detail worth recording: `SCOPES` in `backtest/results_store.py` is a closed
+list (`own_coverage`, `common_hours`). C13's three-curve intersection *is* C11's
+`common_hours` definition applied to this cycle's curve set, so it is written under that
+name rather than editing the store's contract to add a third spelling. In Tier A that is
+**not** the same day set as C11's 2024 `common_hours` (nine curves); every C13 row
+carries its `source_artefact`, and `docs/regime_analysis.md` §3 states it.
+
+#### Data: 54 price pulls, every payload hash identical to C1's
+
+NOTE C2-02 — `data/raw/` was empty on arrival again (**24th recurrence**), and unlike
+C12 this cycle **did** need prices: 36 walk-forward runs cannot be built from committed
+prediction artefacts. So `data.fetch_prices` ran for all nine zones × 2019-2024:
+**54 downloaded, 0 already cached, 0 flagged**. Before any fitting, every cached file was
+re-summarised and compared against the committed manifest: **all 54 `payload_sha256`,
+`n_points`, `n_negative`, `n_nan`, `price_min` and `price_max` values are identical to
+C1's.** The re-fetch is byte-identical data, so the manifest was **not** regenerated or
+re-committed (C8/C9/C10's precedent). No ENTSO-E pull: `ENTSOE_API_KEY` was neither
+needed nor read, because the comparable arm has no exogenous block.
+
+#### Sealed holdout
+
+**SEALED.** Verified after the work: marker-alone-on-a-line count **0**,
+`holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`,
+`assert_not_sealed({2025})` raises, no `*2025*` file exists anywhere under `data/`,
+cached years are exactly 2019-2024, every `market_day` in every C13 artefact is in
+2020-2024, and `evaluation_years` ∈ {2020, 2021, 2022, 2023} on all 4 824 new store rows
+(2020-2024 across all 8 250). The **362** occurrences of the string `2025` across the C13
+artefacts and the store were checked **programmatically**: 356 are digits inside floats
+and the remaining **6 are the cutover date strings** `2025-10-01` / `2025-09-30` copied
+from `config/data.yaml`'s `structural_dates` into `c13_cutover_status.json` and
+`c13_regime_summary.json` — which is PLAN.md C13's own "flag the cutover" requirement,
+and contains no 2025 *data*. `load_daily_by_year` and `regime_price_table` both refuse a
+sealed year **before any path is built**, and two tests pin that. No 2025 data has been
+fetched, loaded, dispatched or computed against at any point in C2-C13.
+
+#### Config hash and libraries
+
+Config hash **`515d4e8d98887256`** — unchanged since C8; C13 modified no `config/*.yaml`.
+Library fingerprint **`856fb19ac0c4eecd`** — identical to C10's, C11's and C12's (python
+3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1, lightgbm 4.7.0), so
+C10-C13 rows are directly comparable. The GBM config fingerprint `a366a760e269bba6` was
+not touched and no hyperparameter was tuned.
+
+#### Built and committed (33 new tests, 640 in total)
+
+- `backtest/run_c13_regime.py` — four phases: `compute` (the 36 walk-forward runs,
+  parallel-safe per zone), `dispatch` (the 36 LP runs, recording invariant flags instead
+  of swallowing or aborting), `analyse` (the per-year tables, the band tests per year,
+  the crisis comparison, the year-stability block, the spread/headroom analysis, the
+  regime table, the manifest cross-check, the cutover flag, the 2024 reproduction), and
+  `ingest`.
+- `tests/test_c13_regime.py` — 33 offline tests: the three-curve basis, the *unpaired*
+  year-on-year difference (its sd must be ~√2× a single arm's, so a quietly paired
+  interval cannot slip through), this cycle's shape table on hand-made days, the
+  sealed-year guards, the 2024 reproduction **and its ability to fail**, the store rows,
+  the manifest cross-check's hour-by-hour explanation, and FINDINGs C13-A..C13-F each
+  pinned to the artefacts this cycle committed.
+- `docs/regime_analysis.md` — the full write-up, including the honesty label (§2), the
+  FLAG (§8), what the cycle did not do and why (§9) and its own Limitations (§10).
+- Artefacts: 36 × `c13_year_<ZONE>_<YEAR>_{predictions.csv.gz,folds.csv,summary.json}`,
+  36 × `c13_dispatch_<ZONE>_<YEAR>_{daily.csv.gz,summary.json}`,
+  `c13_daily_by_year.csv.gz` (**49 284 rows** — the artefact C15/C17 should read rather
+  than re-dispatching), `c13_per_year_metrics.csv` (270 rows), `c13_year_intervals.csv`,
+  `c13_regime_table.csv` (45 rows), `c13_regime_summary.json`, `c13_cutover_status.json`,
+  `c13_invariant_flags.json`, and 4 824 new store rows.
+- `requirements.txt` — a comment block recording that C13 added no dependency.
+
+#### Notes for later cycles
+
+**NOTE C13-01 (for C18, wording — read with NOTE C12-03).** Three labels are now
+*evidenced* rather than cautionary: the eight-zone capture band is **not established**
+(one of five years clears 5%, FINDING C13-B); the cross-zone capture finding is **a
+finding about NO2 plus a direction** (FINDING C13-C); and **2024 is the most favourable
+year of the five**, so every C10-C12 headline must travel with "in the validation year,
+which is the best of the five evaluated". A fourth is new: **a one-year capture band
+cannot be called a regime effect** when one zone re-measured in another year moves just
+as far (FINDING C13-A).
+
+**NOTE C13-02 (for C15).** The throughput-cost ladder (0 / 2 / 5 EUR/MWh) is no longer
+the test of NO2's mechanism — FINDING C13-E settled that against the thin-spread story.
+Run it instead for the thing FLAG C13-01 exposes: **how much of the capture ratio is
+friction**, which the ladder measures directly, and where the break-even spread sits.
+NO2 2020 is the natural stress cell (oracle 769 EUR/MW/yr, mean spread 3.41 EUR/MWh,
+capture −0.52); at a 0 EUR/MWh throughput cost its capture should rise sharply if
+friction is the binding constraint there, while FINDING C13-E predicts NO2's *relative*
+deficit in the other four years barely moves. `c13_daily_by_year.csv.gz` and the 36
+prediction artefacts mean the ladder needs **no re-fitting**, only re-dispatch.
+
+**NOTE C13-03 (for C14/C15, new).** `error_over_headroom` (pooled MAE ÷ mean realised
+daily spread) is the strongest cell-level predictor of capture this project has found
+(ρ = −0.74 over 44 cells, −0.68 ex-NO2, against MAE's −0.015). It is now a store metric.
+C14's residual-load chapter should ask the obvious follow-up — **does residual-load
+forecast error explain `error_over_headroom` across Tier-A zones and years?** — and C18
+should use it as the bridge from a point-forecast metric to EUR/MW/yr, alongside the
+within-day Spearman (FINDING C12-C).
+
+**NOTE C13-04 — the Tier-A exogenous/GBM per-year deltas were NOT computed, with
+reasons.** NOTE C12-01 asked C13 for the three GBM-exogenous capture deltas per year.
+They are not here, because: (i) **only one new year is even available** — those arms are
+aligned to `train_from=2022-01-01` (no archived ENTSO-E D-1 vintage exists earlier) and
+the harness needs 365 market days of history, so the honest evaluation years for an
+exogenous arm are 2023 and 2024, i.e. one extra draw, which is the same "one year
+decides too little" problem in a new coat; (ii) it needs a **fresh ENTSO-E pull** (three
+zones × two document types × two years, one of them ~13 MB of XML per zone-year) because
+`data/raw/` does not survive a container; (iii) PLAN.md C13 is the regime analysis and
+NOTE C12-01 left the call to this cycle. **NOTE C8-01 therefore stays RE-OPENED**, and
+the right home for it is the next cycle that must re-pull ENTSO-E data anyway — **C14**,
+whose residual-load chapter needs exactly those load/wind/solar series for Tier A. C14
+should fold the 2023 exogenous ladder in while it has the data, or say why not.
+
+#### Repo-state note
+
+The detached-HEAD trap recurred: the container arrived detached at `0116440` with local
+`master` stale 16 commits behind. **28 recurrences out of 35 containers.** `HEAD`
+equalled `origin/master` exactly after a fetch (0 ahead, 0 behind), so nothing was at
+risk and `git checkout -B master` was permitted; the cycle worked on an attached
+`master` throughout. C9's warning still stands for a container that arrives detached
+*and* genuinely behind the remote: flag rather than improvise.
+
+**Next:** C14 — the fundamentals chapter: price vs residual load (load − wind − solar)
+per Tier-A zone, merit-order commentary. It needs a fresh ENTSO-E pull (`data/raw/` is
+gone again), so read **NOTE C13-04** first and fold in the 2023 exogenous/GBM ladder
+while the data is there, which closes NOTE C8-01. Read **NOTE C13-03** for the question
+C14's own chapter is best placed to answer. PLAN.md's buffer note allows cutting C14 if
+behind — C13 finished on schedule, so it is not cut. The 2025 holdout stays **SEALED**
+until Checkpoint C (C16).

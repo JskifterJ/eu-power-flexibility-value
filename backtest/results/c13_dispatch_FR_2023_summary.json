@@ -1,0 +1,597 @@
+{
+  "cycle": "C13",
+  "zone": "FR",
+  "tier": "B",
+  "regime": "nuclear-dominated",
+  "year": 2023,
+  "generated_at_utc": "2026-10-09T19:02:17.301100+00:00",
+  "git_sha": "01164404d43e70945f5c1ce4a7ae7f9a82048a58",
+  "config_hash": "515d4e8d98887256",
+  "library_fingerprint": "856fb19ac0c4eecd",
+  "battery_spec": {
+    "power_mw": 1.0,
+    "energy_mwh": 2.0,
+    "duration_hours": 2.0,
+    "round_trip_efficiency": 0.88,
+    "eta_leg": 0.93808315,
+    "throughput_cost_eur_per_mwh": 2.0,
+    "initial_soc_fraction": 0.5,
+    "initial_soc_mwh": 1.0,
+    "terminal_mode": "trailing_value",
+    "terminal_floor_fraction": 0.0,
+    "forbid_simultaneous": false,
+    "simultaneity_price_threshold_eur_per_mwh": -14.666667
+  },
+  "n_market_days_wanted": 365,
+  "dispatched_days_per_curve": {
+    "lear_full_history": 364,
+    "naive": 365,
+    "oracle": 365
+  },
+  "n_common_days": 364,
+  "skipped_days_per_curve": {
+    "oracle": [],
+    "lear_full_history": [
+      {
+        "day": "2023-10-29",
+        "reason": "incomplete",
+        "detail": "decision (lear_full_history) price vector has 1 missing hour(s) of 25"
+      }
+    ],
+    "naive": []
+  },
+  "curve_sources": {
+    "lear_full_history": {
+      "name": "lear_full_history",
+      "source": "c13_year_FR_2023_predictions.csv.gz:y_pred_lear_price_only",
+      "is_oracle": false,
+      "n_points": 8760,
+      "n_missing": 1,
+      "first_ts_utc": "2022-12-31T23:00:00+00:00",
+      "last_ts_utc": "2023-12-31T22:00:00+00:00",
+      "alignment": {
+        "curve": "lear_full_history",
+        "n_points": 8760,
+        "n_missing_values": 1,
+        "first_ts_utc": "2022-12-31T23:00:00+00:00",
+        "last_ts_utc": "2023-12-31T22:00:00+00:00",
+        "on_realised_grid": true
+      }
+    },
+    "naive": {
+      "name": "naive",
+      "source": "c13_year_FR_2023_predictions.csv.gz:y_pred_naive_last_week",
+      "is_oracle": false,
+      "n_points": 8760,
+      "n_missing": 0,
+      "first_ts_utc": "2022-12-31T23:00:00+00:00",
+      "last_ts_utc": "2023-12-31T22:00:00+00:00",
+      "alignment": {
+        "curve": "naive",
+        "n_points": 8760,
+        "n_missing_values": 0,
+        "first_ts_utc": "2022-12-31T23:00:00+00:00",
+        "last_ts_utc": "2023-12-31T22:00:00+00:00",
+        "on_realised_grid": true
+      }
+    }
+  },
+  "max_y_true_vs_realised_gap": 0.0,
+  "pooled": {
+    "oracle": {
+      "own_coverage": {
+        "n_days": 365,
+        "first_day": "2023-01-01",
+        "last_day": "2023-12-31",
+        "cash_eur": 55383.49744037167,
+        "value_added_eur": 55830.29411677658,
+        "same_start_oracle_value_added_eur": 55830.29411677658,
+        "rolled_oracle_cash_eur": 55383.49744037167,
+        "rolled_oracle_value_added_eur": 55830.29411677658,
+        "cash_eur_per_mw_year": 55421.431342728094,
+        "capture_same_start_pooled": 1.0,
+        "capture_rolled_oracle_cash": 1.0,
+        "eur_per_mw_year_lost_vs_oracle": 0.0,
+        "n_days_capture_defined": 365,
+        "capture_same_start_mean_daily": 1.0,
+        "capture_same_start_quantiles_daily": {
+          "p05": 1.0,
+          "p25": 1.0,
+          "p50": 1.0,
+          "p75": 1.0,
+          "p95": 1.0
+        },
+        "n_days_capture_above_one": 0,
+        "n_days_value_added_negative": 0,
+        "share_of_days_value_added_negative": 0.0,
+        "n_days_with_simultaneity": 3,
+        "share_of_days_with_simultaneity": 0.00821917808219178,
+        "equivalent_full_cycles": 661.027431666582,
+        "realised_spread_mean_eur_per_mwh": 83.49210958904109,
+        "realised_spread_median_eur_per_mwh": 77.43
+      },
+      "common_hours": {
+        "n_days": 364,
+        "first_day": "2023-01-01",
+        "last_day": "2023-12-31",
+        "cash_eur": 55356.65904037167,
+        "value_added_eur": 55803.45571677658,
+        "same_start_oracle_value_added_eur": 55803.45571677658,
+        "rolled_oracle_cash_eur": 55356.65904037167,
+        "rolled_oracle_value_added_eur": 55803.45571677658,
+        "cash_eur_per_mw_year": 55394.574560262336,
+        "capture_same_start_pooled": 1.0,
+        "capture_rolled_oracle_cash": 1.0,
+        "eur_per_mw_year_lost_vs_oracle": 0.0,
+        "n_days_capture_defined": 364,
+        "capture_same_start_mean_daily": 1.0,
+        "capture_same_start_quantiles_daily": {
+          "p05": 1.0,
+          "p25": 1.0,
+          "p50": 1.0,
+          "p75": 1.0,
+          "p95": 1.0
+        },
+        "n_days_capture_above_one": 0,
+        "n_days_value_added_negative": 0,
+        "share_of_days_value_added_negative": 0.0,
+        "n_days_with_simultaneity": 3,
+        "share_of_days_with_simultaneity": 0.008241758241758242,
+        "equivalent_full_cycles": 659.2074316665818,
+        "realised_spread_mean_eur_per_mwh": 83.54508241758242,
+        "realised_spread_median_eur_per_mwh": 77.51
+      }
+    },
+    "lear_full_history": {
+      "own_coverage": {
+        "n_days": 364,
+        "first_day": "2023-01-01",
+        "last_day": "2023-12-31",
+        "cash_eur": 48448.769505585464,
+        "value_added_eur": 48823.395618909504,
+        "same_start_oracle_value_added_eur": 59014.650674013035,
+        "rolled_oracle_cash_eur": 55356.65904037167,
+        "rolled_oracle_value_added_eur": 55803.45571677658,
+        "cash_eur_per_mw_year": 48481.953594287916,
+        "capture_same_start_pooled": 0.8273097453139509,
+        "capture_rolled_oracle_cash": 0.8752112274379081,
+        "eur_per_mw_year_lost_vs_oracle": 6912.6209659744145,
+        "n_days_capture_defined": 364,
+        "capture_same_start_mean_daily": 0.8013731467547807,
+        "capture_same_start_quantiles_daily": {
+          "p05": 0.3486342984878924,
+          "p25": 0.7382702037982145,
+          "p50": 0.8703220874608255,
+          "p75": 0.9520625983369067,
+          "p95": 0.9911664320795104
+        },
+        "n_days_capture_above_one": 0,
+        "n_days_value_added_negative": 4,
+        "share_of_days_value_added_negative": 0.01098901098901099,
+        "n_days_with_simultaneity": 0,
+        "share_of_days_with_simultaneity": 0.0,
+        "equivalent_full_cycles": 657.4416811224767,
+        "realised_spread_mean_eur_per_mwh": 83.54508241758242,
+        "realised_spread_median_eur_per_mwh": 77.51
+      },
+      "common_hours": {
+        "n_days": 364,
+        "first_day": "2023-01-01",
+        "last_day": "2023-12-31",
+        "cash_eur": 48448.769505585464,
+        "value_added_eur": 48823.395618909504,
+        "same_start_oracle_value_added_eur": 59014.650674013035,
+        "rolled_oracle_cash_eur": 55356.65904037167,
+        "rolled_oracle_value_added_eur": 55803.45571677658,
+        "cash_eur_per_mw_year": 48481.953594287916,
+        "capture_same_start_pooled": 0.8273097453139509,
+        "capture_rolled_oracle_cash": 0.8752112274379081,
+        "eur_per_mw_year_lost_vs_oracle": 6912.6209659744145,
+        "n_days_capture_defined": 364,
+        "capture_same_start_mean_daily": 0.8013731467547807,
+        "capture_same_start_quantiles_daily": {
+          "p05": 0.3486342984878924,
+          "p25": 0.7382702037982145,
+          "p50": 0.8703220874608255,
+          "p75": 0.9520625983369067,
+          "p95": 0.9911664320795104
+        },
+        "n_days_capture_above_one": 0,
+        "n_days_value_added_negative": 4,
+        "share_of_days_value_added_negative": 0.01098901098901099,
+        "n_days_with_simultaneity": 0,
+        "share_of_days_with_simultaneity": 0.0,
+        "equivalent_full_cycles": 657.4416811224767,
+        "realised_spread_mean_eur_per_mwh": 83.54508241758242,
+        "realised_spread_median_eur_per_mwh": 77.51
+      }
+    },
+    "naive": {
+      "own_coverage": {
+        "n_days": 365,
+        "first_day": "2023-01-01",
+        "last_day": "2023-12-31",
+        "cash_eur": 44571.160445702684,
+        "value_added_eur": 44104.63681348551,
+        "same_start_oracle_value_added_eur": 60718.606869670075,
+        "rolled_oracle_cash_eur": 55383.49744037167,
+        "rolled_oracle_value_added_eur": 55830.29411677658,
+        "cash_eur_per_mw_year": 44601.68863778878,
+        "capture_same_start_pooled": 0.7263776144955738,
+        "capture_rolled_oracle_cash": 0.8047733080362065,
+        "eur_per_mw_year_lost_vs_oracle": 10819.742704939306,
+        "n_days_capture_defined": 365,
+        "capture_same_start_mean_daily": 0.6839853124087982,
+        "capture_same_start_quantiles_daily": {
+          "p05": 0.0838769140359379,
+          "p25": 0.5968361906642445,
+          "p50": 0.7714217176915015,
+          "p75": 0.8917372742469934,
+          "p95": 0.981502609012431
+        },
+        "n_days_capture_above_one": 0,
+        "n_days_value_added_negative": 14,
+        "share_of_days_value_added_negative": 0.038356164383561646,
+        "n_days_with_simultaneity": 3,
+        "share_of_days_with_simultaneity": 0.00821917808219178,
+        "equivalent_full_cycles": 654.3331822106879,
+        "realised_spread_mean_eur_per_mwh": 83.49210958904109,
+        "realised_spread_median_eur_per_mwh": 77.43
+      },
+      "common_hours": {
+        "n_days": 364,
+        "first_day": "2023-01-01",
+        "last_day": "2023-12-31",
+        "cash_eur": 44507.446621744064,
+        "value_added_eur": 44227.23568433859,
+        "same_start_oracle_value_added_eur": 60691.768469670074,
+        "rolled_oracle_cash_eur": 55356.65904037167,
+        "rolled_oracle_value_added_eur": 55803.45571677658,
+        "cash_eur_per_mw_year": 44537.931174224716,
+        "capture_same_start_pooled": 0.7287188493517137,
+        "capture_rolled_oracle_cash": 0.8040125143622692,
+        "eur_per_mw_year_lost_vs_oracle": 10856.643386037624,
+        "n_days_capture_defined": 364,
+        "capture_same_start_mean_daily": 0.6984139519558609,
+        "capture_same_start_quantiles_daily": {
+          "p05": 0.08810459430332455,
+          "p25": 0.5976504402009034,
+          "p50": 0.7734136713718539,
+          "p75": 0.8920229620609315,
+          "p95": 0.9815118878016768
+        },
+        "n_days_capture_above_one": 0,
+        "n_days_value_added_negative": 13,
+        "share_of_days_value_added_negative": 0.03571428571428571,
+        "n_days_with_simultaneity": 3,
+        "share_of_days_with_simultaneity": 0.008241758241758242,
+        "equivalent_full_cycles": 651.5189327547939,
+        "realised_spread_mean_eur_per_mwh": 83.54508241758242,
+        "realised_spread_median_eur_per_mwh": 77.51
+      }
+    }
+  },
+  "invariants": {
+    "oracle": {
+      "day_lengths_match_local_calendar": {
+        "holds": true,
+        "hours_per_day_histogram": {
+          "23": 1,
+          "24": 363,
+          "25": 1
+        },
+        "mismatched_days": []
+      },
+      "settlement_is_not_a_decision_price_readback": {
+        "holds": true,
+        "curve": "oracle",
+        "n_days_checked": 365,
+        "n_days_decision_equals_realised": 365,
+        "worst_decision_vs_realised_gap_eur_per_mwh": 0.0,
+        "offenders": []
+      },
+      "decision_value_added_non_negative": {
+        "holds": true,
+        "curve": "oracle",
+        "n_days_checked": 365,
+        "worst_day_eur": 0.0,
+        "offenders": {},
+        "note": "Asserted on the decision prices the LP optimised, where standing still is a feasible point and so the optimum cannot be negative. The realised-price analogue is NOT a theorem for a forecast curve and is reported, not asserted."
+      },
+      "value_added_non_negative_at_realised": {
+        "holds": true,
+        "n_days_checked": 365,
+        "worst_day_eur": 13.69678957,
+        "offenders": {}
+      }
+    },
+    "lear_full_history": {
+      "day_lengths_match_local_calendar": {
+        "holds": true,
+        "hours_per_day_histogram": {
+          "23": 1,
+          "24": 363
+        },
+        "mismatched_days": []
+      },
+      "settlement_is_not_a_decision_price_readback": {
+        "holds": true,
+        "curve": "lear_full_history",
+        "n_days_checked": 364,
+        "n_days_decision_equals_realised": 0,
+        "worst_decision_vs_realised_gap_eur_per_mwh": 147.563,
+        "offenders": []
+      },
+      "decision_value_added_non_negative": {
+        "holds": true,
+        "curve": "lear_full_history",
+        "n_days_checked": 364,
+        "worst_day_eur": 0.0,
+        "offenders": {},
+        "note": "Asserted on the decision prices the LP optimised, where standing still is a feasible point and so the optimum cannot be negative. The realised-price analogue is NOT a theorem for a forecast curve and is reported, not asserted."
+      },
+      "same_start_oracle_dominates_every_day": {
+        "holds": true,
+        "curve": "lear_full_history",
+        "n_days_checked": 364,
+        "worst_excess_eur": 0.0,
+        "worst_excess_day": "2023-09-26",
+        "n_failures": 0,
+        "failures": []
+      },
+      "beats_naive_pooled_common_days": {
+        "applicable": true,
+        "holds": true,
+        "n_days": 364,
+        "model_cash_eur": 48448.7695,
+        "naive_cash_eur": 44507.4466,
+        "margin_eur": 3941.3229,
+        "per_day_beats_naive_days": 226,
+        "per_day_beats_naive_share": 0.620879
+      },
+      "oracle_dominates_pooled_common_days": {
+        "holds": true,
+        "oracle_cash_eur": 55356.659,
+        "arm_cash_eur": 48448.7695,
+        "margin_eur": 6907.8895,
+        "capture_rolled_oracle_cash": 0.875211
+      }
+    },
+    "naive": {
+      "day_lengths_match_local_calendar": {
+        "holds": true,
+        "hours_per_day_histogram": {
+          "23": 1,
+          "24": 363,
+          "25": 1
+        },
+        "mismatched_days": []
+      },
+      "settlement_is_not_a_decision_price_readback": {
+        "holds": true,
+        "curve": "naive",
+        "n_days_checked": 365,
+        "n_days_decision_equals_realised": 0,
+        "worst_decision_vs_realised_gap_eur_per_mwh": 190.25,
+        "offenders": []
+      },
+      "decision_value_added_non_negative": {
+        "holds": true,
+        "curve": "naive",
+        "n_days_checked": 365,
+        "worst_day_eur": 0.0,
+        "offenders": {},
+        "note": "Asserted on the decision prices the LP optimised, where standing still is a feasible point and so the optimum cannot be negative. The realised-price analogue is NOT a theorem for a forecast curve and is reported, not asserted."
+      },
+      "same_start_oracle_dominates_every_day": {
+        "holds": true,
+        "curve": "naive",
+        "n_days_checked": 365,
+        "worst_excess_eur": 0.0,
+        "worst_excess_day": "2023-06-25",
+        "n_failures": 0,
+        "failures": []
+      },
+      "beats_naive_pooled_common_days": {
+        "applicable": false,
+        "reason": "this is the naive floor"
+      },
+      "oracle_dominates_pooled_common_days": {
+        "holds": true,
+        "oracle_cash_eur": 55356.659,
+        "arm_cash_eur": 44507.4466,
+        "margin_eur": 10849.2124,
+        "capture_rolled_oracle_cash": 0.804013
+      }
+    }
+  },
+  "invariant_failures": [],
+  "realised_losses": {
+    "oracle": {
+      "curve": "oracle",
+      "n_days_checked": 365,
+      "n_days_value_added_negative_at_realised": 0,
+      "share_of_days": 0.0,
+      "total_eur": 0.0,
+      "worst_days": [],
+      "note": "A schedule frozen on a forecast and settled at realised prices can lose money; doing nothing was feasible in the LP's own problem, not in hindsight. This is a measured result, not an invariant breach."
+    },
+    "lear_full_history": {
+      "curve": "lear_full_history",
+      "n_days_checked": 364,
+      "n_days_value_added_negative_at_realised": 4,
+      "share_of_days": 0.010989,
+      "total_eur": -74.2876,
+      "worst_days": [
+        {
+          "market_day": "2023-12-26",
+          "value_added_eur": -35.066467
+        },
+        {
+          "market_day": "2023-11-13",
+          "value_added_eur": -25.227678
+        },
+        {
+          "market_day": "2023-12-25",
+          "value_added_eur": -9.185138
+        },
+        {
+          "market_day": "2023-12-13",
+          "value_added_eur": -4.808289
+        }
+      ],
+      "note": "A schedule frozen on a forecast and settled at realised prices can lose money; doing nothing was feasible in the LP's own problem, not in hindsight. This is a measured result, not an invariant breach."
+    },
+    "naive": {
+      "curve": "naive",
+      "n_days_checked": 365,
+      "n_days_value_added_negative_at_realised": 14,
+      "share_of_days": 0.038356,
+      "total_eur": -433.9077,
+      "worst_days": [
+        {
+          "market_day": "2023-10-29",
+          "value_added_eur": -122.598871
+        },
+        {
+          "market_day": "2023-12-17",
+          "value_added_eur": -56.780797
+        },
+        {
+          "market_day": "2023-11-08",
+          "value_added_eur": -47.285517
+        },
+        {
+          "market_day": "2023-08-09",
+          "value_added_eur": -35.001322
+        },
+        {
+          "market_day": "2023-11-11",
+          "value_added_eur": -34.406186
+        },
+        {
+          "market_day": "2023-11-25",
+          "value_added_eur": -28.691719
+        },
+        {
+          "market_day": "2023-04-07",
+          "value_added_eur": -19.384485
+        },
+        {
+          "market_day": "2023-02-25",
+          "value_added_eur": -19.144661
+        },
+        {
+          "market_day": "2023-04-17",
+          "value_added_eur": -14.655572
+        },
+        {
+          "market_day": "2023-01-06",
+          "value_added_eur": -13.007727
+        }
+      ],
+      "note": "A schedule frozen on a forecast and settled at realised prices can lose money; doing nothing was feasible in the LP's own problem, not in hindsight. This is a measured result, not an invariant breach."
+    }
+  },
+  "simultaneity": {
+    "oracle": {
+      "flag_required": true,
+      "price_threshold_eur_per_mwh": -14.6667,
+      "n_days_affected": 3,
+      "n_days_total": 365,
+      "n_intervals_affected": 10,
+      "n_intervals_at_negative_price": 10,
+      "energy_burned_mwh": 0.7465,
+      "cash_from_overlap_eur": -13.27,
+      "cash_from_overlap_share_of_total": -0.00024,
+      "worst_days": [
+        {
+          "market_day": "2023-07-16",
+          "n_intervals": 4,
+          "energy_burned_mwh": 0.3192,
+          "min_price": -26.27,
+          "cash_from_overlap_eur": -4.12
+        },
+        {
+          "market_day": "2023-07-02",
+          "n_intervals": 4,
+          "energy_burned_mwh": 0.23,
+          "min_price": -55.66,
+          "cash_from_overlap_eur": -17.4
+        },
+        {
+          "market_day": "2023-05-28",
+          "n_intervals": 2,
+          "energy_burned_mwh": 0.1973,
+          "min_price": -26.67,
+          "cash_from_overlap_eur": 8.24
+        }
+      ]
+    },
+    "lear_full_history": {
+      "flag_required": false,
+      "price_threshold_eur_per_mwh": -14.6667,
+      "n_days_affected": 0,
+      "n_days_total": 364,
+      "n_intervals_affected": 0,
+      "n_intervals_at_negative_price": 0,
+      "energy_burned_mwh": 0.0,
+      "cash_from_overlap_eur": 0.0,
+      "cash_from_overlap_share_of_total": 0.0,
+      "worst_days": []
+    },
+    "naive": {
+      "flag_required": true,
+      "price_threshold_eur_per_mwh": -14.6667,
+      "n_days_affected": 3,
+      "n_days_total": 365,
+      "n_intervals_affected": 10,
+      "n_intervals_at_negative_price": 4,
+      "energy_burned_mwh": 0.7465,
+      "cash_from_overlap_eur": 54.72,
+      "cash_from_overlap_share_of_total": 0.001228,
+      "worst_days": [
+        {
+          "market_day": "2023-07-23",
+          "n_intervals": 4,
+          "energy_burned_mwh": 0.3192,
+          "min_price": -0.08,
+          "cash_from_overlap_eur": -0.02
+        },
+        {
+          "market_day": "2023-07-09",
+          "n_intervals": 4,
+          "energy_burned_mwh": 0.23,
+          "min_price": 37.11,
+          "cash_from_overlap_eur": 54.72
+        },
+        {
+          "market_day": "2023-06-04",
+          "n_intervals": 2,
+          "energy_burned_mwh": 0.1973,
+          "min_price": -0.09,
+          "cash_from_overlap_eur": 0.02
+        }
+      ]
+    }
+  },
+  "point_error_on_dispatched_hours": {
+    "lear_full_history": {
+      "mae": 18.728823686319405,
+      "rmse": 26.26249133356312,
+      "bias": 0.5230884144247282,
+      "n_hours": 8735
+    },
+    "naive": {
+      "mae": 28.650303377218087,
+      "rmse": 39.75402077017538,
+      "bias": 0.5318328563251292,
+      "n_hours": 8735
+    }
+  },
+  "nan_policy": {
+    "policy": "decline",
+    "decision": "a market day whose forecast vector has a hole is skipped and counted, never patched (NOTE C4-02 / NOTE C10-01)"
+  },
+  "soc_note": "each evaluation year is its own rolling run and opens at initial_soc_fraction, exactly as C11's 2024 run did; SoC carries across days within a year and not across a year boundary, so the per-year columns are independent runs rather than one slice of a five-year trajectory"
+}
