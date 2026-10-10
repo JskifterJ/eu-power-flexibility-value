@@ -1,7 +1,7 @@
 {
   "cycle": "C14",
   "question": "NOTE C13-03 \u2014 does residual-load forecast error explain error_over_headroom?",
-  "git_sha": "abaa1937f20575415dcfaa66e849d0bc095ca398",
+  "git_sha": "914ab2fb7ab2e098677f555103d0faa084be5791",
   "config_hash": "515d4e8d98887256",
   "vintage": "after_gate_closure",
   "residual_load_error_caveat": "day-over-day revision of the Art. 14 D-1 publication, used as a lower bound on residual-load forecast error; no realised-generation series is in PLAN.md's scope",
@@ -35,7 +35,7 @@
     "n_cells": 9,
     "n_zones": 3,
     "n_years": 3,
-    "honest_label": "nine (zone, year) cells. FINDING C13-D rests on 44. A cross-cell rank correlation on nine points has a sampling sd of roughly 0.38 under independence, so a cross-cell claim from this window is **not established**; the per-day columns are this cycle's evidence. Note also that the raw-MW predictors are size proxies across zones (NO2's mean residual load is 3.6 GW against DE-LU's 30.0), which is why their cross-cell sign can and does reverse against the per-day within-cell sign \u2014 the *_over_mean columns are the comparable ones.",
+    "honest_label": "nine (zone, year) cells. FINDING C13-D rests on 44. A cross-cell rank correlation on nine points has a sampling sd of roughly 0.38 under independence, so a cross-cell claim from this window is **not established**; the per-day columns are this cycle's evidence. Read the sign carefully: the cross-cell correlation of a RES predictor against error_over_headroom is NEGATIVE while every per-day within-cell one is POSITIVE, and that is not a scale artefact \u2014 it survives normalising by each cell's own mean residual load (*_over_mean). The two measure different things. BETWEEN cells, a zone-year with a larger relative RES swing has a wider price spread and so more headroom, which makes it easier. WITHIN a cell, a day whose RES publication was revised more than usual is harder. Use the *_over_mean columns for any cross-zone sentence anyway: the raw-MW ones are also size proxies (NO2's mean residual load is 3.6 GW against DE-LU's 30.0).",
     "spearman_residual_load_revision_mae_mw_vs_error_over_headroom": -0.666667,
     "spearman_residual_load_revision_mae_mw_vs_price_mae_eur_mwh": 0.416667,
     "spearman_residual_load_revision_mae_mw_vs_realised_spread_eur_mwh": 0.683333,
@@ -1082,7 +1082,5 @@
       "block14_boot_sd": 0.036712
     }
   ],
-  "figures": [
-    "docs/figures/c14_headroom_vs_res_revision.png"
-  ]
+  "figures": []
 }

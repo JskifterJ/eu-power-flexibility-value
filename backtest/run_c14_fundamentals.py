@@ -1116,6 +1116,14 @@ def headroom_frame(zone: str, years: Sequence[int] = EXOG_YEARS) -> pd.DataFrame
     ``error_over_headroom`` here is arithmetically the one FINDING C13-D is
     about (``pooled MAE / mean realised daily spread``, taken per day).
 
+    ``error_over_headroom`` here is the **per-day** ratio ``MAE_d / spread_d``,
+    not that day's contribution to FINDING C13-D's pooled cell statistic. A
+    ratio of means is not a mean of ratios, so the two are different numbers for
+    the same name; the cell version is what :func:`headroom` writes to
+    ``c14_headroom_cells.csv`` and the per-day version is the only one a per-day
+    correlation can use. A day whose realised spread is not positive is NaN, not
+    infinite, and is dropped from the correlation rather than winsorised.
+
     ``residual_load_revision_mae_mw`` is the day-over-day revision of the
     as-published Art. 14 residual load: the mean over the day's hours of
     ``|RL(h) - RL(h - 24h)|``. It is a **proxy** for residual-load forecast
@@ -1472,8 +1480,14 @@ def plot_merit_order(
     import matplotlib.pyplot as plt
 
     zones = list(bundles)
+    # `sharey` because the chapter compares price *levels* across the three
+    # zones (FINDING C14-C's x2.6-2.7 crisis shift); three independent price
+    # axes would make a 143 EUR/MWh line and a 316 EUR/MWh line look alike. The
+    # x axes stay independent — NO2's residual load spans 2-6 GW and DE-LU's
+    # spans -13 to 69, and forcing those to share would reduce NO2 to a smear.
     fig, axes = plt.subplots(
-        1, len(zones), figsize=(4.2 * len(zones), 4.4), constrained_layout=True
+        1, len(zones), figsize=(4.2 * len(zones), 4.4), sharey=True,
+        constrained_layout=True,
     )
     axes = np.atleast_1d(axes)
     for ax, zone in zip(axes, zones):
@@ -1503,10 +1517,18 @@ def plot_merit_order(
                 zorder=3,
             )
         ax.set_yscale("symlog", linthresh=50)
+        # Clipped to roughly the 0.1st-99.9th percentile of the pooled Tier-A
+        # price. The full range runs to -500 (DE-LU) and +936, and letting it
+        # set the axis spends two thirds of the panel on a handful of hours
+        # while compressing every decile curve into a band. The clipped hours
+        # are counted in §6 of docs/fundamentals.md, not hidden.
+        ax.set_ylim(-150, 1000)
         ax.set_title(f"{zone}", color=INK)
         ax.set_xlabel("D-1 forecast residual load (GW)")
-        ax.legend(frameon=False, title="decile medians", fontsize=8, title_fontsize=8)
     axes[0].set_ylabel("day-ahead price (EUR/MWh, symlog)")
+    # One legend: the three panels share it, and repeating it three times cost
+    # NO2 the corner of its panel the 2022 curve sits in.
+    axes[0].legend(frameon=False, title="decile medians", fontsize=8, title_fontsize=8)
     fig.suptitle(
         "The empirical supply curve: price against residual load, Tier A",
         color=INK,
@@ -1568,41 +1590,88 @@ def plot_negative_price_probability(
     return path
 
 
+def _binned_median(x: np.ndarray, y: np.ndarray, n_bins: int = 10):
+    """Median ``y`` in deciles of ``x`` — the trend line a dense cloud hides.
+
+    A scatter of 1 090 days is a blob; the eye cannot read a rank correlation of
+    +0.5 off one. The binned median is the same statistic the merit-order figure
+    draws and it makes the reported number visible rather than asking the reader
+    to take it on trust.
+    """
+    usable = np.isfinite(x) & np.isfinite(y)
+    x, y = x[usable], y[usable]
+    if len(x) < n_bins * 5:
+        return np.array([]), np.array([])
+    bins = pd.qcut(x, n_bins, labels=False, duplicates="drop")
+    frame = pd.DataFrame({"x": x, "y": y, "b": bins}).groupby("b")
+    return frame["x"].median().to_numpy(), frame["y"].median().to_numpy()
+
+
 def plot_headroom(daily: pd.DataFrame) -> Any:
-    """NOTE C13-03, one panel per zone: the day's RES revision against its error."""
+    """NOTE C13-03, two rows: the numerator's driver and the denominator's.
+
+    The top row is the question as NOTE C13-03 asked it — the day's RES revision
+    against the day's error-over-headroom. The bottom row is the one that
+    carries FINDING C14-F: the day's residual-load **range** against the day's
+    realised price **spread**, which is strongly positive in DE-LU and ES and
+    flat at zero in NO2. Putting them in one figure is the point, because the
+    contrast between the two rows in the NO2 column *is* the mechanism.
+
+    A binned-median line is drawn over each cloud. Without it the panels are
+    1 090-point blobs and the reported correlations are invisible.
+    """
     _figure_style()
     import matplotlib.pyplot as plt
 
     zones = sorted(daily["zone"].unique())
-    fig, axes = plt.subplots(
-        1, len(zones), figsize=(4.2 * len(zones), 3.6), constrained_layout=True
+    rows = (
+        ("residual_load_revision_mae_mw", "error_over_headroom", 1e-3,
+         "residual-load D-1 revision, daily MAE (GW)",
+         "error / headroom\n(price MAE ÷ realised spread)", True),
+        ("residual_load_range_gw", "realised_spread_eur_mwh", 1.0,
+         "residual-load daily range (GW)",
+         "realised price spread\n(EUR/MWh)", False),
     )
-    axes = np.atleast_1d(axes)
-    for ax, zone in zip(axes, zones):
-        block = daily[daily["zone"] == zone]
-        for year in sorted(block["year"].unique()):
-            rows_in = block[block["year"] == year].dropna(
-                subset=["residual_load_revision_mae_mw", "error_over_headroom"]
+    fig, axes = plt.subplots(
+        len(rows), len(zones), figsize=(4.0 * len(zones), 3.3 * len(rows)),
+        constrained_layout=True,
+    )
+    axes = np.atleast_2d(axes)
+    for r, (xcol, ycol, xscale, xlabel, ylabel, logy) in enumerate(rows):
+        for c, zone in enumerate(zones):
+            ax = axes[r, c]
+            block = daily[daily["zone"] == zone]
+            for year in sorted(block["year"].unique()):
+                piece = block[block["year"] == year].dropna(subset=[xcol, ycol])
+                ax.scatter(
+                    piece[xcol] * xscale, piece[ycol],
+                    s=5, alpha=0.40, linewidths=0,
+                    color=YEAR_COLOURS.get(int(year), INK),
+                    label=str(int(year)) if r == 0 and c == 0 else None,
+                )
+            usable = block.dropna(subset=[xcol, ycol])
+            bx, by = _binned_median(
+                usable[xcol].to_numpy(dtype=float) * xscale,
+                usable[ycol].to_numpy(dtype=float),
             )
-            ax.scatter(
-                rows_in["residual_load_revision_mae_mw"] / 1000.0,
-                rows_in["error_over_headroom"],
-                s=6,
-                alpha=0.5,
-                linewidths=0,
-                color=YEAR_COLOURS.get(int(year), INK),
-                label=str(int(year)),
-            )
-        ax.set_yscale("log")
-        ax.set_title(zone, color=INK)
-        ax.set_xlabel("residual-load D-1 revision, daily MAE (GW)")
-        ax.legend(frameon=False, fontsize=8, markerscale=2)
-    axes[0].set_ylabel("error / headroom  (price MAE ÷ realised spread)")
+            if len(bx):
+                ax.plot(bx, by, color=NEGATIVE, linewidth=1.8, marker="o",
+                        markersize=3.4, zorder=5,
+                        label="decile median" if r == 0 and c == 0 else None)
+            if logy:
+                ax.set_yscale("log")
+            ax.set_xlabel(xlabel)
+            if r == 0:
+                ax.set_title(zone, color=INK)
+            if c == 0:
+                ax.set_ylabel(ylabel)
+    axes[0, 0].legend(frameon=False, fontsize=8, markerscale=2.2)
     fig.suptitle(
-        "NOTE C13-03: a harder RES day is a harder day to capture — in two of three zones",
+        "NOTE C13-03: a harder RES day is a harder day (top) — but in NO2 the "
+        "RES swing does not set the spread at all (bottom)",
         color=INK, fontsize=11,
     )
-    fig.text(0.5, -0.04, ATTRIBUTION, ha="center", color=INK_SOFT, fontsize=7)
+    fig.text(0.5, -0.02, ATTRIBUTION, ha="center", color=INK_SOFT, fontsize=7)
     FIGURE_DIR.mkdir(parents=True, exist_ok=True)
     path = FIGURE_DIR / "c14_headroom_vs_res_revision.png"
     fig.savefig(path, bbox_inches="tight")
@@ -1936,7 +2005,7 @@ def ladder_dispatch_zone(zone: str) -> tuple[dict[str, Any], pd.DataFrame]:
                 "arm_cash_eur": round(arm_cash, 4),
                 "margin_eur": round(oracle_cash - arm_cash, 4),
             }
-        block["simultaneous_charge_and_discharge"] = simultaneity_flag(res)
+        block["simultaneous_charge_and_discharge"] = simultaneity_flag(res, spec)
         invariants[name] = block
 
     daily = pd.concat(
@@ -2213,6 +2282,35 @@ def ladder_analyse(args: argparse.Namespace) -> int:
 
     contrast_frame = pd.DataFrame(contrasts)
     capture_frame_out = pd.DataFrame(captures)
+
+    # The contrasts re-pool the per-day artefact; the capture table comes from
+    # the dispatch phase's own `pooled_capture`. They are two code paths to one
+    # number, so they must agree, and a disagreement means the contrast
+    # denominator is not the one the headline capture used — which is exactly
+    # the FINDING C11-C mistake (scoring two curves against different
+    # ceilings), and it would be invisible in the published table.
+    published = {
+        (row["zone"], row["curve"]): row["capture_rolled_oracle_cash"]
+        for row in captures
+        if row["capture_rolled_oracle_cash"] is not None
+    }
+    worst = 0.0
+    n_checked = 0
+    for row in contrasts:
+        for side in ("treatment", "baseline"):
+            key = (row["zone"], row[side])
+            if key not in published:
+                continue
+            delta = abs(float(row[f"capture_{side}"]) - float(published[key]))
+            worst = max(worst, delta)
+            n_checked += 1
+    if worst > 1e-6:
+        raise FundamentalsError(
+            f"a contrast's capture disagrees with the dispatch phase's pooled "
+            f"capture by up to {worst:.3g} — the two are not using the same "
+            f"denominator, which is the FINDING C11-C failure mode"
+        )
+    print(f"  capture cross-check: {n_checked} comparisons, worst delta {worst:.3g}")
     contrast_path = RESULTS_DIR / "c14_ladder_contrasts.csv"
     contrast_frame.to_csv(contrast_path, index=False)
     capture_path = RESULTS_DIR / "c14_ladder_capture.csv"
@@ -2247,6 +2345,15 @@ def ladder_analyse(args: argparse.Namespace) -> int:
         "contrasts": contrasts,
         "capture": captures,
         "n_store_2024_rows_read": int(len(prior)),
+        "capture_cross_check": {
+            "n_comparisons": n_checked,
+            "worst_absolute_delta": worst,
+            "note": (
+                "The contrast table re-pools the per-day artefact; the capture "
+                "table comes from the dispatch phase's pooled_capture. Two code "
+                "paths, one number."
+            ),
+        },
         "full_history_reproducibility": [
             cross_check_full_history_against_c13(zone) for zone in zones
         ],

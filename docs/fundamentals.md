@@ -143,6 +143,31 @@ rather than smoothed over:
 Every R² here is in-sample by construction and is a descriptive share of
 variance, never skill.
 
+### 2.2 The three figures, and the axis choices they make
+
+- **`c14_merit_order_tier_a.png`** — the empirical supply curve, one panel per
+  zone, one decile-median line per year over the pooled hourly cloud. The
+  **price axis is shared** across the three panels, because §5 compares price
+  *levels* across zones and three independent axes would make a 143 EUR/MWh line
+  and a 316 EUR/MWh line look alike. The **residual-load axes are not** shared:
+  NO2 spans 2-6 GW and DE-LU −13 to 69, and forcing those together reduces NO2
+  to a smear. The price axis is symlog (linear within ±50, log outside) and
+  clipped to −150..1000; the full range runs to −500 and +936 on a handful of
+  hours, and letting those set the axis spends two thirds of the panel on them.
+  The clipped hours are **counted in §6**, not hidden.
+- **`c14_negative_price_by_decile.png`** — `P(price < 0)` by residual-load
+  decile, shared y-axis. This is the figure §6 is about and the contrast is
+  visible without reading a number: DE-LU and ES spike in decile 1 and collapse
+  to zero by decile 3; NO2 is a low, slowly-declining line across all ten.
+- **`c14_headroom_vs_res_revision.png`** — two rows, because §8's answer has two
+  halves. Top: the day's RES revision against its error-over-headroom (NOTE
+  C13-03 as asked). Bottom: the day's residual-load range against its realised
+  price spread (the half that carries FINDING C14-F). A **binned decile-median
+  line** is drawn over each cloud — 1 090 scattered days is a blob and a rank
+  correlation of +0.5 cannot be read off one, so without the line the figure
+  would be asking the reader to take the table on trust. The contrast between
+  the two rows in the NO2 column is the mechanism.
+
 ---
 
 ## 3. FINDING C14-A — the merit order is a DE-LU and ES fact, and barely an NO2 one
@@ -350,6 +375,17 @@ daily spread** — a ratio with a model in the numerator and a market in the
 denominator. Both halves get their own question, because they have different
 consequences for a desk: a bigger error is a worse model, a smaller spread is a
 worse market.
+
+**Two granularities, and they are not the same number.** FINDING C13-D's
+definition is a *cell* statistic: one pooled MAE over one mean spread per (zone,
+year), and that is what `c14_headroom_cells.csv` and §8.3 carry. A per-*day*
+correlation needs a per-day value, which is that day's own
+`MAE_d / spread_d` — the ratio of the day's figures, not the day's contribution
+to the pooled one. The two agree in spirit and not in arithmetic (a ratio of
+means is not a mean of ratios), so the per-day column is named the same thing
+but computed per day, and §8.2's correlations are correlations of *that*. Days
+with a non-positive realised spread are NaN rather than infinite, and are
+dropped from the correlation rather than winsorised.
 
 The predictor is the **day-over-day revision** of the as-published Art. 14
 residual load: the mean over the day's hours of `|RL(h) − RL(h−24h)|`, computed

@@ -824,6 +824,52 @@ def test_the_late_arms_are_the_only_ones_marked_after_gate_closure():
     assert late == {"lear_res_as_published", "gbm_res_as_published"}
 
 
+def test_the_dispatch_helpers_are_called_with_the_arities_they_declare():
+    """A wrong-arity call to an imported helper is invisible until dispatch runs.
+
+    ``ladder_dispatch_zone`` is an hour of LP per zone, so the ladder tests skip
+    without its artefacts and a signature slip survives all the way to the
+    expensive phase — which is exactly what happened in this cycle
+    (``simultaneity_flag(res)`` against a two-argument helper). Checking the
+    signatures is cheap and catches the whole class.
+    """
+    import inspect
+
+    from backtest.run_c5_oracle_lp import (
+        check_day_lengths,
+        check_value_added_non_negative,
+        simultaneity_flag,
+    )
+    from backtest.run_c11_dispatch import beats_naive, mae_on_days, pooled_capture
+    from dispatch.curves import (
+        check_decision_value_added_non_negative,
+        check_per_day_dominance,
+        same_start_oracle,
+    )
+
+    expected = {
+        simultaneity_flag: 2,                       # (result, spec)
+        check_day_lengths: 2,                       # (result, zone_key)
+        check_value_added_non_negative: 1,          # (result)
+        check_decision_value_added_non_negative: 2,  # (result, spec)
+        check_per_day_dominance: 2,                 # (result, same_start)
+        same_start_oracle: 2,                       # (result, spec)
+        beats_naive: 3,                             # (result, naive, days)
+        mae_on_days: 4,                             # (curve, realised, days, tz)
+        pooled_capture: 5,
+    }
+    for function, arity in expected.items():
+        required = [
+            p for p in inspect.signature(function).parameters.values()
+            if p.default is inspect.Parameter.empty
+            and p.kind in (p.POSITIONAL_ONLY, p.POSITIONAL_OR_KEYWORD)
+        ]
+        assert len(required) == arity, (
+            f"{function.__name__} now takes {len(required)} required positional "
+            f"arguments, not {arity}; run_c14_fundamentals calls it with {arity}"
+        )
+
+
 def test_every_ladder_contrast_names_a_real_arm():
     curves = {a.curve for a in ladder_arms("NO2")}
     for treatment, baseline, question in LADDER_CONTRASTS:
@@ -897,6 +943,22 @@ def test_the_reproducibility_check_skips_rather_than_passes_when_absent():
     report = cross_check_full_history_against_c13("FR")  # Tier B: no C8 artefact
     assert "skipped" in report
     assert "holds" not in report
+
+
+def test_the_two_capture_code_paths_agree():
+    """The contrast table and the capture table must be one number, not two.
+
+    The contrasts re-pool the per-day artefact; the capture table comes from the
+    dispatch phase's own ``pooled_capture``. A disagreement would mean the
+    contrast denominator is not the one the headline used, which is precisely
+    the FINDING C11-C failure mode (two curves scored against different
+    ceilings) and would be invisible in the published table.
+    """
+    _needs(LADDER)
+    summary = json.loads(LADDER.read_text(encoding="utf-8"))
+    block = summary["capture_cross_check"]
+    assert block["n_comparisons"] > 0
+    assert block["worst_absolute_delta"] <= 1e-6
 
 
 def test_the_gbm_fingerprint_is_the_frozen_one():
