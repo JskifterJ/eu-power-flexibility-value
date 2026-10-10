@@ -91,3 +91,22 @@ lightgbm>=4.3
 # what makes C10-C13 rows directly comparable; a new version of numpy, pandas,
 # scikit-learn, scipy or lightgbm here would have made the five per-year columns
 # incomparable to each other as well as to the published 2024 ones.
+
+# C14 (the fundamentals chapter: price against residual load for Tier A, NOTE
+# C13-03's per-day correlations, and the 2023 exogenous ladder): no new
+# dependency. The chapter's statistics are `numpy.linalg.lstsq` on explicit
+# design matrices — deliberately not statsmodels or a spline library: the four
+# fits that matter are a straight line, a bin step function, a per-bin
+# intercept-and-slope block and additive calendar dummies, all of which are a
+# column_stack away, and the two comparisons the cycle reports as "gains" are
+# nested *by construction of those matrices*, which is checked numerically
+# rather than trusted to a formula API. matplotlib is used for the three
+# figures, as in C2/C6, and `matplotlib.use("Agg")` is set before pyplot is
+# imported because the container is headless. The bootstrap is C12's:
+# `backtest.bootstrap` for every day-additive statistic, plus one local
+# `block_day_picks` for the rank correlations, which are the only statistic in
+# the project that is not day-additive and so cannot be a `counts @ column`.
+# That function asserts its own draw counts against
+# `backtest.bootstrap.replicate_counts`, so the two constructions cannot drift
+# apart and a C14 interval stays comparable to a C12/C13 one. The
+# library_fingerprint is unchanged from C10-C13 (856fb19ac0c4eecd).
