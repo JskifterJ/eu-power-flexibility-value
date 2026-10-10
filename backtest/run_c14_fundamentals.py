@@ -247,6 +247,20 @@ def selected_zones(requested: list[str] | None) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
+#: Columns of the two cache-verification frames, declared so an absent cache
+#: (``data/raw/`` never survives a container — NOTE C2-02) produces an empty
+#: frame of the right shape instead of a KeyError.
+PRICE_CACHE_COLUMNS: tuple[str, ...] = (
+    "zone", "year", "n_points", "cached_payload_sha256",
+    "manifest_payload_sha256", "matches", "in_manifest",
+)
+
+EXOG_CACHE_COLUMNS: tuple[str, ...] = (
+    "zone", "document", "series", "year", "n_points", "cached_payload_sha256",
+    "manifest_payload_sha256", "matches", "in_manifest",
+)
+
+
 def verify_price_cache(zones: Sequence[str]) -> dict[str, Any]:
     """Every re-pulled price file's data fingerprint against C1's committed manifest.
 
@@ -283,8 +297,18 @@ def verify_price_cache(zones: Sequence[str]) -> dict[str, Any]:
                     "in_manifest": bool(not want_row.empty),
                 }
             )
-    frame_out = pd.DataFrame(rows)
-    mismatched = frame_out[~frame_out["matches"]]
+    # Explicit columns so an *absent* cache yields an empty frame with the right
+    # shape rather than a KeyError on "matches". With no cache there is nothing
+    # to verify, and `holds` is False below: the check must fail on an absent
+    # cache, never pass vacuously. Naming the columns would also silently *drop*
+    # a key a later change adds to the row dict, so the two are checked to agree.
+    if rows and set(rows[0]) != set(PRICE_CACHE_COLUMNS):
+        raise FundamentalsError(
+            f"PRICE_CACHE_COLUMNS {sorted(PRICE_CACHE_COLUMNS)} does not match "
+            f"the row keys {sorted(rows[0])}"
+        )
+    frame_out = pd.DataFrame(rows, columns=PRICE_CACHE_COLUMNS)
+    mismatched = frame_out[~frame_out["matches"].astype(bool)]
     return {
         "n_files": int(len(frame_out)),
         "n_matching": int(frame_out["matches"].sum()),
@@ -342,8 +366,15 @@ def verify_exog_cache(zones: Sequence[str]) -> dict[str, Any]:
                             "in_manifest": bool(not want_rows.empty),
                         }
                     )
-    frame_out = pd.DataFrame(rows)
-    mismatched = frame_out[~frame_out["matches"]]
+    # Same reason as verify_price_cache: an absent cache is an empty frame with
+    # the right columns and `holds` False, not a KeyError.
+    if rows and set(rows[0]) != set(EXOG_CACHE_COLUMNS):
+        raise FundamentalsError(
+            f"EXOG_CACHE_COLUMNS {sorted(EXOG_CACHE_COLUMNS)} does not match "
+            f"the row keys {sorted(rows[0])}"
+        )
+    frame_out = pd.DataFrame(rows, columns=EXOG_CACHE_COLUMNS)
+    mismatched = frame_out[~frame_out["matches"].astype(bool)]
     return {
         "n_files": int(frame_out[["zone", "document", "year"]].drop_duplicates().shape[0]),
         "n_series": int(len(frame_out)),

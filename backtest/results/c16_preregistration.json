@@ -1,0 +1,214 @@
+{
+  "cycle": "C16",
+  "checkpoint": "C",
+  "status": "AWAITING HUMAN APPROVAL \u2014 the holdout is sealed",
+  "written_at_utc": "2026-10-10T18:49:16+00:00",
+  "git_sha": "ae59c54130e105213f75f76df9213ef62283afe2",
+  "config_hash": "515d4e8d98887256",
+  "library_fingerprint": "856fb19ac0c4eecd",
+  "window": {
+    "year": 2025,
+    "first_market_day": "2025-01-01",
+    "last_market_day": "2025-09-30",
+    "n_market_days": 273,
+    "why_it_stops_there": "the SDAC 15-minute go-live is 2025-10-01 and PLAN.md ends the main hourly backtest the day before; native 15-minute analysis stays a labelled stretch goal, never blended in"
+  },
+  "zones": {
+    "tier_a": [
+      "DE-LU",
+      "ES",
+      "NO2"
+    ],
+    "tier_b": [
+      "FR",
+      "NL",
+      "BE",
+      "IT-North",
+      "DK1",
+      "PL"
+    ]
+  },
+  "arms": {
+    "headline_comparable": {
+      "model": "lear",
+      "exog_variant": "price_only",
+      "vintage": "honest",
+      "train_from": "2019-01-01",
+      "why": "the nine-zone arm every cross-zone number in C10-C15 is built on; comparability across zones outranks per-zone accuracy for the headline"
+    },
+    "floor": {
+      "model": "naive_last_week",
+      "vintage": "honest"
+    },
+    "ceiling": {
+      "model": "oracle",
+      "exog_variant": "perfect_foresight"
+    },
+    "tier_a_exogenous": {
+      "variants": [
+        "price_only",
+        "load_only",
+        "res_persistence"
+      ],
+      "models": [
+        "lear",
+        "gbm"
+      ],
+      "excluded": "res_as_published",
+      "why_excluded": "the Art. 14 D-1 wind/solar forecast is published at 18:00 on D-1, after gate closure (vintage after_gate_closure). It is reported in C8/C9 as a measured leak premium, and a once-only holdout evaluation reports the honest arms"
+    }
+  },
+  "models_frozen": {
+    "lear": {
+      "selector": "aic",
+      "hour_key": "local",
+      "vst": true,
+      "note": "C4's committed LearSpec, unchanged since C4"
+    },
+    "gbm": {
+      "fingerprint": "a366a760e269bba6",
+      "note": "C9's one fixed LightGBM config with in-fold early stopping; PLAN.md forbids a hyperparameter search, and the holdout is not an occasion to start one"
+    },
+    "naive_last_week": {
+      "note": "same hour, seven days earlier"
+    }
+  },
+  "walk_forward": {
+    "refit_every_days": 1,
+    "min_train_days": 365,
+    "train_window_days": null,
+    "window": "expanding",
+    "note": "identical to C10/C11/C13. The expanding window means the 2025 folds train on 2019-2024 inclusive \u2014 the validation year moves from 'evaluated' to 'trained on', which is what an expanding window does and is legitimate because 2024 is in the past relative to every 2025 fold"
+  },
+  "curves": [
+    "oracle",
+    "lear_full_history",
+    "naive"
+  ],
+  "dispatch": {
+    "power_mw": 1.0,
+    "duration_hours": 2.0,
+    "round_trip_efficiency": 0.88,
+    "throughput_cost_eur_per_mwh": 2.0,
+    "initial_soc_fraction": 0.5,
+    "terminal_mode": "trailing_value",
+    "trailing_days": 7,
+    "trailing_quantile": 0.5,
+    "commit_then_settle": true,
+    "note": "config/battery.yaml as committed. NOTE C15-01 asks the human whether terminal_mode stays trailing_value; if it changes, it must change BEFORE the unseal, because changing it afterwards would mean re-evaluating the holdout a second time"
+  },
+  "metrics": {
+    "forecast": [
+      "mae_on_dispatched_hours",
+      "rmse_on_dispatched_hours",
+      "rmae_vs_naive_on_dispatched_hours",
+      "daily_spread_mae_eur_per_mwh",
+      "daily_spread_bias_eur_per_mwh",
+      "within_day_spearman_mean"
+    ],
+    "dispatch": [
+      "capture_rolled_oracle_cash",
+      "capture_same_start",
+      "dispatch_cash_eur_per_mw_year",
+      "eur_per_mw_year_lost_vs_oracle"
+    ],
+    "intervals": {
+      "method": "block bootstrap over daily blocks",
+      "block_days_ladder": [
+        1,
+        7,
+        14
+      ],
+      "n_replicates": 10000,
+      "seed": 20261009,
+      "alpha": 0.05
+    }
+  },
+  "outputs": {
+    "per_day": "backtest/results/c17_holdout_<ZONE>_2025_daily.csv.gz",
+    "per_zone_summary": "backtest/results/c17_holdout_<ZONE>_2025_summary.json",
+    "table": "backtest/results/c17_holdout_2025_metrics.csv",
+    "intervals": "backtest/results/c17_holdout_2025_intervals.csv",
+    "store": "backtest/results/results.csv (append-only, cycle C17)",
+    "write_up": "docs/holdout_2025.md"
+  },
+  "assertions_that_must_hold": [
+    "value(forecast schedule @ realised) <= value(same-start oracle @ realised) on EVERY dispatched day",
+    "value(naive @ realised) <= value(forecast @ realised) pooled over the window (on average, not per day)",
+    "no LP objective from a forecast-price solve is reported as a realised value (commit-then-settle, assert_settlement_is_not_a_readback)",
+    "every feature's max timestamp precedes its row's gate closure (forecast/leakage.py, every fold, train and test)",
+    "every training target was published before the fold's gate closure",
+    "expected row count per (zone, local day) against the DST whitelist",
+    "resolution_seconds == 3600 on every evaluated row; a 15-minute segment inside the window is a FLAG, not a resample",
+    "no evaluated market day falls on or after 2025-10-01"
+  ],
+  "stop_rules": [
+    "the evaluation runs ONCE. PROGRESS.md records the UTC timestamp of the run and the git SHA it ran at",
+    "a failing invariant is a FLAG and a stop, not an occasion to adjust the model, the config or the window",
+    "no model, feature set, hyperparameter, battery parameter or metric definition may change after the first 2025 number is seen. A change that looks necessary is a finding to report, and any re-run is a second evaluation that must be labelled as one",
+    "a 404, an empty response or an Acknowledgement from either source is a FLAG; the dependent zone is skipped and the rest continues"
+  ],
+  "preconditions": {
+    "human_writes_the_unseal_marker": "a line in PROGRESS.md that, stripped, equals the holdout_unseal_marker value in config/data.yaml",
+    "config_data_yaml_fetch_years_must_add_2025": "ENTSO-E fetches are bounded by fetch_years (entsoe.exogenous_years), so the Tier-A 2025 exogenous pull is refused until 2025 is added to fetch_years. The Energy-Charts price fetch is bounded only by the holdout guard",
+    "entsoe_api_key": "required for the Tier-A 2025 exogenous pull",
+    "fresh_download_required": "no 2025 file has ever been cached, so the unseal cycle fetches 9 zone-years of prices and 3 zones x 2 documents of ENTSO-E data \u2014 one request each, then cached",
+    "expect_a_resolution_change_in_the_2025_price_file": "a full-year 2025 Energy-Charts pull contains 15-minute data from 2025-10-01. data/contracts.py detects the change; the evaluation window ends 2025-09-30 so no 15-minute row is scored, and the post-cutover segment is reported, not dropped silently"
+  },
+  "baseline_2024_for_comparison": {
+    "BE": {
+      "capture_rolled_oracle_cash": 0.904354,
+      "dispatch_cash_eur_per_mw_year": 56055.47,
+      "mae_on_dispatched_hours": 19.3685,
+      "within_day_spearman_mean": 0.832891
+    },
+    "DE-LU": {
+      "capture_rolled_oracle_cash": 0.918691,
+      "dispatch_cash_eur_per_mw_year": 68178.88,
+      "mae_on_dispatched_hours": 22.8874,
+      "within_day_spearman_mean": 0.810898
+    },
+    "DK1": {
+      "capture_rolled_oracle_cash": 0.835786,
+      "dispatch_cash_eur_per_mw_year": 53883.83,
+      "mae_on_dispatched_hours": 25.4248,
+      "within_day_spearman_mean": 0.706237
+    },
+    "ES": {
+      "capture_rolled_oracle_cash": 0.910932,
+      "dispatch_cash_eur_per_mw_year": 42406.88,
+      "mae_on_dispatched_hours": 17.839,
+      "within_day_spearman_mean": 0.835431
+    },
+    "FR": {
+      "capture_rolled_oracle_cash": 0.852633,
+      "dispatch_cash_eur_per_mw_year": 46776.66,
+      "mae_on_dispatched_hours": 17.8656,
+      "within_day_spearman_mean": 0.807349
+    },
+    "IT-North": {
+      "capture_rolled_oracle_cash": 0.904214,
+      "dispatch_cash_eur_per_mw_year": 37798.64,
+      "mae_on_dispatched_hours": 9.5376,
+      "within_day_spearman_mean": 0.885223
+    },
+    "NL": {
+      "capture_rolled_oracle_cash": 0.903104,
+      "dispatch_cash_eur_per_mw_year": 68650.2,
+      "mae_on_dispatched_hours": 21.4632,
+      "within_day_spearman_mean": 0.829974
+    },
+    "NO2": {
+      "capture_rolled_oracle_cash": 0.614644,
+      "dispatch_cash_eur_per_mw_year": 15994.15,
+      "mae_on_dispatched_hours": 13.6621,
+      "within_day_spearman_mean": 0.578108
+    },
+    "PL": {
+      "capture_rolled_oracle_cash": 0.883911,
+      "dispatch_cash_eur_per_mw_year": 68029.22,
+      "mae_on_dispatched_hours": 20.2361,
+      "within_day_spearman_mean": 0.813517
+    }
+  }
+}

@@ -1,0 +1,248 @@
+{
+  "cycle": "C16",
+  "checkpoint": "C",
+  "verified_at_utc": "2026-10-10T18:49:10+00:00",
+  "git_sha": "ae59c54130e105213f75f76df9213ef62283afe2",
+  "config_hash": "515d4e8d98887256",
+  "marker": {
+    "progress_path": "PROGRESS.md",
+    "marker": "CHECKPOINT C APPROVED: 2025 holdout unsealed",
+    "holdout_is_unsealed": false,
+    "n_lines_mentioning_marker_in_prose": 1,
+    "lines_mentioning_marker_in_prose": [
+      6263
+    ],
+    "n_bare_marker_lines": 0,
+    "seal_intact": true
+  },
+  "split": {
+    "sealed_years": [
+      2025
+    ],
+    "fetch_years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "fetch_years_intersect_sealed": [],
+    "splits": {
+      "train": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "validate": [
+        2024
+      ],
+      "holdout": [
+        2025
+      ]
+    },
+    "sdac_15min_golive": "2025-10-01",
+    "main_backtest_end": "2025-09-30",
+    "exogenous_available_from_year": 2022
+  },
+  "guards": {
+    "n_guard_calls": 33,
+    "n_modules_with_a_guard": 14,
+    "required_modules": [
+      "data/energy_charts.py",
+      "data/prices.py",
+      "data/entsoe.py",
+      "data/exogenous.py",
+      "backtest/walk_forward.py",
+      "backtest/results_store.py"
+    ],
+    "required_modules_missing_a_guard": [],
+    "guard_calls_by_module": {
+      "data/energy_charts.py": [
+        210,
+        287
+      ],
+      "data/entsoe.py": [
+        860,
+        972
+      ],
+      "data/exogenous.py": [
+        110,
+        277
+      ],
+      "data/holdout.py": [
+        99
+      ],
+      "data/prices.py": [
+        69,
+        122
+      ],
+      "backtest/results_store.py": [
+        326
+      ],
+      "backtest/run_c11_dispatch.py": [
+        1148
+      ],
+      "backtest/run_c12_metrics.py": [
+        306,
+        1218
+      ],
+      "backtest/run_c13_regime.py": [
+        234,
+        330,
+        427,
+        667,
+        790,
+        820,
+        1218,
+        1910
+      ],
+      "backtest/run_c14_fundamentals.py": [
+        501,
+        539,
+        1167,
+        1338,
+        1721,
+        1948
+      ],
+      "backtest/run_c15_sensitivities.py": [
+        549
+      ],
+      "backtest/run_c5_oracle_lp.py": [
+        116,
+        514
+      ],
+      "backtest/run_c6_curves.py": [
+        840
+      ],
+      "backtest/walk_forward.py": [
+        175,
+        284
+      ]
+    }
+  },
+  "refusal_probes": {
+    "n_probes": 8,
+    "n_refused": 8,
+    "probes": [
+      {
+        "entry_point": "energy_charts.fetch_year",
+        "attempted": "fetch 2025 day-ahead prices from Energy-Charts",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to fetch Energy-Charts prices for DE-LU 2025: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "entry_point": "energy_charts.read_cached_year",
+        "attempted": "read a cached 2025 price file",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to load cached Energy-Charts prices for DE-LU 2025: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "entry_point": "prices.read_cached_file",
+        "attempted": "read a cached 2025 price file untruncated",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to load cached prices for DE-LU 2025: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "entry_point": "prices.load_zone_series",
+        "attempted": "stitch a price series that includes 2025",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to stitch a price series for DE-LU: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "entry_point": "entsoe.fetch_year",
+        "attempted": "fetch the 2025 D-1 load forecast from ENTSO-E",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to fetch ENTSO-E load_forecast_da for DE-LU 2025: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "entry_point": "entsoe.read_cached_year",
+        "attempted": "read a cached 2025 ENTSO-E document",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to load cached ENTSO-E load_forecast_da for DE-LU 2025: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "entry_point": "exogenous.load_zone_document",
+        "attempted": "stitch an exogenous document series that includes 2025",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to stitch an exogenous series for DE-LU: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "entry_point": "results_store.append_rows",
+        "attempted": "write a 2025 metric into the results store",
+        "refused": true,
+        "raised": "SealedHoldoutError",
+        "message": "refusing to write a mae_eur_per_mwh for DE-LU/lear into the results store: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      }
+    ]
+  },
+  "cli_refusal_probes": {
+    "n_cli_probes": 2,
+    "cli_probes": [
+      {
+        "command": "python -m backtest.run_c11_dispatch --years 2025 --zones DE-LU --no-append",
+        "returncode": 1,
+        "refused": true,
+        "mentions_sealed_holdout": true,
+        "tail": "data.holdout.SealedHoldoutError: refusing to run the C11 nine-zone dispatch: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      },
+      {
+        "command": "python -m backtest.run_c13_regime --phase compute --years 2025 --zones DE-LU --no-append",
+        "returncode": 1,
+        "refused": true,
+        "mentions_sealed_holdout": true,
+        "tail": "data.holdout.SealedHoldoutError: refusing to C13 compute phase: year(s) [2025] are the SEALED HOLDOUT. PROGRESS.md does not contain the unseal marker ('CHECKPOINT C APPROVED: 2025 holdout unsealed'), which only a human writes after Checkpoint C (C16) is approved. See CLAUDE.md."
+      }
+    ]
+  },
+  "artefacts": {
+    "n_tables_scanned": 243,
+    "n_summaries_scanned": 172,
+    "exempt_artefacts": [
+      "c16_preregistration.json",
+      "c16_seal_verification.json"
+    ],
+    "evaluation_years_in_store": [
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "artefacts_naming_the_holdout": {},
+    "clean": true
+  },
+  "download_record": {
+    "manifest_dir": "data/manifest",
+    "years_in_manifests": {
+      "prices_manifest.csv": [
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "exogenous_manifest.csv": [
+        2022,
+        2023,
+        2024
+      ]
+    },
+    "sealed_years_found": [],
+    "raw_cache_present": false,
+    "raw_files_naming_a_sealed_year": [],
+    "clean": true
+  },
+  "seal_intact": true,
+  "holdout_year_touched_by_this_cycle": false
+}
