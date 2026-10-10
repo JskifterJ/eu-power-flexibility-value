@@ -1,0 +1,895 @@
+{
+  "cycle": "C9",
+  "generated_at_utc": "2026-10-10T04:32:46+00:00",
+  "git_sha": "24e6fa55de6c213b04d23b7161dfaa5aabcd1e0e",
+  "config_hash": "515d4e8d98887256",
+  "zone": "NO2",
+  "evaluation_years": [
+    2023
+  ],
+  "walk_forward_spec": {
+    "refit_every_days": 1,
+    "min_train_days": 365,
+    "train_window_days": null
+  },
+  "gbm_spec": {
+    "booster_params": {
+      "objective": "regression",
+      "metric": "l2",
+      "learning_rate": 0.05,
+      "num_leaves": 31,
+      "min_data_in_leaf": 20,
+      "feature_fraction": 0.9,
+      "bagging_fraction": 0.9,
+      "bagging_freq": 1,
+      "lambda_l1": 0.0,
+      "lambda_l2": 1.0,
+      "seed": 20260101,
+      "bagging_seed": 20260101,
+      "feature_fraction_seed": 20260101,
+      "data_random_seed": 20260101,
+      "num_threads": 4,
+      "deterministic": true,
+      "force_row_wise": true,
+      "verbosity": -1
+    },
+    "num_boost_round": 2000,
+    "early_stopping_rounds": 50,
+    "early_stopping_days": 90,
+    "refit_on_full_window": true,
+    "min_fit_rows": 2000,
+    "nan_policy": "native",
+    "vst": true,
+    "fingerprint": "a366a760e269bba6"
+  },
+  "align_train_from": "2022-01-01",
+  "persistence_lag_hours": 24,
+  "price_series": {
+    "zone": "NO2",
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "n_points": 52608,
+    "n_duplicate_timestamps": 0,
+    "first_ts_utc": "2018-12-31T23:00:00+00:00",
+    "last_ts_utc": "2024-12-31T22:00:00+00:00"
+  },
+  "exogenous_source": {
+    "n_hours": 26304,
+    "first_utc": "2022-01-01T00:00:00+00:00",
+    "last_utc": "2024-12-31T23:00:00+00:00",
+    "leakage_status": "FLAGGED",
+    "flagged_columns": [
+      "residual_load_forecast_mw",
+      "solar_forecast_da_mw",
+      "wind_forecast_da_mw"
+    ]
+  },
+  "publication_clocks": {
+    "load_forecast_da": {
+      "document": "load_forecast_da",
+      "day_offset": -1,
+      "local_time": "10:00",
+      "tz": "Europe/Brussels",
+      "leakage_status": "safe",
+      "describes": "10:00 Europe/Brussels on D-1"
+    },
+    "wind_solar_forecast_da": {
+      "document": "wind_solar_forecast_da",
+      "day_offset": -1,
+      "local_time": "18:00",
+      "tz": "Europe/Brussels",
+      "leakage_status": "FLAGGED",
+      "describes": "18:00 Europe/Brussels on D-1"
+    }
+  },
+  "feature_build": {
+    "zone": "NO2",
+    "n_rows": 52608,
+    "first_target_utc": "2018-12-31T23:00:00+00:00",
+    "last_target_utc": "2024-12-31T22:00:00+00:00",
+    "price_columns": [
+      "price_lag_24h",
+      "price_lag_48h",
+      "price_lag_72h",
+      "price_lag_168h",
+      "price_daily_mean_lag_24h",
+      "price_daily_min_lag_24h",
+      "price_daily_max_lag_24h"
+    ],
+    "calendar_columns": [
+      "hour_of_day_local",
+      "hour_of_day_utc",
+      "day_of_week",
+      "is_weekend",
+      "month"
+    ],
+    "deferred_columns": [
+      "is_public_holiday"
+    ],
+    "daily_aggregate_source": {
+      "price_daily_mean_lag_24h": "latest fully public UTC calendar day (mean); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_min_lag_24h": "latest fully public UTC calendar day (min); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_max_lag_24h": "latest fully public UTC calendar day (max); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)"
+    },
+    "n_incomplete_utc_days": 2,
+    "mask": {
+      "total_masked": 6,
+      "masked_per_column": {
+        "price_lag_24h": 6
+      },
+      "first_masked_per_column": {
+        "price_lag_24h": "2019-10-27T22:00:00+00:00"
+      }
+    }
+  },
+  "n_rows_aligned": 26304,
+  "reference_scores": {
+    "naive_last_week": {
+      "n": 8760,
+      "n_scored": 8760,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 23.515114,
+      "rmse": 33.067444,
+      "bias": 1.054653
+    },
+    "train_mean": {
+      "n": 8760,
+      "n_scored": 8760,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 95.203912,
+      "rmse": 100.124515,
+      "bias": 94.633977
+    }
+  },
+  "arms": {
+    "price_only": {
+      "exog_spec": {
+        "variant": "price_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [],
+      "acknowledged_late_columns": [],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8760,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.42495,
+        "rmse": 22.991386,
+        "bias": 5.790096
+      },
+      "rmae_vs_naive": 0.698485,
+      "skill_vs_train_mean": 0.827476,
+      "n_folds": 365,
+      "early_stopping": {
+        "n_folds": 365,
+        "best_iteration_min": 45,
+        "best_iteration_median": 93.0,
+        "best_iteration_mean": 106.67,
+        "best_iteration_max": 321,
+        "n_folds_hitting_the_round_cap": 0,
+        "n_fit_rows_last_fold": 15335,
+        "n_stopping_rows_last_fold": 2161,
+        "stopping_window_last_fold": [
+          "2023-10-02",
+          "2023-12-30"
+        ],
+        "n_predict_rows_with_any_nan_last_fold": 0,
+        "note": "best_iteration is the round count the in-fold stopping set chose, per fold. n_folds_hitting_the_round_cap > 0 means the boosting cap, not the stopping curve, ended those fits \u2014 which would make the round count a fixed hyperparameter rather than an in-fold choice."
+      },
+      "feature_importance_last_fold": {
+        "price_lag_24h": 0.70863,
+        "price_lag_48h": 0.085799,
+        "price_lag_72h": 0.014986,
+        "price_lag_168h": 0.024678,
+        "price_daily_mean_lag_24h": 0.097203,
+        "price_daily_min_lag_24h": 0.011989,
+        "price_daily_max_lag_24h": 0.022013,
+        "hour_of_day_local": 0.002023,
+        "hour_of_day_utc": 0.001964,
+        "day_of_week": 0.008793,
+        "is_weekend": 0.007561,
+        "month": 0.014362
+      }
+    },
+    "load_only": {
+      "exog_spec": {
+        "variant": "load_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw"
+      ],
+      "acknowledged_late_columns": [],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8760,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.223429,
+        "rmse": 22.627644,
+        "bias": 6.283585
+      },
+      "rmae_vs_naive": 0.689915,
+      "skill_vs_train_mean": 0.829593,
+      "n_folds": 365,
+      "early_stopping": {
+        "n_folds": 365,
+        "best_iteration_min": 38,
+        "best_iteration_median": 95.0,
+        "best_iteration_mean": 108.58,
+        "best_iteration_max": 540,
+        "n_folds_hitting_the_round_cap": 0,
+        "n_fit_rows_last_fold": 15335,
+        "n_stopping_rows_last_fold": 2161,
+        "stopping_window_last_fold": [
+          "2023-10-02",
+          "2023-12-30"
+        ],
+        "n_predict_rows_with_any_nan_last_fold": 0,
+        "note": "best_iteration is the round count the in-fold stopping set chose, per fold. n_folds_hitting_the_round_cap > 0 means the boosting cap, not the stopping curve, ended those fits \u2014 which would make the round count a fixed hyperparameter rather than an in-fold choice."
+      },
+      "feature_importance_last_fold": {
+        "price_lag_24h": 0.774711,
+        "price_lag_48h": 0.062126,
+        "price_lag_72h": 0.015744,
+        "price_lag_168h": 0.024346,
+        "price_daily_mean_lag_24h": 0.044227,
+        "price_daily_min_lag_24h": 0.012675,
+        "price_daily_max_lag_24h": 0.023696,
+        "hour_of_day_local": 0.001676,
+        "hour_of_day_utc": 0.002558,
+        "day_of_week": 0.010785,
+        "is_weekend": 0.007001,
+        "month": 0.01402,
+        "load_forecast_da_mw": 0.006435
+      }
+    },
+    "res_persistence": {
+      "exog_spec": {
+        "variant": "res_persistence",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "acknowledged_late_columns": [],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8760,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.4872,
+        "rmse": 22.819744,
+        "bias": 6.281378
+      },
+      "rmae_vs_naive": 0.701132,
+      "skill_vs_train_mean": 0.826822,
+      "n_folds": 365,
+      "early_stopping": {
+        "n_folds": 365,
+        "best_iteration_min": 35,
+        "best_iteration_median": 99.0,
+        "best_iteration_mean": 108.36,
+        "best_iteration_max": 356,
+        "n_folds_hitting_the_round_cap": 0,
+        "n_fit_rows_last_fold": 15335,
+        "n_stopping_rows_last_fold": 2161,
+        "stopping_window_last_fold": [
+          "2023-10-02",
+          "2023-12-30"
+        ],
+        "n_predict_rows_with_any_nan_last_fold": 0,
+        "note": "best_iteration is the round count the in-fold stopping set chose, per fold. n_folds_hitting_the_round_cap > 0 means the boosting cap, not the stopping curve, ended those fits \u2014 which would make the round count a fixed hyperparameter rather than an in-fold choice."
+      },
+      "feature_importance_last_fold": {
+        "price_lag_24h": 0.658482,
+        "price_lag_48h": 0.07571,
+        "price_lag_72h": 0.014105,
+        "price_lag_168h": 0.025154,
+        "price_daily_mean_lag_24h": 0.147062,
+        "price_daily_min_lag_24h": 0.010119,
+        "price_daily_max_lag_24h": 0.021319,
+        "hour_of_day_local": 0.001895,
+        "hour_of_day_utc": 0.002223,
+        "day_of_week": 0.008899,
+        "is_weekend": 0.007438,
+        "month": 0.014359,
+        "load_forecast_da_mw": 0.004771,
+        "wind_forecast_da_mw": 0.004789,
+        "solar_forecast_da_mw": 0.0,
+        "residual_load_forecast_mw": 0.003673
+      }
+    },
+    "res_as_published": {
+      "exog_spec": {
+        "variant": "res_as_published",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 0,
+        "acknowledges_late_columns": true
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "acknowledged_late_columns": [
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8760,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 15.291072,
+        "rmse": 21.298731,
+        "bias": 6.889746
+      },
+      "rmae_vs_naive": 0.650266,
+      "skill_vs_train_mean": 0.839386,
+      "n_folds": 365,
+      "early_stopping": {
+        "n_folds": 365,
+        "best_iteration_min": 31,
+        "best_iteration_median": 94.0,
+        "best_iteration_mean": 104.94,
+        "best_iteration_max": 329,
+        "n_folds_hitting_the_round_cap": 0,
+        "n_fit_rows_last_fold": 15335,
+        "n_stopping_rows_last_fold": 2161,
+        "stopping_window_last_fold": [
+          "2023-10-02",
+          "2023-12-30"
+        ],
+        "n_predict_rows_with_any_nan_last_fold": 0,
+        "note": "best_iteration is the round count the in-fold stopping set chose, per fold. n_folds_hitting_the_round_cap > 0 means the boosting cap, not the stopping curve, ended those fits \u2014 which would make the round count a fixed hyperparameter rather than an in-fold choice."
+      },
+      "feature_importance_last_fold": {
+        "price_lag_24h": 0.645447,
+        "price_lag_48h": 0.077791,
+        "price_lag_72h": 0.015038,
+        "price_lag_168h": 0.029444,
+        "price_daily_mean_lag_24h": 0.136152,
+        "price_daily_min_lag_24h": 0.009799,
+        "price_daily_max_lag_24h": 0.020999,
+        "hour_of_day_local": 0.001772,
+        "hour_of_day_utc": 0.002627,
+        "day_of_week": 0.008751,
+        "is_weekend": 0.007853,
+        "month": 0.014934,
+        "load_forecast_da_mw": 0.002273,
+        "wind_forecast_da_mw": 0.018216,
+        "solar_forecast_da_mw": 0.0,
+        "residual_load_forecast_mw": 0.008903
+      }
+    }
+  },
+  "attach_reports": {
+    "price_only": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "price_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [],
+      "clocks": {},
+      "column_vintage": {},
+      "acknowledged_late_columns": [],
+      "acknowledged_violations": [],
+      "masked_per_column": {},
+      "persistence_masked_dst_rows": 0,
+      "persistence_masked_dst_timestamps": [],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26304,
+      "first_complete_exogenous_utc": null,
+      "coverage_per_column": {},
+      "exogenous_source": {}
+    },
+    "load_only": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "load_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw"
+      ],
+      "clocks": {
+        "load_forecast_da": {
+          "document": "load_forecast_da",
+          "day_offset": -1,
+          "local_time": "10:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "safe",
+          "describes": "10:00 Europe/Brussels on D-1"
+        },
+        "wind_solar_forecast_da": {
+          "document": "wind_solar_forecast_da",
+          "day_offset": -1,
+          "local_time": "18:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "FLAGGED",
+          "describes": "18:00 Europe/Brussels on D-1"
+        }
+      },
+      "column_vintage": {
+        "load_forecast_da_mw": "as published for the target market day; public 10:00 Europe/Brussels on D-1"
+      },
+      "acknowledged_late_columns": [],
+      "acknowledged_violations": [],
+      "masked_per_column": {},
+      "persistence_masked_dst_rows": 0,
+      "persistence_masked_dst_timestamps": [],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26303,
+      "first_complete_exogenous_utc": "2022-01-01T00:00:00+00:00",
+      "coverage_per_column": {
+        "load_forecast_da_mw": 0.999962
+      },
+      "exogenous_source": {
+        "leakage_status": "FLAGGED",
+        "flagged_columns": [
+          "residual_load_forecast_mw",
+          "solar_forecast_da_mw",
+          "wind_forecast_da_mw"
+        ],
+        "native_resolutions_seconds": [
+          3600
+        ],
+        "unit": "MW"
+      }
+    },
+    "res_persistence": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "res_persistence",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "clocks": {
+        "load_forecast_da": {
+          "document": "load_forecast_da",
+          "day_offset": -1,
+          "local_time": "10:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "safe",
+          "describes": "10:00 Europe/Brussels on D-1"
+        },
+        "wind_solar_forecast_da": {
+          "document": "wind_solar_forecast_da",
+          "day_offset": -1,
+          "local_time": "18:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "FLAGGED",
+          "describes": "18:00 Europe/Brussels on D-1"
+        }
+      },
+      "column_vintage": {
+        "load_forecast_da_mw": "as published for the target market day; public 10:00 Europe/Brussels on D-1",
+        "wind_forecast_da_mw": "the vintage published 24h earlier (for market day D-1); public 18:00 Europe/Brussels on D-1 of that day",
+        "solar_forecast_da_mw": "the vintage published 24h earlier (for market day D-1); public 18:00 Europe/Brussels on D-1 of that day",
+        "residual_load_forecast_mw": "derived: load_forecast_da_mw - wind_forecast_da_mw - solar_forecast_da_mw, each at this variant's own vintage; information time is the latest of the three"
+      },
+      "acknowledged_late_columns": [],
+      "acknowledged_violations": [],
+      "masked_per_column": {
+        "wind_forecast_da_mw": 3,
+        "solar_forecast_da_mw": 3,
+        "residual_load_forecast_mw": 3
+      },
+      "persistence_masked_dst_rows": 3,
+      "persistence_masked_dst_timestamps": [
+        "2022-10-30T22:00:00+00:00",
+        "2023-10-29T22:00:00+00:00",
+        "2024-10-27T22:00:00+00:00"
+      ],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26228,
+      "first_complete_exogenous_utc": "2022-01-02T00:00:00+00:00",
+      "coverage_per_column": {
+        "load_forecast_da_mw": 0.999962,
+        "wind_forecast_da_mw": 0.997111,
+        "solar_forecast_da_mw": 0.997111,
+        "residual_load_forecast_mw": 0.997111
+      },
+      "exogenous_source": {
+        "leakage_status": "FLAGGED",
+        "flagged_columns": [
+          "residual_load_forecast_mw",
+          "solar_forecast_da_mw",
+          "wind_forecast_da_mw"
+        ],
+        "native_resolutions_seconds": [
+          3600
+        ],
+        "unit": "MW"
+      }
+    },
+    "res_as_published": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "res_as_published",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 0,
+        "acknowledges_late_columns": true
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "clocks": {
+        "load_forecast_da": {
+          "document": "load_forecast_da",
+          "day_offset": -1,
+          "local_time": "10:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "safe",
+          "describes": "10:00 Europe/Brussels on D-1"
+        },
+        "wind_solar_forecast_da": {
+          "document": "wind_solar_forecast_da",
+          "day_offset": -1,
+          "local_time": "18:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "FLAGGED",
+          "describes": "18:00 Europe/Brussels on D-1"
+        }
+      },
+      "column_vintage": {
+        "load_forecast_da_mw": "as published for the target market day; public 10:00 Europe/Brussels on D-1",
+        "wind_forecast_da_mw": "as published for the target market day; public 18:00 Europe/Brussels on D-1",
+        "solar_forecast_da_mw": "as published for the target market day; public 18:00 Europe/Brussels on D-1",
+        "residual_load_forecast_mw": "derived: load_forecast_da_mw - wind_forecast_da_mw - solar_forecast_da_mw, each at this variant's own vintage; information time is the latest of the three"
+      },
+      "acknowledged_late_columns": [
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "acknowledged_violations": [
+        {
+          "kind": "after_gate_closure",
+          "column": "wind_forecast_da_mw",
+          "detail": "feature embeds information published after the bidding deadline for its own target day",
+          "n_rows": 26255,
+          "first_timestamp": "2022-01-01T00:00:00+00:00",
+          "worst_lateness_seconds": 21600.0
+        },
+        {
+          "kind": "after_gate_closure",
+          "column": "solar_forecast_da_mw",
+          "detail": "feature embeds information published after the bidding deadline for its own target day",
+          "n_rows": 26255,
+          "first_timestamp": "2022-01-01T00:00:00+00:00",
+          "worst_lateness_seconds": 21600.0
+        },
+        {
+          "kind": "after_gate_closure",
+          "column": "residual_load_forecast_mw",
+          "detail": "feature embeds information published after the bidding deadline for its own target day",
+          "n_rows": 26255,
+          "first_timestamp": "2022-01-01T00:00:00+00:00",
+          "worst_lateness_seconds": 21600.0
+        }
+      ],
+      "masked_per_column": {},
+      "persistence_masked_dst_rows": 0,
+      "persistence_masked_dst_timestamps": [],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26255,
+      "first_complete_exogenous_utc": "2022-01-01T00:00:00+00:00",
+      "coverage_per_column": {
+        "load_forecast_da_mw": 0.999962,
+        "wind_forecast_da_mw": 0.998137,
+        "solar_forecast_da_mw": 0.998137,
+        "residual_load_forecast_mw": 0.998137
+      },
+      "exogenous_source": {
+        "leakage_status": "FLAGGED",
+        "flagged_columns": [
+          "residual_load_forecast_mw",
+          "solar_forecast_da_mw",
+          "wind_forecast_da_mw"
+        ],
+        "native_resolutions_seconds": [
+          3600
+        ],
+        "unit": "MW"
+      }
+    }
+  },
+  "lear_reference": {
+    "path": "backtest/results/c8_exog_NO2_2023_predictions.csv.gz",
+    "n_rows": 8760,
+    "arms_found": [
+      "load_only",
+      "price_only",
+      "res_as_published",
+      "res_persistence"
+    ],
+    "worst_y_true_disagreement_eur_mwh": 0.0,
+    "note": "LEAR is not refitted in C9. C8 committed its predictions for these arms, this zone, this evaluation year, this aligned training window and this walk-forward spec; the index and realised prices are asserted equal to this run's, which also re-verifies C8's artefact against a freshly re-pulled cache."
+  },
+  "common_hours": {
+    "n_hours": 8759,
+    "n_hours_dropped": 1,
+    "series": [
+      "gbm_load_only",
+      "gbm_price_only",
+      "gbm_res_as_published",
+      "gbm_res_persistence",
+      "lear_load_only",
+      "lear_price_only",
+      "lear_res_as_published",
+      "lear_res_persistence",
+      "naive_last_week"
+    ],
+    "scores": {
+      "gbm_price_only": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.419958,
+        "rmse": 22.983714,
+        "bias": 5.783889
+      },
+      "gbm_load_only": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.217923,
+        "rmse": 22.618456,
+        "bias": 6.276944
+      },
+      "gbm_res_persistence": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.482189,
+        "rmse": 22.811926,
+        "bias": 6.275201
+      },
+      "gbm_res_as_published": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 15.286535,
+        "rmse": 21.291828,
+        "bias": 6.884249
+      },
+      "lear_price_only": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 17.25475,
+        "rmse": 23.507218,
+        "bias": 6.928366
+      },
+      "lear_load_only": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 17.519294,
+        "rmse": 23.77584,
+        "bias": 7.223606
+      },
+      "lear_res_persistence": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 17.48914,
+        "rmse": 23.762355,
+        "bias": 7.13077
+      },
+      "lear_res_as_published": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.922526,
+        "rmse": 22.526541,
+        "bias": 7.097953
+      },
+      "naive_last_week": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 23.516131,
+        "rmse": 33.068963,
+        "bias": 1.053105
+      }
+    },
+    "note": "The GBM routes a missing cell natively and so answers hours the committed LEAR declines, which makes raw coverage differ between the two models. These are the only scores in this summary that compare them on one evaluation set; the per-arm blocks above are each series on its own coverage."
+  },
+  "ladders": {
+    "gbm": {
+      "model": "gbm",
+      "variants": [
+        "price_only",
+        "load_only",
+        "res_persistence",
+        "res_as_published"
+      ],
+      "mae": [
+        16.419958,
+        16.217923,
+        16.482189,
+        15.286535
+      ],
+      "listed_in_information_order": true,
+      "mae_monotone_non_increasing": false,
+      "deltas": {
+        "capturable_exogenous_gain": {
+          "arms": "load_only vs price_only",
+          "mae_improvement_eur_mwh": 0.202035,
+          "mae_improvement_fraction": 0.012304,
+          "rmse_improvement_eur_mwh": 0.365258,
+          "rmse_improvement_fraction": 0.015892
+        },
+        "vintage_premium": {
+          "arms": "res_as_published vs res_persistence",
+          "mae_improvement_eur_mwh": 1.195654,
+          "mae_improvement_fraction": 0.072542,
+          "rmse_improvement_eur_mwh": 1.520098,
+          "rmse_improvement_fraction": 0.066636
+        }
+      }
+    },
+    "lear": {
+      "model": "lear",
+      "variants": [
+        "price_only",
+        "load_only",
+        "res_persistence",
+        "res_as_published"
+      ],
+      "mae": [
+        17.25475,
+        17.519294,
+        17.48914,
+        16.922526
+      ],
+      "listed_in_information_order": true,
+      "mae_monotone_non_increasing": false,
+      "deltas": {
+        "capturable_exogenous_gain": {
+          "arms": "load_only vs price_only",
+          "mae_improvement_eur_mwh": -0.264544,
+          "mae_improvement_fraction": -0.015332,
+          "rmse_improvement_eur_mwh": -0.268622,
+          "rmse_improvement_fraction": -0.011427
+        },
+        "vintage_premium": {
+          "arms": "res_as_published vs res_persistence",
+          "mae_improvement_eur_mwh": 0.566614,
+          "mae_improvement_fraction": 0.032398,
+          "rmse_improvement_eur_mwh": 1.235814,
+          "rmse_improvement_fraction": 0.052007
+        }
+      }
+    }
+  },
+  "model_comparison": {
+    "price_only": {
+      "gbm_mae": 16.419958,
+      "lear_mae": 17.25475,
+      "gbm_minus_lear_mae": -0.834792,
+      "gbm_mae_as_fraction_of_lear": 0.95162,
+      "gbm_rmse": 22.983714,
+      "lear_rmse": 23.507218,
+      "gbm_minus_lear_rmse": -0.523504
+    },
+    "load_only": {
+      "gbm_mae": 16.217923,
+      "lear_mae": 17.519294,
+      "gbm_minus_lear_mae": -1.301371,
+      "gbm_mae_as_fraction_of_lear": 0.925718,
+      "gbm_rmse": 22.618456,
+      "lear_rmse": 23.77584,
+      "gbm_minus_lear_rmse": -1.157384
+    },
+    "res_persistence": {
+      "gbm_mae": 16.482189,
+      "lear_mae": 17.48914,
+      "gbm_minus_lear_mae": -1.006951,
+      "gbm_mae_as_fraction_of_lear": 0.942424,
+      "gbm_rmse": 22.811926,
+      "lear_rmse": 23.762355,
+      "gbm_minus_lear_rmse": -0.950429
+    },
+    "res_as_published": {
+      "gbm_mae": 15.286535,
+      "lear_mae": 16.922526,
+      "gbm_minus_lear_mae": -1.635991,
+      "gbm_mae_as_fraction_of_lear": 0.903325,
+      "gbm_rmse": 21.291828,
+      "lear_rmse": 22.526541,
+      "gbm_minus_lear_rmse": -1.234713
+    },
+    "note": "A negative gbm_minus_lear_mae means the booster beat the per-hour LASSO on that arm. The difference is one of functional form AND of pooling (LEAR fits 24 models partitioned by delivery hour; the GBM fits one pooled model with the hour as a categorical feature) \u2014 this run cannot separate the two, and does not claim to."
+  },
+  "day_shift_diagnostic": {
+    "arm": "price_only",
+    "shifts": [
+      0,
+      1
+    ],
+    "aligned_mae": 16.42495,
+    "one_day_staler_mae": 19.927854,
+    "degradation_eur_mwh": 3.502904,
+    "degradation_fraction": 0.213267,
+    "staler_is_worse": true,
+    "results": [
+      {
+        "shift_days": 0,
+        "n": 8760,
+        "n_scored": 8760,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.42495,
+        "rmse": 22.991386,
+        "bias": 5.790096
+      },
+      {
+        "shift_days": 1,
+        "n": 8760,
+        "n_scored": 8760,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 19.927854,
+        "rmse": 27.281666,
+        "bias": 7.655119
+      }
+    ],
+    "note": "PLAN.md C3 assertion (i) for the GBM, on real prices at the committed config. The -1 (fresher) arm is omitted: it is a leak, so 'it degrades' is the wrong claim about it \u2014 what a leak is worth to this model is measured in tests/test_c9_gbm.py instead. See FINDING C9-A for why the synthetic week-periodic version of this check is vacuous for a pooled booster and this real-data one is not."
+  }
+}

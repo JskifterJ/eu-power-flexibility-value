@@ -515,10 +515,10 @@ nine-cell table is reported because a reader will ask for it.
 
 ## 9. NOTE C13-04 / NOTE C8-01 — the 2023 exogenous ladder
 
-See §10 for what ran and what did not. The question NOTE C8-01 has been waiting
-on since C12 re-opened it is whether the **honest** exogenous block is worth
-having under the booster *outside ES*, and the answer needs a second evaluation
-year rather than more arms.
+The question NOTE C8-01 has been waiting on since C12 re-opened it is whether
+the **honest** exogenous block is worth having under the booster *outside ES*,
+and the answer needed a second evaluation year rather than more arms. **It ran,
+and the answer is no.**
 
 The arithmetic that makes 2023 the only year available: the exogenous arms are
 aligned to `train_from = 2022-01-01` (no archived ENTSO-E D-1 vintage exists
@@ -539,7 +539,140 @@ key in `tests/test_c14_fundamentals.py`, because the store key is
 would make the two years two unrelated rows — the second-year comparison would
 silently not exist. The denominator is **FINDING C11-C's**
 `capture_rolled_oracle_cash`; `capture_same_start_pooled` is never used to rank
-two curves.
+two curves. The contrast table and the dispatch phase's own `pooled_capture`
+are two code paths to one number and are cross-checked against each other: **30
+comparisons, worst absolute delta 4.8e-07**, and the run refuses anything above
+1e-6.
+
+### 9.1 FINDING C14-G — NOTE C8-01 is closed: the honest exogenous block is not worth having
+
+`gbm_res_persistence − gbm_price_only`, capture in percentage points, daily
+block, 2023 from this cycle and 2024 from C11/C12:
+
+| zone | 2023 | 2024 |
+|---|---|---|
+| **DE-LU** | **−3.55pp [−6.76, −0.33]** ✱ | +0.35pp [−1.83, +2.53] |
+| ES | +0.26pp [−2.15, +2.72] | +2.04pp [−0.26, +4.38] |
+| NO2 | +2.39pp [−4.82, +9.78] | +2.71pp [−2.50, +8.03] |
+
+Six (zone, year) cells under the booster. **Exactly one excludes zero at
+PLAN.md's daily block, and it is negative.** The nearest thing to an
+established positive remains ES 2024, which misses at the daily block
+(P(≤0) = 0.042, clearing only under the one-sided reading NOTE C8-01's
+directional question licensed). Under the LASSO all six cells contain zero.
+
+So the honest exogenous block — everything a bidder could legitimately have had
+— does **not** have a reliable positive value for a battery, in either model
+class, in either year, in any of the three Tier-A zones. FINDING C8-A said it
+was worth ~nothing on MAE; the dispatch metric now says the same across two
+years, and the one contrast that clears a CI says it is actively harmful.
+**NOTE C8-01 is answered: no.** C18 must not claim an exogenous gain.
+
+This also settles the MAE half. `res_persistence − price_only` as a fraction of
+MAE, twelve cells:
+
+| zone | LEAR 2023 | LEAR 2024 | GBM 2023 | GBM 2024 |
+|---|---|---|---|---|
+| DE-LU | −0.71% | +0.28% | −3.76% | −1.01% |
+| ES | +0.51% | −2.41% | +2.06% | −1.20% |
+| NO2 | +1.36% | +0.54% | +0.38% | −0.22% |
+
+Every cell is inside ±4% (the largest is −3.76%), and the sign flips between
+years in **four** of the six (zone, model) pairs — the two that hold their sign
+are DE-LU under the GBM (negative twice) and NO2 under the LEAR (positive
+twice). **FINDING C8-A replicates in a second evaluation year and
+gets stronger**: the honest exogenous block is worth nothing, and which side of
+nothing it lands on is noise.
+
+### 9.2 FINDING C14-H — the leak is worth what the merit order is worth
+
+The Art. 14 vintage premium under the booster, against §3's measure of how much
+residual load explains that zone-year's price:
+
+| cell | `r2_piecewise_linear_20` | GBM vintage premium (% of MAE) |
+|---|---|---|
+| DE-LU 2023 | 0.802 | **28.13%** |
+| DE-LU 2024 | 0.675 | 23.97% |
+| ES 2023 | 0.650 | 23.21% |
+| ES 2024 | 0.555 | 17.48% |
+| NO2 2023 | 0.361 | 7.25% |
+| NO2 2024 | 0.323 | **3.48%** |
+
+**Strictly monotone: Spearman 1.0 over six cells, zero inversions.** A leak
+about tomorrow's wind and solar is worth precisely as much as wind and solar
+matter to tomorrow's price, and the span is a factor of eight.
+
+**Suggestive, not established**, for two reasons stated plainly. The two axes
+are not independent — a zone where RES sets the price is mechanically a zone
+where knowing RES early helps — so this is a quantitative consistency check that
+*could* have failed rather than an independent discovery. And three zones
+contribute two cells each, so the effective sample is nearer three than six: a
+perfect ordering of three zones happens one time in six by chance.
+
+What it does give C18 is a *reason* for FINDING C9-C's zone pattern rather than
+a list of numbers, and a prediction: a zone with little merit order has little
+to leak.
+
+### 9.3 Two more things the second year settled
+
+**The vintage premium is a property of the model class, and the LASSO is
+fragile.** DE-LU's premium is −16.83% under the LEAR in 2023 and **+28.13%
+under the GBM in the same zone-year**; in capture terms the GBM's is
++9.05pp [+4.31, +13.62] (2023) and +3.47pp [+0.43, +6.60] (2024, C11), both
+established. So the LEAR's 2023 sign reversal is a LASSO failure under a regime
+shift, not evidence about the vintage: in the same rows the booster extracts the
+leak cleanly. This strengthens **FINDING C9-C** — the leak is worth more to a
+non-linear model, and now also *more reliably*. It remains **unachievable** and
+travels only as the measurement of a leak.
+
+**FINDING C12-E's one established contrast replicates.**
+`gbm_price_only − lear_price_only` in ES is **−4.49pp [−7.40, −1.58]** in 2023
+against C12's −2.22pp [−4.25, −0.29] in 2024: same sign, larger, excluding zero
+in both years. The booster captures **less** than the LASSO in the zone where it
+also has the better MAE — now a two-year result.
+
+### 9.4 FLAG C14-01 — a pooled naive-dominance failure that is a tie, and a finding
+
+**DE-LU 2023, `gbm_res_persistence`, fails CLAUDE.md's pooled naive-dominance
+invariant.** It settles **52 763 EUR** against the naive floor's **52 850** over
+364 days: a margin of **−87 EUR**, or **0.16%**, with a per-day win rate of
+**50.3%**.
+
+It is a tie, and the bootstrap says so rather than the prose: the margin is
+**−0.139pp of oracle cash with a 95% interval of [−6.22, +6.15]** at the daily
+block — forty-four times wider than the point estimate — and P(≤0) = 0.516,
+0.518 and 0.526 at the 1, 7 and 14-day blocks. There is no evidence the arm is
+worse than naive; it landed 87 EUR on the wrong side of zero.
+
+**The assertion was not weakened.** It still reports `holds: false`, the failure
+is recorded in `c14_ladder_invariant_flags.json`, and the dispatch phase exits
+non-zero. No tolerance was widened and no test was edited. Every other check
+passed on every curve of every zone, including the per-day same-start oracle
+bound — the actual theorem.
+
+**Why it is worth more than a footnote.** Among the five honest curves of
+DE-LU 2023 this arm has **the best MAE and the worst capture** — both ends at
+once:
+
+| honest curve | MAE | capture |
+|---|---|---|
+| **gbm_res_persistence** | **23.60** (best) | **0.8453** (worst) |
+| gbm_price_only | 24.53 | 0.8807 |
+| lear_res_persistence | 25.62 | 0.8700 |
+| lear_price_only | 25.77 | 0.8853 |
+| naive | 33.62 | 0.8467 |
+
+(Only the leaky `gbm_res_as_published` beats its MAE overall, at 17.05.) A
+forecast **30% better than the naive floor on the point metric captured
+slightly less of the flexibility value than the naive floor did**. The ranking
+is not merely uncorrelated here, it is inverted at both ends. That is the
+sharpest single instance in this project of **FINDING C11-D / C12-D**, and it
+belongs in C18 beside them.
+
+This is a different animal from **FLAG C13-01** (NO2 2020), where the margin was
+−655 EUR on a perfect-foresight prize of 769 EUR/MW/yr in a market with a
+3.41 EUR/MWh daily spread. That was a thin-market artefact; this is a tie in a
+deep market. Neither should be "fixed" by relaxing the check.
 
 ---
 
@@ -560,7 +693,18 @@ two curves.
   `test_the_committed_config_is_exactly_what_plan_md_froze`. PLAN.md forbids a
   hyperparameter search across cycles; a 2023 run on a re-tuned config would not
   be a second year of the same experiment, and the difference would be invisible
-  in the capture table.
+  in the capture table. Its `num_threads=4` is part of that fingerprint, which
+  is why the ladder's zones were run **serially**: two four-thread fits sharing
+  four cores were several times slower in total than running them one at a time,
+  and lowering the thread count to fit would have changed the frozen config.
+- **The 2023 full-history LEAR reference was run for DE-LU only.** C13 already
+  computed that exact curve for 2023 (it is the nine-zone comparable arm), so
+  for ES and NO2 it was ~20 minutes per zone of duplicated work. DE-LU's was
+  kept deliberately, as the reproducibility cross-check in §1.1. The three C8
+  artefacts therefore differ by one column, which nothing in the ladder reads.
+- **No third evaluation year.** 2022 cannot be one for a 2022-aligned arm and
+  2025 is sealed. §9's conclusions rest on two years, one of which has a
+  crisis-dominated training window.
 
 ---
 
@@ -591,3 +735,18 @@ two curves.
    PLAN.md's scope (`docs/audit.md` records the absence of reservoir data for NO2
    and DK1 as a known limitation). Naming the residual it is *not* is as far as
    this chapter honestly goes.
+8. **§9's ladder rests on two evaluation years, and 2023 is not a clean one.**
+   Every 2023 arm carries a **+5.3 to +10.8 EUR/MWh upward bias**, because an
+   arm aligned to `train_from = 2022-01-01` needing 365 market days of history
+   has a training window dominated by the crisis year and over-predicts into
+   2023's collapse. That is a property of the only second year available, not of
+   the arms. It makes the *negative* NOTE C8-01 answer (§9.1) the conservative
+   one — a block that cannot help a well-conditioned model is unlikely to start
+   helping a badly-conditioned one — but it does bound every number in §9.
+9. **§9.2's monotone ordering is six cells from three zones**, on two axes that
+   are not independent. Stated there as suggestive, and it should not be quoted
+   as a law.
+10. **2023 is a PLAN.md training year.** Its forecasts are genuine
+    expanding-window predictions, but the LEAR spec (C4) and the GBM config (C9)
+    were both chosen while looking at 2024. §9 is a second *prediction* year, not
+    a second *configuration* test. The sealed 2025 holdout is the only clean one.

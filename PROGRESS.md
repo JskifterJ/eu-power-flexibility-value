@@ -2,25 +2,27 @@
 
 ## Current status
 
-- **Next cycle to run:** **C14.** C13 complete (the regime analysis: PLAN.md's per-year
-  tables built for the first time — nine zones x **five** evaluation years, 2020-2024,
-  36 new walk-forward runs and 36 new LP runs, with 2024 read from C12's committed
-  artefact and **reproduced against the published store rows** in 291 checks). It
-  settles two open C12 questions and adds a mechanism: **FINDING C13-A** (a zone's
-  capture ratio moves across years by as much as the eight zones differ within a year,
-  2.3-5.4x a single year's noise — so a one-year capture band is **not** a regime
-  effect), **FINDING C13-B** (FINDING C12-B settled: the eight-zone band clears 5% in
-  **one of five years**, p = 0.846 in 2021 and 0.523 in 2022 — **not established**),
-  **FINDING C13-C** (NO2 is bottom on capture *and* on within-day ordering in **all
-  five** years, 10 of 10 year pairs — the one C11/C12 claim five years makes
-  *stronger*), **FINDING C13-D** (**neither MAE nor the spread predicts capture; their
-  ratio does** — `error_over_headroom` rho = **-0.74** over 44 cells against MAE's
-  **-0.015**), **FINDING C13-E** (**NOTE C12-02 closed**: NO2 sits 18-36pp and 2.9-5.6
-  residual sd *below* the eight-zone spread line in every usable year, so the
-  thin-spread story does **not** explain it and the ordering story survives) and
-  **FINDING C13-F** (the 2022 crisis multiplied the prize and the loss by ~2.5x and left
-  the captured *share* alone — 8 of 9 zones lower, 1 interval excluding zero). **One
-  open FLAG: FLAG C13-01**, explained and not a bug (below). No open blocker.
+- **Next cycle to run:** **C15.** C14 complete (the fundamentals chapter: PLAN.md's
+  price-vs-residual-load analysis for Tier A, 2022-2024, plus **both** notes C13 handed
+  forward). Six descriptive findings, a mechanism for the project's largest open puzzle,
+  and **NOTE C8-01 closed**. **FINDING C14-A** (residual load accounts for 0.80/0.68 of
+  DE-LU's hourly price variance in 2023/24, 0.65/0.56 of ES's and only 0.36/0.32 of
+  NO2's — and 0.41/0.26/**0.04** in the crisis year), **FINDING C14-B** (NO2's supply
+  curve *slopes the wrong way* in 2022, Spearman −0.177 — a merit order cannot do that,
+  a hydro reservoir's opportunity cost can), **FINDING C14-C** (the crisis **shifted the
+  curve without bending it**: 2022 priced at ×2.6-2.7 of 2024 at matched residual load
+  while the normalised decile curve correlates 0.97-1.00 — an independent cross-check on
+  FINDING C13-F from the fundamentals side), **FINDING C14-D** (negative prices sit
+  **8.8-10.0× uniform** in DE-LU's and ES's bottom residual-load decile and only
+  **4.0×/2.1×** in NO2's, so most of NO2's negative hours are not low-residual-load
+  hours), **FINDING C14-E** (residual load is nearly a sufficient statistic in DE-LU
+  2023/24 — 0.4-1.3pp of R² lost by imposing it — and **breaks in 2022**, where a GW of
+  wind moved the price nearly twice as much as a GW of load), **FINDING C14-F** (NOTE
+  C13-03 answered, and the mechanism FINDING C12-C asked for), **FINDING C14-G** (NOTE
+  C8-01 closed: **the honest exogenous block is not worth having**) and **FINDING C14-H**
+  (the leak is worth what the merit order is worth, Spearman **1.0** over six cells —
+  suggestive, not established). **One new FLAG: FLAG C14-01**, explained and not a bug
+  (below). No open blocker.
 - **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
   closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
 - **Two labels every later cycle must attach, now evidenced rather than cautionary.**
@@ -117,8 +119,8 @@
   DE-LU and NO2); FINDING C10-B's window gain being an MAE claim; and the Art. 14 leak
   buying ~nothing a battery can trade except on DE-LU under the GBM (+3.47pp
   [+0.43, +6.60], and unachievable).
-- **Results live in one append-only table: `backtest/results/results.csv`** (**8 250 rows
-  after C13**, 4 runs, `backtest/results_store.py`, written up in `docs/results_store.md`,
+- **Results live in one append-only table: `backtest/results/results.csv`** (**8 565 rows
+  after C14**, 5 runs, `backtest/results_store.py`, written up in `docs/results_store.md`,
   `docs/dispatch_results.md`, `docs/metrics_layer.md` and `docs/regime_analysis.md`). Long
   format, so **a new metric is a new value, not a new column** and **a new evaluation year
   is new rows** — C11 added 17 dispatch metrics, C12 added 7 point metrics plus interval
@@ -206,6 +208,23 @@
   (curve, day) checks, worst excess exactly 0.0 EUR**. **Needs a human only if the human
   disagrees that this is a regime fact**; no later cycle should "fix" it by relaxing the
   check.
+- **Open FLAGs (cont.): FLAG C14-01 — DE-LU 2023 `gbm_res_persistence` fails the same
+  pooled naive-dominance invariant, and it is a TIE, not a defeat.** It settles **52 763
+  EUR** against the naive floor's **52 850** over 364 days: **−87 EUR**, **0.16%**,
+  per-day win rate **50.3%**. The bootstrap says tie rather than the prose doing so:
+  **−0.139pp of oracle cash, 95% interval [−6.22, +6.15]** at the daily block — 44x wider
+  than the point estimate — P(≤0) = 0.516 / 0.518 / 0.526 at the 1 / 7 / 14-day blocks.
+  **The assertion was not weakened**: `holds: false` is still reported, the failure is in
+  `backtest/results/c14_ladder_invariant_flags.json`, the dispatch phase exits non-zero,
+  no tolerance was widened and no test was edited; every other check passed on every
+  curve of every zone, the per-day same-start oracle bound included. **Why it matters
+  beyond the flag:** this arm has the **second-best honest MAE of the eight DE-LU 2023
+  curves** (23.60 against the naive floor's 33.62, a 30% improvement) and the **worst
+  honest capture** (0.8453 against naive's 0.8467). A forecast 30% better than naive on
+  the point metric captured no more flexibility value than naive — the sharpest instance
+  in this project of **FINDING C11-D / C12-D**, and it belongs in C18 beside them. Unlike
+  FLAG C13-01 (a thin-market artefact: −655 EUR on a 769 EUR/MW/yr prize) this is a tie
+  in a deep market. Neither should be "fixed" by relaxing the check.
 - **Earlier findings that still bind:** C9-A (PLAN.md leakage assertion (i) is vacuous for
   a pooled booster on the synthetic fixture; re-sited, `tests/test_c3_leakage_harness.py`
   untouched), **C9-B RETRACTED** (the claim that `lgb.train` keeps post-best-iteration
@@ -219,13 +238,17 @@
   for 36 walk-forward runs, so it re-pulled all 54 (zone, year) files and verified **all
   54 `payload_sha256` identical to C1's** before fitting anything. The manifest was
   therefore not regenerated or re-committed.
-- **NOTE C8-01 — RE-OPENED by C12.** C11 closed it affirmatively for the booster on point
-  estimates of +0.35 / +2.04 / +2.71pp of capture. Two of the three intervals contain zero
-  at every block length and the third (ES) depends on the block length. The question is
-  now "is the honest exogenous block worth having under the booster *outside ES*", and it
-  needs a second evaluation year, not more arms. **C13 did not close it** — only 2023 is
-  available for a 2022-aligned arm and it needs a fresh ENTSO-E pull; see **NOTE C13-04**,
-  which hands it to **C14**, the next cycle that must re-pull those series anyway.
+- **NOTE C8-01 — CLOSED by C14 (FINDING C14-G), and the answer is NO.** The second
+  evaluation year ran: C8's LEAR ladder and C9's GBM ladder for 2023, all three Tier-A
+  zones, both runners unmodified, then the rolling LP. Across the **six** booster cells
+  (3 zones x 2 years) of `gbm_res_persistence − gbm_price_only`, **exactly one excludes
+  zero at the daily block and it is NEGATIVE** (DE-LU 2023, **−3.55pp [−6.76, −0.33]**);
+  2024's nearest positive, ES at +2.04pp, misses at the daily block. Under the LASSO all
+  six contain zero. On MAE the twelve cells are all inside ±4% (largest −3.76%) with the
+  sign flipping between years in **four** of six (zone, model) pairs. **So the honest exogenous block — all
+  a bidder could legitimately have had — does not have a reliable positive value, in
+  either model class, either year, any Tier-A zone. C18 must not claim an exogenous
+  gain**, and C15 needs no exogenous arm (NOTE C14-06).
 - **NOTE C9-01, NOTE C10-01, NOTE C11-01 — all ANSWERED and closed.** NOTE C11-01's three
   questions are FINDINGs C12-B (no), C12-D (undetermined) and C12-E (ES only).
 - **NOTE C12-01 — ANSWERED by C13**, except for its GBM-exogenous clause, which NOTE
@@ -312,48 +335,56 @@
   C13 is the regime analysis. **NOTE C8-01 stays RE-OPENED** and is handed to **C14**,
   which must re-pull those series for its own chapter — fold the 2023 ladder in there or
   say why not.
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C13 after the work:
-  marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`,
-  `sealed_years()` = `{2025}`, `assert_not_sealed({2025})` raises, no `*2025*` file exists
-  anywhere under `data/`, the price cache holds exactly 2019-2024, every `market_day` in
-  every C13 artefact is in **2020-2024**, and `evaluation_years` is a single year in
-  {2020, 2021, 2022, 2023} on all 4 824 new store rows (2020-2024 across all 8 250). The
-  **362** occurrences of the string `2025` across the C13 artefacts and the store were
-  checked **programmatically** (each one's full delimited token matched against a numeric
-  literal) rather than by eye: 356 are digits inside floats and the remaining **6 are the
-  cutover date strings** `2025-10-01` / `2025-09-30`, copied from `config/data.yaml`'s
-  `structural_dates` into `c13_cutover_status.json` and `c13_regime_summary.json` — which
-  *is* PLAN.md C13's "flag the cutover" requirement and contains no 2025 **data**.
-  `load_daily_by_year` and `regime_price_table` both refuse a sealed year **before any
-  path is built** (two tests pin it), and the store's own tripwire stands: a metric whose
-  `evaluation_years` touches a sealed year **cannot be written**. No 2025 data has been
-  fetched, loaded, dispatched or computed against at any point in C2-C13.
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C14 after the work:
+  marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`, `sealed_years()`
+  = `{2025}`, `assert_not_sealed({2025})` raises, **no `*2025*` file anywhere under
+  `data/`**, the price cache holds exactly 2019-2024 in **every one of the nine zones**,
+  and the only years in any committed C14 artefact are **2022, 2023, 2024**. Store-wide
+  `evaluation_years` across all 8 565 rows: 2020-2024. **C14's string-`2025` sweep is
+  stricter than C13's and fixes a false negative in it**: C13 asked only "is this
+  occurrence numeric", and a bare `2025` in prose matches a numeric literal exactly as a
+  digit run inside a float does, so the one test could not separate "a 2025 datum" from
+  "the word 2025". C14 sorts every occurrence into three buckets — **1** digits inside a
+  longer number (`19.522025`, a residual-load value), **2** bare year tokens (both
+  `docs/fundamentals.md` prose saying 2025 is sealed), **0** in neither. Three
+  occurrences in total, **none a 2025 datum**. `fundamentals_frame` and `headroom_frame`
+  both refuse a sealed year **before any path is built** (two tests pin it, so 2025
+  cannot arrive as a missing-file message), and the store's tripwire stands. No 2025 data
+  has been fetched, loaded, dispatched or computed against at any point in C2-C14.
 - **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C13 modified no
   `config/*.yaml`. C13's library fingerprint is **`856fb19ac0c4eecd`**, identical to
   C10's, C11's and C12's (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1,
   scipy 1.17.1, lightgbm 4.7.0), so C10-C13 rows are directly comparable.
-- **C13 modified no pre-existing module at all.** It is one new runner
-  (`backtest/run_c13_regime.py`), one new test file (`tests/test_c13_regime.py`, 33
-  tests), one new document (`docs/regime_analysis.md`), a `requirements.txt` comment and
-  new artefacts; `git diff --stat HEAD` over `tests/`, `config/`, `forecast/`,
-  `dispatch/`, `data/`, `backtest/walk_forward.py`, `backtest/metrics.py`,
-  `backtest/bootstrap.py`, `backtest/results_store.py` and every earlier runner came back
-  empty. C11's and C12's metric, bootstrap and capture code are **imported**, which is
-  what makes a 2022 capture ratio the same statistic as the 2024 one.
+- **C14 modified no pre-existing module at all.** It is one new runner
+  (`backtest/run_c14_fundamentals.py`), one new test file
+  (`tests/test_c14_fundamentals.py`, 68 tests), one new document
+  (`docs/fundamentals.md`), three figures, a `requirements.txt` comment block and new
+  artefacts; `git diff --stat HEAD` over `tests/`, `config/`, `forecast/`, `dispatch/`,
+  `data/`, `backtest/walk_forward.py`, `backtest/metrics.py`, `backtest/bootstrap.py`,
+  `backtest/results_store.py` and every earlier runner came back empty. C8's and C9's
+  runners were **invoked unmodified** for the 2023 ladder rather than wrapped, which is
+  what makes a 2023 arm the same experiment as the 2024 one; C11's `Arm`, `pooled_capture`
+  and contrast taxonomy and C12's bootstrap are **imported**, and a test checks
+  `ladder_arms()` against `arms_for(zone, "A")` field by field because one different
+  spelling of the store key would make the two years two unrelated rows.
 - **`backtest/metrics.py` was extended in C12, additively.** 225 lines added; the only
   removed line is `from dataclasses import dataclass` becoming
   `from dataclasses import asdict, dataclass`. No existing function changed, so C3's
   leakage assertions and C4's skill score read exactly the code they read before. A *new*
   file under `tests/` follows C11's precedent and is not a flag-and-stop event; editing a
   **pre-existing** test still is.
-- **Repo-state note:** the detached-HEAD trap recurred in C13 — the container arrived
-  detached at `0116440` with local `master` stale 16 commits behind. **28 recurrences out
-  of 35 containers.** `HEAD` equalled `origin/master` exactly, so nothing was at risk and
-  `git checkout -B master` was permitted. C9's warning still stands: **if a future
-  container arrives detached *and* genuinely behind the remote, and `checkout -B` is
-  refused, flag rather than improvise.** Keep checking
-  `git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the start
-  of every cycle.
+- **Repo-state note:** the detached-HEAD trap recurred in C14 — the container arrived
+  detached at `abaa193` with local `master` stale 17 commits behind. **29 recurrences out
+  of 36 containers.** `HEAD` equalled `origin/master` exactly after a fetch and local
+  `master` was a strict ancestor, so nothing was at risk — but **`git checkout -B master`
+  was refused by this session's permission classifier as a destructive git action**. The
+  branch was attached the safer way instead: **`git checkout master` then
+  `git merge --ff-only origin/master`**, which cannot discard a commit and fails loudly
+  if the branch has diverged. **Later cycles should reach for that recipe first.** C9's
+  warning still stands for a container that arrives detached *and* genuinely behind the
+  remote, where neither recipe is safe and the cycle should flag rather than improvise.
+  Keep checking `git rev-parse --abbrev-ref HEAD` and
+  `git rev-list --count master..HEAD` at the start of every cycle.
 
 ## Log
 
@@ -5086,3 +5117,571 @@ while the data is there, which closes NOTE C8-01. Read **NOTE C13-03** for the q
 C14's own chapter is best placed to answer. PLAN.md's buffer note allows cutting C14 if
 behind — C13 finished on schedule, so it is not cut. The 2025 holdout stays **SEALED**
 until Checkpoint C (C16).
+
+### C14 — 2026-10-10 (scheduled cycle) — the fundamentals chapter, and a mechanism for NO2
+
+Scope per PLAN.md C14: *"Fundamentals chapter: price vs residual load (load −
+wind − solar) per Tier-A zone, merit-order commentary."* Done, plus both notes
+C13 handed forward: **NOTE C13-03** (does residual-load forecast error explain
+`error_over_headroom`?), which is answered and turned out to supply the
+mechanism FINDING C12-C asked for; and **NOTE C13-04** (the 2023 exogenous
+ladder), which ran in full and **closes NOTE C8-01 — the answer is no**. Full
+write-up in `docs/fundamentals.md`.
+
+**No checkpoint, no blocker, no new dependency.** The cycle is one new runner
+(`backtest/run_c14_fundamentals.py`), one new test file
+(`tests/test_c14_fundamentals.py`, 68 tests — C11/C12/C13's precedent, a
+*new* file is not the flag-and-stop event, editing a pre-existing one is), one
+new document (`docs/fundamentals.md`), three figures, a `requirements.txt`
+comment block, and new artefacts.
+
+#### The one genuinely new judgement this cycle had to make
+
+C3-C13 all asked *what could a bidder have known at gate closure*. C14 asks
+*what set the price*, and that changes which vintage is allowed. The Art. 14
+wind/solar D-1 forecast is published 18:00 local on D-1 — **six hours after**
+gate closure — which makes it unusable as a **model input** (the whole subject
+of C8) and leaves it the closest thing in PLAN.md's scope to **realised** wind
+and solar. This cycle uses it descriptively and draws the line in code:
+
+* `FUNDAMENTALS_VINTAGE = "after_gate_closure"` on every descriptive artefact
+  and every descriptive store row — **228 of this cycle's 315** — so
+  `honest_rows()` excludes all of them. The other 87 are the 2023 ladder's own
+  capture and MAE figures, which are about real forecasts and are filed
+  `honest` (its two late arms excepted).
+* `assert_descriptive_only()` is a callable that **raises**, naming the
+  publication clock. A later cycle that imports `fundamentals_frame` and hands
+  the result to a feature builder gets a refusal, not a silent leak. Two tests
+  pin it, including that a frame mislabelled `honest` is refused *for the label*
+  — the earlier of the two errors.
+* The descriptive rows are filed under the **oracle's** `(model, exog_variant)`
+  identity, because there is no forecast behind an R² of the realised price on
+  residual load. Filing them under a model's key would make them join to that
+  model's MAE as if they described it.
+
+**The limitation is stated, not engineered around**: the residual load behind
+every figure is a *forecast* of residual load. The fix is an ENTSO-E actuals
+pull (A65/A16, A75) and that is outside PLAN.md's declared data scope. C18
+inherits this.
+
+#### FINDING C14-A — the merit order is a DE-LU and ES fact, and barely an NO2 one
+
+`r2_piecewise_linear_20` (price on a per-bin intercept-and-slope fit of D-1
+forecast residual load), with the clock-only control beside it:
+
+| zone | 2022 | 2023 | 2024 | calendar-only | gain over the clock |
+|---|---|---|---|---|---|
+| DE-LU | 0.406 | **0.802** | **0.675** | 0.130 / 0.233 / 0.220 | +0.285 / **+0.586** / +0.470 |
+| ES | 0.264 | 0.650 | 0.555 | 0.096 / 0.238 / 0.168 | +0.177 / +0.432 / +0.424 |
+| **NO2** | **0.044** | 0.361 | 0.323 | 0.042 / 0.066 / 0.089 | +0.051 / +0.332 / +0.282 |
+
+NO2 is last every year on the raw R² **and** on the gain over a clock — a factor
+of 2.0-2.2 behind DE-LU in 2023/24 and a factor of **9** in 2022. Spearman
+agrees: +0.90/+0.85 (DE-LU), +0.79/+0.74 (ES), +0.59/+0.56 (NO2) in 2023/2024.
+And **the crisis year degrades it everywhere** (0.41 / 0.26 / 0.04): the stack
+did not change in 2022, its fuel cost did, so residual load stopped pinning the
+price *level* even where it still pinned the ordering.
+
+**A methodological trap worth recording, because it bites in the conservative
+direction.** The 20-bin *step* function is **not** an upper bound on what
+residual load can explain — it discards the variation inside each bin, so on a
+smooth relationship it scores *below* the straight line. On a synthetic
+exactly-linear zone it returns 0.995, not 1.0, and **DE-LU 2024 is the real
+case** (step 0.596 against linear 0.601, a discretisation loss of 0.079). The
+per-bin intercept-**and-slope** fit nests the straight line, so its R² can never
+be lower and `nonlinearity_gain` is curvature rather than curvature minus
+discretisation loss. Two tests pin both behaviours. A first draft of this cycle
+reported the step fit as the headline and was caught by its own fixture test.
+A second draft fitted hour × weekday × bin as the control — ~3 400 cells on
+~8 760 hours, 2.6 observations each — and was replaced by an **additive**
+calendar block; `n_parameters_*` is now reported for all five fits so the
+in-sample caveat is a number rather than a disclaimer.
+
+#### FINDING C14-B — NO2's supply curve slopes the wrong way in 2022
+
+NO2 2022 decile medians run **219.3 → 143.4 EUR/MWh** as residual load rises
+2.3 → 4.8 GW: Spearman **−0.177**, slopes **−39.1 / −17.6 / −31.4 EUR/MWh per
+GW**, 8 of 9 inter-decile steps *down*. It is the only (zone, year) in the table
+with a negative sign.
+
+**A merit order cannot slope down. A hydro reservoir's opportunity cost can.** In
+a water-scarce, export-constrained year the price is set by the reservoir's
+shadow value and the export arbitrage against the Continent, not by a domestic
+thermal stack — and NO2's domestic "stack" is 4 GW of load against 0.5 GW of
+wind and **no solar fleet at all**. Hours of high domestic residual load in 2022
+were hours when the Continent was not short, so NO2 exported less and priced
+lower. (Note: `high_over_mid` is +1.78 here — the ratio of two *negative* slopes
+— so the artefact now carries `high_over_mid_is_a_convexity_ratio = False` and a
+test pins the trap.)
+
+#### FINDING C14-C — the crisis moved the level and kept the shape
+
+At the median residual-load decile, which holds the quantity axis fixed:
+
+| zone | 2022→2024 level | shape ρ (decile medians) | normalised-curve Pearson |
+|---|---|---|---|
+| DE-LU | **×0.381** | 1.000 | **0.998** |
+| ES | **×0.372** | 0.988 | **0.974** |
+| NO2 | ×0.233 | **−0.988** | **−0.898** |
+
+So in the two zones with a real merit order, **2022 priced at 2.6-2.7× 2024 at
+the same residual load** while the normalised decile curve correlates 0.97-1.00:
+**shifted, not bent**, which is the signature a fuel-cost shock should leave.
+This is an independent cross-check on **FINDING C13-F** from the fundamentals
+side — C13 measured the perfect-foresight battery earning ×1.72-2.71 its usual
+in 2022; this measures the price level at matched fundamentals at ×2.6-2.7.
+NO2's negative shape correlation is the *same fact* as FINDING C14-B, not a
+second one. Rank correlation alone cannot tell a shift from a steepening (any
+two monotone curves rank-correlate at 1), which is why the normalised comparison
+sits beside it and a synthetic test pins both.
+
+**What no arm in this project can see:** the fuel-cost axis. PLAN.md excluded the
+AGSI+ gas proxy after the audit, so the single largest driver of the 2022 price
+*level* is absent by design. FINDING C13-F says that cost little in capture
+terms; this says why a 2022 point-forecast MAE looks as bad as it does.
+
+#### FINDING C14-D — negative prices are a bottom-decile event, except in NO2
+
+Share of a zone-year's negative hours falling in its lowest residual-load
+decile. **10% is the uniform-spread benchmark.**
+
+| zone | 2022 | 2023 | 2024 |
+|---|---|---|---|
+| DE-LU | 1.000 (**10.0×**) | 0.980 (**9.8×**) | 0.880 (**8.8×**) |
+| ES | no negative hours | no negative hours | 0.882 (**8.8×**) |
+| **NO2** | no negative hours | **0.397 (4.0×)** | **0.209 (2.1×)** |
+
+DE-LU and ES sit at **8.8-10.0× uniform**: textbook. NO2 sits at **4.0× and
+2.1×**, with only 21-40% of its negative hours in the bottom decile and 47-63%
+in the bottom two — so **the majority of NO2's negative hours are not
+low-residual-load hours**, and its 2024 figure only just clears a 2× bar where
+DE-LU is at ~9×. A negative price in DE-LU is a merit-order event; in NO2 it is
+mostly something else, and this project has no data to attribute it (reservoir
+levels and corridor flows are outside scope — `docs/audit.md` already records
+the absence of NO2/DK1 reservoir data as a known limitation). Naming the
+residual it is *not* is as far as the chapter honestly goes.
+
+Two structural facts that refine C13's negative-hour counts: **ES printed its
+first negative hour of the whole window in 2024** (237 over the exogenous-join
+hours against C13's 247 over the full market year), and **in no (zone, year) is
+a negative price more likely than not even in the bottom decile** — DE-LU 2024
+comes closest at **0.457**. So "negative prices are normal in the bottom decile"
+is not yet true anywhere in Tier A.
+
+#### FINDING C14-E — residual load is nearly a sufficient statistic, except in the crisis
+
+`b_load + b_wind`, which the merit-order restriction sets to zero, with paired
+day-block bootstrap intervals (10 000 replicates, seed 20261010, block 1 day):
+
+| zone | 2022 | 2023 | 2024 | R² lost by imposing residual load |
+|---|---|---|---|---|
+| DE-LU | **−4.21** [−5.17, −3.33] | +0.35 [+0.17, +0.52] | +0.42 [+0.20, +0.66] | **0.068** / 0.004 / 0.013 |
+| ES | +1.80 [+0.03, +3.65] | −1.30 [−2.00, −0.58] | −0.51 [−1.29, +0.31] | 0.005 / 0.041 / 0.027 |
+| NO2 | **−99.16** [−124.5, −74.6] | −12.50 [−17.36, −7.51] | +0.50 [−3.70, +4.54] | **0.094** / 0.019 / **0.000** |
+
+In DE-LU 2023/24 the restriction is violated but trivially (+0.35 and +0.42
+against a load coefficient of ~3.2, so 11-13% of it, and 0.4-1.3pp of R² lost by
+imposing it). **In the crisis year it breaks**: DE-LU 2022's wind coefficient
+(−9.13) is nearly **twice** its load coefficient (+4.92) — at crisis gas prices a
+MW of wind displaced very expensive gas while a MW of extra load was partly met
+by cheaper inframarginal plant, so the two were genuinely not interchangeable.
+**NO2 2024 is the one cell where the restriction is not rejected** (R² lost
+0.00003); residual load is sufficient there, it just explains little.
+
+**Do not compare the per-GW slopes across zones.** NO2's mean load is 4.1 GW and
+DE-LU's 53.2, so NO2's 23 EUR/MWh/GW against DE-LU's 3.1 is that artefact and
+nothing else. `coef_*_per_10pct_mean_load` is the comparable figure and brings
+the three much closer: **16.5 / 14.7 / 9.5** EUR/MWh in 2024. A synthetic test
+with two zones differing 10× in size pins this.
+
+**Solar and wind are not interchangeable, and they disagree by zone.**
+`b_solar − b_wind` is **−0.33 [−0.50, −0.17]** and **−0.69 [−0.82, −0.55]** in
+DE-LU 2023/24 (solar cannibalises *more*) and **+2.23 [+1.65, +2.77]** and
+**+1.76 [+1.14, +2.35]** in ES (wind cannibalises more). Both exclude zero in
+both years and they point in opposite directions. Reading: solar arrives in a
+fixed midday block, so in solar-dominated ES the marginal MW of solar lands in
+hours already at the bottom of the stack where there is little price left to
+displace, while wind can arrive in any hour and still find a thermal unit on the
+margin. **Two zones, two years, with intervals — not an established law.**
+
+#### FINDING C14-F — NOTE C13-03 answered, and it is the mechanism FINDING C12-C asked for
+
+`error_over_headroom` is pooled price MAE ÷ mean realised daily spread, so both
+halves got their own question. The predictor is the **day-over-day revision** of
+the as-published Art. 14 residual load, computed on the UTC index at a true
+24-hour offset (not "yesterday's same local hour", which is 23 or 25 hours twice
+a year). **It is a revision, not a forecast error, and a lower bound on the
+error a bidder carried** — the only stand-in for realised residual load in scope
+is itself a forecast. It is also exactly what C8's `res_persistence` arm has to
+live with, which is what makes it the relevant quantity rather than merely the
+available one. `RES_ERROR_IS_A_REVISION` carries this on every row, and a test
+pins the label. **Nothing was refitted**: the dispatch outcomes are C13's
+committed `c13_daily_by_year.csv.gz` rows for the nine-zone comparable arm, so
+this `error_over_headroom` *is* the one FINDING C13-D is about.
+
+Spearman over market days, 95% paired day-block intervals. `*` = excludes zero.
+
+| zone | outcome | 2022 | 2023 | 2024 |
+|---|---|---|---|---|
+| DE-LU | `error_over_headroom` | +0.139* | **+0.500*** | **+0.481*** |
+| DE-LU | realised spread | +0.402* | **+0.593*** | **+0.596*** |
+| ES | `error_over_headroom` | +0.108* | +0.341* | +0.357* |
+| ES | realised spread | +0.618* | +0.578* | +0.352* |
+| **NO2** | `error_over_headroom` | +0.078 | +0.160* | +0.241* |
+| **NO2** | **realised spread** | **+0.012** | **+0.035** | **+0.020** |
+
+1. **NOTE C13-03 is answered yes, with a zone gradient.** A harder RES day is a
+   harder day to capture in DE-LU (≈ +0.49) and ES (≈ +0.35), 2-3× weaker in NO2.
+   The effect is largest exactly where the merit order is strongest (FINDING
+   C14-A) — which is the mechanism FINDING C13-D's ρ = −0.74 was missing.
+2. **The crisis year breaks it again** (+0.14 / +0.11 / +0.08 in 2022).
+3. **The headline: NO2's daily price shape has no relationship to its
+   residual-load shape.** The day's residual-load *range* against the day's
+   realised price *spread* is +0.59/+0.60 in DE-LU and +0.35-0.62 in ES, and in
+   NO2 it is **+0.012, +0.035, +0.020 — intervals containing zero in all three
+   years, including the crisis.** A robust zero, not a noisy one. And NO2's
+   within-day residual-load swing is only **0.26-0.33 of its own mean** residual
+   load against 0.64-0.90 (DE-LU) and 0.68-1.18 (ES): the swing is small *and*
+   what there is predicts nothing.
+
+**This closes the loop on the project's largest open puzzle.** FINDING C11-B
+found NO2 the capture outlier; FINDING C12-C proposed "the forecast puts the
+hours in the wrong order"; FINDING C13-E killed the rival thin-spread story;
+FINDING C13-C confirmed NO2 last on within-day ordering in all five years. C14
+says *why*: **the fundamental that orders the hours in DE-LU and ES does not
+order them in NO2 at all**, so a model built on price history and residual load
+has nothing to learn NO2's within-day shape from. **This is a falsifiable
+prediction for C15**: no change to the throughput cost, the battery duration or
+the SoC policy should fix NO2's ordering, because the information is not in the
+inputs.
+
+**A sign reversal, and it is *not* a scale artefact — the first draft of this
+entry said it was.** Across the nine cells a RES predictor correlates
+**negatively** with `error_over_headroom`: raw-MW revision ρ = −0.67, and after
+normalising by each cell's own mean residual load, revision ρ = **−0.65** and
+daily range ρ = **−0.72**. Normalising does not remove it, so the two levels are
+measuring different things and both are real:
+
+* **Between cells** the predictor is *structural RES penetration*. A zone-year
+  whose residual load swings by 90% of its own level (DE-LU 2024) has a wide
+  spread and so a lot of headroom, making its error small *relative to* that
+  headroom. ρ = −0.72 is the same sign and nearly the same size as FINDING
+  C13-D's −0.74 for `error_over_headroom` against capture — consistent, not
+  contradictory.
+* **Within a cell** the predictor is *forecast error on the day*. Holding the
+  structure fixed, a day revised more than usual is harder (+0.49 DE-LU, +0.35
+  ES).
+
+So NOTE C13-03's complete answer has two layers pointing the same economic way:
+**RES build-out creates the headroom, and RES forecast error eats into it.**
+Neither layer can be read off the other. Separately, the raw-MW predictors *are*
+size proxies across zones (NO2's mean residual load 3.6 GW against DE-LU's
+30.0) — the same per-GW trap as FINDING C14-E — so the `*_over_mean` columns are
+the ones a cross-zone sentence may use. The nine-cell table carries all of this
+in its own `honest_label`.
+
+#### NOTE C13-04 / NOTE C8-01 — the 2023 exogenous ladder
+
+**NOTE C8-01 is CLOSED, and the answer is no.** It ran in full: C8's LEAR
+ladder and C9's GBM ladder for 2023, all three Tier-A zones, both runners
+unmodified, then C5/C6's rolling LP and C11's `pooled_capture` imported rather
+than re-derived.
+
+**FINDING C14-G — the honest exogenous block is not worth having.**
+`gbm_res_persistence − gbm_price_only`, capture in pp, daily block:
+
+| zone | 2023 (C14) | 2024 (C11/C12) |
+|---|---|---|
+| **DE-LU** | **−3.55pp [−6.76, −0.33]** ✱ | +0.35pp [−1.83, +2.53] |
+| ES | +0.26pp [−2.15, +2.72] | +2.04pp [−0.26, +4.38] |
+| NO2 | +2.39pp [−4.82, +9.78] | +2.71pp [−2.50, +8.03] |
+
+Six cells under the booster, **exactly one excludes zero, and it is negative**.
+Under the LASSO all six contain zero. On MAE the twelve cells are all inside
+±4% and the sign flips between years in five of six (zone, model) pairs — so
+**FINDING C8-A replicates in a second year and strengthens**: the block is worth
+nothing, and which side of nothing it falls on is noise. **C18 must not claim an
+exogenous gain.**
+
+**FINDING C14-H — the leak is worth what the merit order is worth.** The GBM
+vintage premium against FINDING C14-A's R², six cells, **strictly monotone,
+Spearman 1.0, zero inversions**: DE-LU 2023 (R² 0.802 → 28.13%), DE-LU 2024
+(0.675 → 23.97%), ES 2023 (0.650 → 23.21%), ES 2024 (0.555 → 17.48%), NO2 2023
+(0.361 → 7.25%), NO2 2024 (0.323 → 3.48%). A factor of eight, perfectly ordered.
+**Suggestive, not established**: the two axes are not independent (a zone where
+RES sets the price is mechanically one where knowing RES early helps), and three
+zones contributing two cells each make the effective n nearer three than six — a
+perfect ordering of three happens one time in six by chance. It is a
+quantitative consistency check that could have failed and did not, and it gives
+C18 a *reason* for FINDING C9-C's zone pattern.
+
+**The vintage premium is a property of the model class, and the LASSO is
+fragile.** DE-LU's is **−16.83% under the LEAR and +28.13% under the GBM in the
+same zone-year**; in capture terms the GBM's is +9.05pp [+4.31, +13.62] (2023)
+and +3.47pp [+0.43, +6.60] (2024), both established. So the LEAR's 2023 sign
+reversal is a LASSO failure under a regime shift, not evidence about the
+vintage — in the same rows the booster extracts the leak cleanly. **FINDING
+C9-C is strengthened**: the leak is worth more to a non-linear model and now
+also *more reliably*. Still unachievable.
+
+**FINDING C12-E's one established contrast replicates.**
+`gbm_price_only − lear_price_only` in ES is **−4.49pp [−7.40, −1.58]** (2023)
+against C12's **−2.22pp [−4.25, −0.29]** (2024): same sign, larger, excluding
+zero in both years. The booster captures **less** than the LASSO in the zone
+where it has the better MAE — now a two-year result.
+
+**FLAG C14-01 — a pooled naive-dominance failure that is a tie, and a finding.**
+DE-LU 2023 `gbm_res_persistence` settles **52 763 EUR** against the naive floor's
+**52 850** over 364 days: **−87 EUR**, **0.16%**, per-day win rate **50.3%**. The
+bootstrap says tie rather than the prose doing so: **−0.139pp of oracle cash,
+95% interval [−6.22, +6.15]** at the daily block — forty-four times wider than
+the point estimate — with P(≤0) = 0.516 / 0.518 / 0.526 across the 1 / 7 /
+14-day blocks. **The assertion was not weakened**: it still reports
+`holds: false`, the failure is recorded in `c14_ladder_invariant_flags.json`,
+the dispatch phase exits non-zero, no tolerance was widened and no test was
+edited. Every other check passed on every curve of every zone, including the
+per-day same-start oracle bound.
+
+What makes it more than a footnote: among the **five honest curves** of DE-LU
+2023 this arm has **the best MAE and the worst capture, both ends at once** —
+MAE 23.60 against gbm_price_only's 24.53, lear_res_persistence's 25.62,
+lear_price_only's 25.77 and the naive floor's 33.62; capture 0.8453 against
+0.8807, 0.8700, 0.8853 and naive's 0.8467. (Only the leaky arm beats its MAE
+overall, at 17.05.) A forecast **30% better than naive on the point metric
+captured slightly less flexibility value than naive did**, and the ranking is
+not merely uncorrelated but inverted at both ends. That is the sharpest instance in this
+project of **FINDING C11-D / C12-D**, and it belongs in C18 beside them. It is a
+different animal from **FLAG C13-01** (a thin-market artefact at −655 EUR on a
+769 EUR/MW/yr prize); this is a tie in a deep market, and neither should be
+"fixed" by relaxing the check.
+
+**Mechanics.** 2023's zones ran **serially** — two four-thread fits sharing four
+cores were several times slower in total, and the GBM's `num_threads=4` is part
+of the frozen fingerprint so it could not be lowered. Per zone: C8 ~7 min, C9
+~21 min. The contrast table and the dispatch phase's `pooled_capture` are
+cross-checked against each other (**30 comparisons, worst delta 4.8e-07**; the
+run refuses >1e-6), because a mismatch would be the FINDING C11-C failure mode
+and invisible in the published table.
+
+#### Data: 54 price pulls and 18 ENTSO-E documents, every fingerprint identical
+
+NOTE C2-02 — `data/raw/` was empty on arrival again (**25th recurrence**), and
+this cycle needed both caches. `data.fetch_prices`: **54 downloaded, 0 already
+cached, 0 flagged.** `data.fetch_exogenous`: **18 downloaded, 0 already cached,
+0 flagged.**
+
+C13 compared six summary statistics per file. This cycle compares the
+**`payload_sha256` the manifests committed** — **54/54** price zone-years against
+C1's manifest and **27/27** ENTSO-E *series* rows against C7's — which is the one
+comparison that cannot be passed by accident. Two details got wrong on the first
+attempt and caught by the check failing loudly rather than vacuously passing:
+
+* **It is a fingerprint of the data, not of the file.** The cached file embeds
+  `_fetch_meta.fetched_at_utc`, so a file hash changes on every re-fetch even
+  when the numbers are identical — which is exactly the column the Checkpoint-A
+  decision removed (**NOTE C2-01**). The check now calls the manifests' own
+  `data.contracts.payload_fingerprint` and
+  `data.exog_manifest.series_fingerprint`.
+* **The exogenous fingerprint is per *series*, not per document.** The A69
+  document carries wind and solar with a different hash each, so a check keyed on
+  `(zone, document, year)` finds two candidates and has to pick one. All 27
+  series rows are checked, and a test asserts the A69 document really does carry
+  two distinct committed hashes.
+
+Neither manifest was regenerated or re-committed (C8/C9/C10/C13's precedent).
+Source gaps are reported and never filled (C7's standing rule): 50 (DE-LU), 144
+(ES) and 48 (NO2) hours dropped for an incomplete residual load out of ~26 300,
+i.e. 0.2-0.6%, concentrated in the known autumn-DST hour and the partial-psrType
+stretches in `docs/entsoe_layer.md`. An hour missing *any* component is dropped,
+never part-subtracted.
+
+#### Sealed holdout
+
+**SEALED.** Verified after the work: marker-alone-on-a-line count **0**,
+`holdout_is_unsealed()` = `False`, `sealed_years()` = `{2025}`,
+`assert_not_sealed({2025})` raises, **no `*2025*` file exists anywhere under
+`data/`**, the price cache holds exactly 2019-2024 in **every one of the nine
+zones**, and the only years appearing in any committed C14 artefact are **2022,
+2023 and 2024**. Store-wide `evaluation_years` across all rows: 2020-2024.
+
+The string-`2025` sweep is **stricter than C13's**, and the improvement is worth
+recording because C13's version had a false negative. C13 classified each
+occurrence as "numeric" or not; a *bare* `2025` in prose matches a numeric
+literal just as a digit run inside a float does, so the one test could not
+separate "a 2025 datum" from "the word 2025". C14 sorts every occurrence into
+three buckets instead:
+
+| bucket | count | what they are |
+|---|---|---|
+| digits inside a longer number | **1** | `19.522025`, a residual-load value in `c14_merit_order_deciles.csv` |
+| a bare `2025` year token | **2** | both in `docs/fundamentals.md` prose, both stating that 2025 is sealed |
+| neither | **0** | — |
+
+Three occurrences in total, **none of them a 2025 datum**. `fundamentals_frame`
+and `headroom_frame` both refuse a sealed year **before any path is built** (two
+tests pin it, so 2025 cannot arrive as a missing-file message), and the store's
+tripwire stands: a metric whose `evaluation_years` touches a sealed year cannot
+be written. No 2025 data has been fetched, loaded, dispatched or computed
+against at any point in C2-C14.
+
+#### The results store
+
+**315 rows appended**, run `C14-20261010T043651Z-0e34c57a`; the store is now
+**8 565 rows across 5 runs**, `verify_append_only()` green, and the 8 250
+committed C10-C13 rows are **byte-for-byte unchanged** (the new file's first
+2 484 512 bytes are identical to `git show HEAD:backtest/results/results.csv`).
+**No schema change and no test edit were needed** — the fifth cycle running in
+which long format made the metric name the extension point. 40 distinct metrics
+across three evaluation years.
+
+Two deliberate filing choices, both about not misfiling a description as a
+result. **228 of the 315 rows are `vintage = after_gate_closure`**, so
+`honest_rows()` excludes every descriptive number this cycle produced — which is
+the correct default for a results table, since they are built on the Art. 14
+late vintage. And the fundamentals rows are filed under the **oracle's**
+`(model, exog_variant)` identity, because there is no forecast behind an R² of
+the realised price on residual load; filing them under a model's key would make
+them join to that model's MAE as though they described it. The 87 `honest` rows
+are the 2023 ladder's own capture and MAE figures, which are about real
+forecasts.
+
+#### Config hash and libraries
+
+Config hash **`515d4e8d98887256`** — unchanged since C8; C14 modified no
+`config/*.yaml`. Library fingerprint **`856fb19ac0c4eecd`** — identical to
+C10/C11/C12/C13's (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn
+1.9.1, scipy 1.17.1, lightgbm 4.7.0), so C10-C14 rows are directly comparable.
+The GBM config fingerprint `a366a760e269bba6` was not touched and no
+hyperparameter was tuned.
+
+#### Built and committed
+
+- `backtest/run_c14_fundamentals.py` — seven phases, deliberately separable
+  because only the ladder's two fitting phases are expensive: `verify` (the
+  cache fingerprint check), `fundamentals` (the descriptive chapter + two
+  figures), `headroom` (NOTE C13-03 + one figure), `ladder-compute` (a
+  *refusal* that names the two C8/C9 commands to run — it does **not** wrap or
+  re-implement them, because a second evaluation year is only comparable to the
+  first if it came out of the same code), `ladder-dispatch`, `ladder-analyse`
+  and `ingest`.
+- `tests/test_c14_fundamentals.py` — 68 offline tests. The new machinery is
+  tested against **synthetic zones whose answers are known by construction**: an
+  exactly linear stack must return equal slopes and R² = 1, a convex one must
+  return convex, a *falling* one must not report a convexity ratio (NO2 2022's
+  trap), a uniformly-sprinkled negative-price zone must **not** be labelled
+  RES-surplus (the falsification FINDING C14-D rests on), a zone with no solar
+  fleet must report **no** solar coefficient rather than a fitted zero, and two
+  zones differing 10× in size must agree on the normalised slope and disagree
+  10× on the raw one. Plus: the descriptive-vintage refusals, the bootstrap's
+  agreement with `backtest.bootstrap.replicate_counts`, the sealed-year guards
+  firing before any path is built, the cache check *failing* rather than passing
+  vacuously, the ladder arms matching C11's store key field by field, and each
+  FINDING pinned to the committed artefact.
+- `docs/fundamentals.md` — the chapter, with the vintage line (§1), the two
+  methodological traps (§2.1), the findings (§§3-8), what the cycle did not do
+  and why (§10) and its own Limitations (§11).
+- Artefacts: `c14_cache_verification.json`, `c14_merit_order_deciles.csv`,
+  `c14_explanatory_power.csv`, `c14_supply_curve_slopes.csv`,
+  `c14_negative_price_mechanism.csv`, `c14_residual_load_sufficiency.csv`,
+  `c14_fundamentals_summary.json`, `c14_headroom_daily.csv.gz` (3 269 rows — the
+  per-day artefact C15/C17 should read rather than rebuild),
+  `c14_headroom_cells.csv`, `c14_headroom_correlations.csv`,
+  `c14_headroom_summary.json`, `c14_ladder_<ZONE>_2023_{daily.csv.gz,summary.json}` (3 zones x 8 curves), `c14_ladder_capture.csv`, `c14_ladder_contrasts.csv`, `c14_ladder_invariant_flags.json`, `c14_ladder_summary.json` and the new store rows.
+- Figures: `docs/figures/c14_merit_order_tier_a.png` (the empirical supply curve,
+  one panel per zone, one line per year, symlog price axis so the negative tail
+  does not swallow the part of the curve the chapter is about),
+  `c14_negative_price_by_decile.png`, `c14_headroom_vs_res_revision.png`.
+- `requirements.txt` — a comment block recording that C14 added no dependency and
+  why the statistics are explicit design matrices rather than a formula API.
+
+#### Notes for later cycles
+
+**NOTE C14-01 (for C15) — FINDING C14-F hands C15 a falsifiable prediction, not
+just a result.** NOTE C13-02 already re-pointed the throughput-cost ladder at
+*how much of the capture ratio is friction*. C14 adds a prediction the same
+ladder tests for free: **NO2's within-day ordering will not improve at any rung**
+— not at a 0 EUR/MWh throughput cost, not at a different duration, not under a
+different SoC policy — because the fundamental that orders the hours elsewhere
+(the within-day residual-load swing) has **no measurable relationship to NO2's
+price spread in any of the three years**, so the information a model would need
+is not in its inputs. C15 should report NO2's within-day Spearman at every rung
+beside its capture. If the Spearman moves materially with the throughput cost,
+FINDING C14-F is wrong and C18 must say so.
+
+**NOTE C14-02 (for C18, wording — read with NOTE C12-03 and NOTE C13-01).** Two
+more labels are now evidenced. **(i) The merit order is a DE-LU/ES fact.** A
+sentence like "price is driven by residual load" is true at R² 0.56-0.80 in
+those two zones and at 0.32-0.36 in NO2, where in 2022 the relationship runs
+*backwards*. Any cross-zone fundamentals claim must carry the zone. **(ii) A
+crisis year degrades every fundamental relationship measured here** — the
+residual-load R², the component-symmetry restriction and the RES-revision
+correlation all collapse in 2022 — so a 2022 number is not a draw from the same
+process as a 2023 or 2024 one, on the fundamentals side just as FINDING C13-F
+found on the dispatch side.
+
+**NOTE C14-03 (for C17/C18) — the bridge from a point metric to EUR/MW/yr now
+has a fundamental behind it.** FINDING C12-C gave the within-day Spearman and
+FINDING C13-D gave `error_over_headroom`; neither had a mechanism. FINDING C14-F
+supplies one and splits it in two: **RES build-out creates the headroom**
+(between-cell, ρ = −0.72 of relative RES swing against error-over-headroom) and
+**RES forecast error eats into it** (within-cell, ρ ≈ +0.35 to +0.50). C18
+should use both rungs and say which is structural and which is a forecasting
+problem — they have different implications for a desk, and only the second one
+is something a better model fixes.
+
+**NOTE C14-04 (for C20) — part of the reproducibility check is already done, and
+it passed.** C8's full-history reference arm and C13's nine-zone comparable arm
+are the same committed configuration. Run by two different runners, in two
+different containers, off two independent Energy-Charts re-pulls, they agree on
+**all 8 759 hours of DE-LU 2023 to a worst absolute difference of exactly
+0.0 EUR/MWh**. `cross_check_full_history_against_c13()` is committed and tested;
+C20 should extend it (more zones, the GBM arms) rather than start fresh. The
+cache-fingerprint check in `c14_cache_verification.json` is the other half: 54
+price zone-years and 27 ENTSO-E series, all identical to the committed
+manifests.
+
+**NOTE C14-05 (for C15/C17) — the per-day artefact to read rather than rebuild.**
+`c14_headroom_daily.csv.gz` is 3 269 rows: one per (Tier-A zone, market day,
+2022-2024) carrying the day's residual-load mean / min / max / range, its
+day-over-day revision, both size-normalised, and the C13 dispatch columns joined
+on. Anything C15 or C17 wants to say about a fundamental against a dispatch
+outcome for Tier A is a groupby on that file, not a re-fit.
+
+**NOTE C14-06 (for C15/C18) — what the closed NOTE C8-01 means downstream.**
+The headline honest Tier-A arm stays `res_persistence` for *consistency with
+C8-C13*, but C18 should now say plainly that it buys nothing: six booster cells,
+one established contrast, negative. The ENTSO-E exogenous block's role in this
+project is therefore **the measurement of a leak** (FINDING C9-C, FINDING
+C14-H) and **the fundamentals chapter** (FINDING C14-A..F), not a modelling
+gain. C15 needs no exogenous arm in its sensitivity ladder.
+
+#### Repo-state note
+
+The detached-HEAD trap recurred: the container arrived detached at `abaa193`
+with local `master` stale 17 commits behind. **29 recurrences out of 36
+containers.** `HEAD` equalled `origin/master` exactly after a fetch (0 ahead, 0
+behind) and local `master` was a strict ancestor, so nothing was at risk.
+**`git checkout -B master` was refused by this session's permission classifier
+as a destructive git action**, so the branch was attached the safer way instead
+— `git checkout master` followed by `git merge --ff-only origin/master`, which
+cannot discard a commit and fails loudly if the branch has diverged. That is the
+better recipe for this situation and later cycles should reach for it first;
+C9's warning still stands for a container that arrives detached *and* genuinely
+behind the remote, where neither recipe is safe and the cycle should flag rather
+than improvise. Keep checking `git rev-parse --abbrev-ref HEAD` and
+`git rev-list --count master..HEAD` at the start of every cycle.
+
+**Next:** C15 — the sensitivities: throughput cost 0/2/5 EUR/MWh, daily-reset vs
+rolling-horizon SoC, RES-forecast degradation, 2h vs 4h duration. PLAN.md calls
+this "where the honest findings live". Read **NOTE C13-02** (the ladder is a
+friction measurement, not NO2's mechanism test — FINDING C13-E settled that) and
+**NOTE C14-01** (C14 hands it a falsifiable prediction: NO2's within-day
+ordering should not improve at any rung, because the information is not in the
+inputs — report NO2's within-day Spearman beside its capture at every rung).
+**NOTE C14-06** says the RES-degradation sensitivity no longer needs an
+exogenous arm: NOTE C8-01 is closed. `c13_daily_by_year.csv.gz` and
+`c14_headroom_daily.csv.gz` mean the ladder needs **no re-fitting, only
+re-dispatch**. Two open FLAGs carry forward, both explained and neither a bug:
+**FLAG C5-01** (resolved at Checkpoint B, carried as a stated limitation) and
+**FLAG C13-01**; **FLAG C14-01** is new and in the same category. The 2025
+holdout stays **SEALED** until Checkpoint C (C16).
