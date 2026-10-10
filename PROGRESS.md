@@ -2,29 +2,61 @@
 
 ## Current status
 
-- **Next cycle to run:** **C15.** C14 complete (the fundamentals chapter: PLAN.md's
-  price-vs-residual-load analysis for Tier A, 2022-2024, plus **both** notes C13 handed
-  forward). Six descriptive findings, a mechanism for the project's largest open puzzle,
-  and **NOTE C8-01 closed**. **FINDING C14-A** (residual load accounts for 0.80/0.68 of
-  DE-LU's hourly price variance in 2023/24, 0.65/0.56 of ES's and only 0.36/0.32 of
-  NO2's — and 0.41/0.26/**0.04** in the crisis year), **FINDING C14-B** (NO2's supply
-  curve *slopes the wrong way* in 2022, Spearman −0.177 — a merit order cannot do that,
-  a hydro reservoir's opportunity cost can), **FINDING C14-C** (the crisis **shifted the
-  curve without bending it**: 2022 priced at ×2.6-2.7 of 2024 at matched residual load
-  while the normalised decile curve correlates 0.97-1.00 — an independent cross-check on
-  FINDING C13-F from the fundamentals side), **FINDING C14-D** (negative prices sit
-  **8.8-10.0× uniform** in DE-LU's and ES's bottom residual-load decile and only
-  **4.0×/2.1×** in NO2's, so most of NO2's negative hours are not low-residual-load
-  hours), **FINDING C14-E** (residual load is nearly a sufficient statistic in DE-LU
-  2023/24 — 0.4-1.3pp of R² lost by imposing it — and **breaks in 2022**, where a GW of
-  wind moved the price nearly twice as much as a GW of load), **FINDING C14-F** (NOTE
-  C13-03 answered, and the mechanism FINDING C12-C asked for), **FINDING C14-G** (NOTE
-  C8-01 closed: **the honest exogenous block is not worth having**) and **FINDING C14-H**
-  (the leak is worth what the merit order is worth, Spearman **1.0** over six cells —
-  suggestive, not established). **One new FLAG: FLAG C14-01**, explained and not a bug
-  (below). No open blocker.
+- **Next cycle to run:** **C16 — CHECKPOINT C.** PLAN.md: *stop, push-notify, wait for
+  explicit human approval to unseal the 2025 holdout.* **C16's own work is to *request*
+  the unseal, not to perform it** — produce Checkpoint C's readiness report (what will be
+  evaluated, with which frozen configuration, which numbers will be produced, and the
+  confirmation that the guard is armed), append it here, send **one** push notification,
+  commit, push, **stop**. It must not load, read, feature-engineer from, train on or
+  compute any metric against 2025 data; the holdout stays **SEALED** until a human writes
+  the unseal marker and records the approval here. A session that fires after the request
+  has been made but before approval should do no new work: verify nothing has changed,
+  append a one-line wait note, stop, and send no notification.
+- **C15 complete** (PLAN.md's four sensitivities: throughput cost 0/2/5, daily-reset vs
+  rolling-horizon SoC, RES-forecast degradation, 2h vs 4h). Six batteries x 51
+  (leg, zone, year) cells = **1 836 rolling-horizon runs**, nothing re-fitted.
+  **FINDING C15-A** (~3% of the capture shortfall is friction and ~97% is not — NOTE
+  C13-02 answered), **FINDING C15-B** (4h: +25 094 EUR/MW/yr, +1.61pp capture, 95 fewer
+  full cycles a year), **FINDING C15-C** (a forced closing inventory is the biggest lever
+  in the ladder: −3.97pp and −3 185 EUR/MW/yr), **FINDING C15-D** (**the surprising
+  finding** — the committed battery already ends **74-77% of days empty**, so the
+  end-of-day mark mostly does not prevent the degeneration it exists for, and where it
+  binds the point estimate says it *costs* ~2 900 EUR/MW/yr; **not established**),
+  **FINDING C15-E** (removing every euro of friction closes **9.1%** of NO2's capture
+  deficit; NO2 is last of nine on capture *and* on within-day Spearman in **30 of 30**
+  (year, rung) rows), **FINDING C15-F** (the Art. 14 leak's dispatch value is a
+  model-class fact, not a battery fact) and **FINDING C15-G** (levers move the money with
+  confidence and the captured *share* with very little — FINDING C12-D across a new
+  dimension). **No new FLAG**; **FLAG C13-01 reproduced at all six rungs** and still a
+  regime fact. **One new decision request: NOTE C15-01.** No open blocker.
+  Write-up: `docs/sensitivities.md`.
+- **NOTE C15-01 — DECISION REQUEST, for the human at Checkpoint C or D.** FINDING C15-D
+  says the committed `trailing_value` end-of-day mark (i) does not prevent the nightly
+  degeneration it was introduced for and (ii) where it binds, the point estimate is that
+  it **costs** the battery ~2 900 EUR/MW/yr — **not established** (16 of 45 cells on
+  cash, 0 of 45 on capture). **C15 changed nothing.** Options: **(a)** keep it and carry
+  FINDING C15-D as a stated limitation in C18 (**recommended** — the effect is not
+  established and every C5-C14 headline stays exactly as published); **(b)** re-run the
+  headline on `terminal_mode="none"`, which moves every published number and needs its
+  own cycle; **(c)** mark closing inventory at a lower quantile, which is a new modelling
+  choice and therefore a new sensitivity, not a fix.
+- **C15 also discharged NOTE C14-04's reproducibility check, at scale.** C15's `base`
+  rung reproduces **54 756 committed per-day settled-cash rows to 5.0e-7 EUR** — 49 284
+  against `c13_daily_by_year.csv.gz` and 5 472 against `c11_capture_daily_2024.csv.gz`
+  over five curves — in a fresh container, off an independent price re-pull, via a runner
+  that did not exist when those numbers were published. DE-LU 2024 capture 0.9187 and NO2
+  2024 0.6146, both ends of FINDING C11-A, to four decimals.
+  `check_baseline_reproduction` and `check_res_leg_reproduction` are committed and
+  tested; **C20 should run them rather than start fresh** (NOTE C15-04).
+- **A third label for C18, from C15 (NOTE C15-02).** **Quote a lever in EUR/MW/yr, not in
+  capture points**: on cash four of five levers are decided in 42-44 of 45 cells, on
+  capture the best manages 11 of 45 and `soc_no_terminal` manages 0. And **"friction
+  costs the battery money" and "friction explains the capture shortfall" are different
+  claims, only the first of which is true** (+1 982 EUR/MW/yr of prize against 3% of the
+  shortfall).
 - **Human checkpoints:** Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A
-  closed 2026-10-01. Next is **Checkpoint C at C16** (unsealing 2025).
+  closed 2026-10-01. **Next is Checkpoint C, and the next cycle (C16) is it** — the
+  cycle requests the unseal of 2025 and stops; only a human approves it.
 - **Two labels every later cycle must attach, now evidenced rather than cautionary.**
   **(i) 2024 is the most favourable year of the five** — highest capture in six of nine
   zones — so every C10-C12 headline travels with "in the validation year, which is the
@@ -119,16 +151,20 @@
   DE-LU and NO2); FINDING C10-B's window gain being an MAE claim; and the Art. 14 leak
   buying ~nothing a battery can trade except on DE-LU under the GBM (+3.47pp
   [+0.43, +6.60], and unachievable).
-- **Results live in one append-only table: `backtest/results/results.csv`** (**8 565 rows
-  after C14**, 5 runs, `backtest/results_store.py`, written up in `docs/results_store.md`,
-  `docs/dispatch_results.md`, `docs/metrics_layer.md` and `docs/regime_analysis.md`). Long
+- **Results live in one append-only table: `backtest/results/results.csv`** (**14 265 rows
+  after C15**, 6 runs, `backtest/results_store.py`, written up in `docs/results_store.md`,
+  `docs/dispatch_results.md`, `docs/metrics_layer.md`, `docs/regime_analysis.md` and
+  `docs/sensitivities.md`). Long
   format, so **a new metric is a new value, not a new column** and **a new evaluation year
   is new rows** — C11 added 17 dispatch metrics, C12 added 7 point metrics plus interval
   bounds, and C13 added 4 824 rows for 2020-2023 (1 206 per year) including
   `error_over_headroom`; **none of the three needed a schema change or a test edit.**
   Every row carries `git_sha`, `config_hash`, the model's fingerprint and a
   `library_fingerprint`; `vintage` (`honest` / `after_gate_closure`) is a **required key
-  column**, and `evaluation_years` is now a single year on every C13 row. Call
+  column**, and `evaluation_years` is now a single year on every C13 row. **C15 added
+  5 700 rows with no schema change either**: a ladder rung lives in the **metric name**
+  (`c15_<rung>_capture`, `c15_d_<rung>_capture_pp`, …), which is the store's documented
+  extension point, so a new battery is a new metric and never a migration. Call
   `verify_append_only()` before trusting anything in there and append with `append_rows` —
   never edit a row in place. The 3 426 C10-C12 rows are byte-for-byte unchanged after
   C13's append (verified against `git show HEAD:`). **`scope` is a closed list**
@@ -147,6 +183,10 @@
   (2020-2024) x nine zones x the three comparable curves, which is what C15 should
   re-dispatch from and C17 should report from rather than re-fitting 36 walk-forward runs.
   The 36 `c13_year_<ZONE>_<YEAR>_predictions.csv.gz` files are the forecasts themselves.
+  **C15 adds `c15_{main,res}_<ZONE>_<YEAR>_daily.csv.gz` (51 files, 361 350 rows: the same
+  shape again for each of six battery rungs) and `c15_rung_points.csv` (every pooled
+  number per (leg, zone, year, rung, curve)).** C17 should read `c15_rung_points.csv`
+  rather than the per-day files unless it needs to re-bootstrap.
 - **`backtest/bootstrap.py` is reusable as-is for C13/C15.** Circular moving-block over
   market days, **paired** (one draw applied to every zone, curve and statistic in a
   replicate), 10 000 replicates, seed 20261009, percentile intervals, plus
@@ -193,7 +233,12 @@
   conservative. Unchanged by C7-C13: C13 re-ran the dispatch code on 36 new zone-years
   without modifying it.
 - **Open FLAGs (cont.): FLAG C13-01 — NO2 2020 fails CLAUDE.md's pooled naive-dominance
-  invariant, and it is a regime fact, not a bug.** The comparable LEAR arm settles
+  invariant, and it is a regime fact, not a bug. C15 reproduced it at all six battery
+  rungs** — including `throughput_0`, where the comparable arm earns **+133 EUR** against
+  the naive floor's **+543**, so **removing every euro of friction does not rescue it
+  either**. Six failures recorded in `c15_invariant_flags.json`, the C15 dispatch phase
+  exited non-zero, no tolerance widened and no test edited. The C13 text follows and is
+  unchanged. The comparable LEAR arm settles
   **-402 EUR/MW** over the year against the naive floor's **+253**; the
   *perfect-foresight* battery earns only **769 EUR/MW/yr**; the mean realised daily spread
   is **3.41 EUR/MWh** against a 2 EUR/MWh throughput cost and a 12% round trip; capture is
@@ -335,26 +380,40 @@
   C13 is the regime analysis. **NOTE C8-01 stays RE-OPENED** and is handed to **C14**,
   which must re-pull those series for its own chapter — fold the 2023 ladder in there or
   say why not.
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C14 after the work:
+- **Sealed holdout (2025):** SEALED. Guard verified armed in C15 after the work:
   marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`, `sealed_years()`
-  = `{2025}`, `assert_not_sealed({2025})` raises, **no `*2025*` file anywhere under
-  `data/`**, the price cache holds exactly 2019-2024 in **every one of the nine zones**,
-  and the only years in any committed C14 artefact are **2022, 2023, 2024**. Store-wide
-  `evaluation_years` across all 8 565 rows: 2020-2024. **C14's string-`2025` sweep is
-  stricter than C13's and fixes a false negative in it**: C13 asked only "is this
-  occurrence numeric", and a bare `2025` in prose matches a numeric literal exactly as a
-  digit run inside a float does, so the one test could not separate "a 2025 datum" from
-  "the word 2025". C14 sorts every occurrence into three buckets — **1** digits inside a
-  longer number (`19.522025`, a residual-load value), **2** bare year tokens (both
-  `docs/fundamentals.md` prose saying 2025 is sealed), **0** in neither. Three
-  occurrences in total, **none a 2025 datum**. `fundamentals_frame` and `headroom_frame`
-  both refuse a sealed year **before any path is built** (two tests pin it, so 2025
-  cannot arrive as a missing-file message), and the store's tripwire stands. No 2025 data
-  has been fetched, loaded, dispatched or computed against at any point in C2-C14.
-- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C13 modified no
-  `config/*.yaml`. C13's library fingerprint is **`856fb19ac0c4eecd`**, identical to
-  C10's, C11's and C12's (python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1,
-  scipy 1.17.1, lightgbm 4.7.0), so C10-C13 rows are directly comparable.
+  = `{2025}`, `assert_not_sealed(2025)` raises `SealedHoldoutError`, **no `*2025*` file
+  anywhere under `data/`**, the price cache holds exactly **2019-2024 in every one of the
+  nine zones**, and store-wide `evaluation_years` across all **14 265** rows is
+  **2020-2024**. C14's three-bucket string-`2025` sweep, re-run over every committed C15
+  artefact and `docs/sensitivities.md`: **86** digit runs inside longer floats (e.g.
+  `1073.6417765862025`), **4** bare year tokens (all of them prose in
+  `docs/sensitivities.md` saying 2025 is sealed or that the backtest ends before
+  2025-10-01), **0** in neither — and **0 bare tokens in any `backtest/results/c15_*`
+  artefact at all**. No `year` column in any of the 51 per-day files contains 2025.
+  `main_curves` has **no artefact mapping for a sealed year** and raises before a path is
+  built, `dispatch_cell` calls `assert_not_sealed` first, and two tests pin both. No 2025
+  data has been fetched, loaded, dispatched or computed against at any point in C2-C15.
+- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C13, C14 and C15 modified
+  no `config/*.yaml`, **including C15, whose FINDING C15-D is an argument for changing
+  `config/battery.yaml` and which deliberately changed nothing** (NOTE C15-01). C15's
+  library fingerprint is **`856fb19ac0c4eecd`**, identical to C10's through C14's (python
+  3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1, lightgbm 4.7.0),
+  so C10-C15 rows are directly comparable.
+- **C15 modified exactly one pre-existing module, additively: `dispatch/rolling.py`**
+  (74 insertions, 1 deletion — the `soc_policy` lever PLAN.md's daily-reset leg needed and
+  did not have). The committed `"carry"` behaviour is pinned **byte-for-byte** by
+  `test_carry_is_the_default_and_is_unchanged_by_naming_it`, and the lever is guarded so
+  that a reset can only ever *discard* stored energy, never create it (see the C15 entry).
+  `git diff --stat HEAD` over `tests/`, `config/`, `forecast/`, `data/`,
+  `backtest/{walk_forward,metrics,bootstrap,results_store}.py`, `dispatch/battery.py`,
+  `dispatch/curves.py` and every earlier runner came back **empty**. Otherwise C15 is one
+  new runner (`backtest/run_c15_sensitivities.py`), one new test file
+  (`tests/test_c15_sensitivities.py`, 119 tests), one new document
+  (`docs/sensitivities.md`), three figures and new artefacts. C11's `pooled_capture`,
+  `same_start_oracle`, `capture_frame` and `beats_naive`, C12's bootstrap and C14's
+  `verify_price_cache` are **imported**, not re-derived — which is what makes a C15
+  capture ratio the same number as the one in `results.csv`.
 - **C14 modified no pre-existing module at all.** It is one new runner
   (`backtest/run_c14_fundamentals.py`), one new test file
   (`tests/test_c14_fundamentals.py`, 68 tests), one new document
@@ -373,18 +432,26 @@
   leakage assertions and C4's skill score read exactly the code they read before. A *new*
   file under `tests/` follows C11's precedent and is not a flag-and-stop event; editing a
   **pre-existing** test still is.
-- **Repo-state note:** the detached-HEAD trap recurred in C14 — the container arrived
-  detached at `abaa193` with local `master` stale 17 commits behind. **29 recurrences out
-  of 36 containers.** `HEAD` equalled `origin/master` exactly after a fetch and local
-  `master` was a strict ancestor, so nothing was at risk — but **`git checkout -B master`
-  was refused by this session's permission classifier as a destructive git action**. The
-  branch was attached the safer way instead: **`git checkout master` then
-  `git merge --ff-only origin/master`**, which cannot discard a commit and fails loudly
-  if the branch has diverged. **Later cycles should reach for that recipe first.** C9's
-  warning still stands for a container that arrives detached *and* genuinely behind the
-  remote, where neither recipe is safe and the cycle should flag rather than improvise.
-  Keep checking `git rev-parse --abbrev-ref HEAD` and
-  `git rev-list --count master..HEAD` at the start of every cycle.
+- **Full suite green after C15: 827 passed, 0 failed** (708 before, plus C15's 119).
+- **Repo-state note:** the detached-HEAD trap recurred in C15 — the container arrived
+  detached at `c7ffea5` with local `master` stale **24** commits behind. **30 recurrences
+  out of 37 containers.** `HEAD` equalled `origin/master` exactly after a fetch and local
+  `master` was a strict ancestor, so **C14's safer recipe applied and worked first time**:
+  `git checkout master` then `git merge --ff-only origin/master`, which cannot discard a
+  commit and fails loudly if the branch has diverged. **That is the recipe later cycles
+  should reach for** — C14 found `git checkout -B master` refused by this session's
+  permission classifier as a destructive git action. C9's warning still stands for a
+  container that arrives detached *and* genuinely behind the remote, where neither recipe
+  is safe and the cycle should flag rather than improvise. Keep checking
+  `git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the start
+  of every cycle.
+- **Artefact size — an input to C20's repo-size check.** C15's artefacts are ~37 MB
+  against ~25 MB for C1-C14 combined, because the per-day ladder is 361 350 rows (six
+  rungs x the C11/C13 dispatch surface). **Nothing was trimmed**, because a committed
+  artefact that does not match what the runner writes is worse than a large one. The
+  obvious saving, if C20 wants it: the ten forecast-shape columns are **rung-invariant by
+  construction** (that is FINDING C15-E's Spearman point) and are stored six times;
+  normalising them out would save ~40%.
 
 ## Log
 
@@ -5689,3 +5756,354 @@ re-dispatch**. Two open FLAGs carry forward, both explained and neither a bug:
 **FLAG C5-01** (resolved at Checkpoint B, carried as a stated limitation) and
 **FLAG C13-01**; **FLAG C14-01** is new and in the same category. The 2025
 holdout stays **SEALED** until Checkpoint C (C16).
+
+---
+
+### C15 — 2026-10-10 (scheduled cycle) — the sensitivities: the same forecasts, dispatched under six batteries
+
+Scope per PLAN.md C15: *"Sensitivities: throughput cost 0/2/5 EUR/MWh; daily-reset
+vs rolling-horizon SoC; RES-forecast degradation; 2h vs 4h duration. This is where
+the honest findings live — look here first for the surprising finding."* Read with
+**NOTE C13-02** (the throughput ladder is a friction measurement, not NO2's
+mechanism test) and **NOTE C14-01** / **NOTE C14-06**.
+
+All four sensitivities ran, on the committed forecasts, with nothing re-fitted:
+**six batteries x 51 (leg, zone, year) cells = 1 836 rolling-horizon runs**, each
+with its own per-day same-start oracle bound. Full write-up in
+`docs/sensitivities.md`.
+
+#### The ladder
+
+One-at-a-time around the committed spec, and a test asserts each rung moves one
+lever plus the fields derived from it: `base` (`config/battery.yaml` as
+committed), `throughput_0`, `throughput_5`, `duration_4h`, `soc_daily_reset`
+(every day opens *and* closes half full) and `soc_no_terminal` (SoC carries,
+closing inventory unvalued — the decomposition leg, and the trap
+`config/battery.yaml` warns about). Main leg: 9 zones x 2020-2024 x {oracle,
+`lear_full_history`, `naive`}. RES leg: Tier A x {2023, 2024} x {oracle, both
+vintages of both model classes}.
+
+#### The zero rung is the published result
+
+`base` was re-solved from scratch in a fresh container, from an independently
+re-pulled price cache, by a runner that did not exist when the numbers were
+published, and it reproduces **54 756 committed per-day settled-cash rows to a
+worst absolute gap of 5.0e-7 EUR**: 49 284 against `c13_daily_by_year.csv.gz`
+(which carries C11's 2024 column unchanged) and 5 472 against
+`c11_capture_daily_2024.csv.gz` over five curves. DE-LU 2024's capture comes back
+as 0.9187 and NO2 2024's as 0.6146 — both ends of FINDING C11-A, to four
+decimals. **This is most of what NOTE C14-04 handed C20**: the reproducibility
+check now covers the whole nine-zone, five-year dispatch surface instead of one
+zone's hours.
+
+#### Findings
+
+**FINDING C15-A — about 3% of the capture shortfall is friction; the other ~97%
+is not (NOTE C13-02 answered).** Over the 44 usable (zone, year) cells the
+comparable LEAR's mean capture is **0.7953** — a **20.47pp** shortfall — and
+removing the **entire** throughput cost recovers **0.80pp** of it, leaving
+**19.67pp**. Friction share of the shortfall: **mean 0.034, median 0.029, range
+−0.033 to +0.174**. The share is itself regime-dependent in the direction a desk
+would expect: ~0 in the deepest zones (DE-LU 0.001, BE 0.005, FR 0.006) and
+largest in the thinner ones (ES 0.091, IT-North 0.070, NO2 0.065, DK1 0.042).
+What the throughput cost moves is the **prize**, not the ratio: k = 0 adds
++2 175 EUR/MW/yr to the oracle and +1 982 to the forecast (42 of 45 cells' cash
+intervals exclude zero), k = 5 removes ~2 800-3 000 from both, and because it
+taxes them almost equally the capture delta's interval excludes zero in only
+**3 of 45** cells at PLAN.md's daily block.
+
+**FINDING C15-B — doubling the duration adds +25 094 EUR/MW/yr and +1.61pp of
+capture, and cycles the battery less.** 44 of 45 cells' cash intervals exclude
+zero; the capture gain is directional (11 / 16 / 17 of 45 at the 1 / 7 / 14-day
+blocks). Equivalent full cycles fall from **577 to 482 per year**, which matters
+for a degradation budget. The mechanism is the obvious one: a 4h battery charges
+and discharges over a wider window, so getting the exact hour wrong costs less —
+it is a slightly *easier* forecasting problem as well as a bigger one.
+
+**FINDING C15-C — the SoC convention is the biggest lever in the ladder, and
+what it prices is a *forced closing inventory*, not the overnight carryover.**
+Forcing each market day to open and close half full costs **−3.97pp of capture
+and −3 185 EUR/MW/yr** — a larger effect than removing all trading friction. The
+mechanism is the closing floor making the day buy back what it sold, at whatever
+hour is left: the other SoC leg (`soc_no_terminal`), which also makes each day
+independent but lets the LP end **empty** (it does so on 99.8% of days), costs
+nothing at all. So "nothing resets at midnight" is not an LP detail, but the
+honest phrasing is "a forced closing inventory costs ~3 200 EUR/MW/yr", not "the
+carryover is worth that" — the carryover itself is exercised on about one day in
+four (FINDING C15-D).
+**Caveat carried in the write-up:** part of that −3 185 is inventory one run
+still owns. `c15_boundary_inventory.csv` bounds it twice: against the
+deliberately unfair bound (the net stored-energy difference at the *year's*
+highest realised price) the median cell is **8.2x** its bound with 46 of 114
+above 10x; against the natural bound (the last dispatched day's highest price,
+when that difference is actually realised or not) the median is **37.1x** with
+**105 of 114** above 10x. Safe under the bound that fits the question; a ~10%
+boundary term under the unfair one. Both are reported.
+
+**FINDING C15-D — the surprising finding: the device that protects the rolling
+horizon mostly does nothing, and where it binds the best estimate is that it
+costs money.** `config/battery.yaml` introduced the trailing-value end-of-day
+mark because without a terminal condition a 24h LP empties the battery before
+midnight and "silently turns PLAN.md's rolling-horizon SoC carryover into the
+daily reset it forbids." With the mark in place the battery **still ends 74-77%
+of days at SoC ~ 0** (oracle 0.744, comparable LEAR 0.767, naive 0.758; mean
+closing SoC 0.35-0.42 MWh of 2.0), so for a 2h battery the rolling horizon is in
+practice a nightly reset to empty and the mark binds on about a quarter of days.
+Removing it entirely (`soc_no_terminal`) leaves the captured share
+**statistically unchanged — 0 of 45 capture intervals exclude zero at the daily
+block, the weakest result of any lever here** — while the point estimate on cash
+moves **+2 943 EUR/MW/yr in the battery's favour** (16 of 45 cells, so
+**directional and NOT established**). **Nothing was changed**: this is
+**NOTE C15-01**, a decision request, and no headline in this project moves on it.
+
+**FINDING C15-E — removing every euro of friction closes 6-12% of NO2's capture
+deficit (9.1% on the four-year mean) and leaves 88-94% standing, in every usable
+year.** Gap to the other eight zones' mean, `base` -> `throughput_0`: 2021 −30.70
+-> −27.41pp (10.7% closed), 2022 −27.35 -> −25.47 (6.9%), 2023 −22.95 -> −21.54
+(6.1%), 2024 −27.46 -> −24.16 (12.0%); four-year mean −27.11 -> −24.65pp, 2.47pp
+closed. NO2 2020 is excluded as thin-regime and reported on its own — including
+it would report that one cell (it alone "closes" 63pp, from −0.52 to +0.11
+capture). **NO2 is last of nine on capture *and* last on the within-day Spearman
+in all 30 of 30 (year, rung) rows.** FINDING C13-E killed the thin-spread story; the friction story dies here.
+What survives is the within-day ordering (FINDING C12-C) with FINDING C14-F's
+fundamental behind it.
+
+**NOTE C14-01, and the one thing this cycle refuses to claim.** C14 handed C15
+"a falsifiable prediction": NO2's within-day ordering will not improve at any
+rung. **It cannot.** The within-day Spearman is a function of the forecast and
+the realised prices; no rung of this ladder touches either; the mean Spearman is
+**0.783 at every one of the six rungs** and the asserted drift is exactly
+**0.0**. C15 therefore reports it as an **assertion about the design** — a
+non-zero drift would mean two rungs had been pooled over different day sets, a
+bug — and tests the prediction's substantive form instead (FINDING C15-E).
+Presenting a tautology as a confirmed prediction is exactly the kind of thing an
+unattended cycle does and a reader cannot see.
+
+**FINDING C15-F — the Art. 14 leak's dispatch value is a model-class fact, not a
+battery fact.** `as_published − persistence` in capture points, never achievable
+(FINDING C9-C): under the **LASSO** it is ~0 or negative at every rung in every
+cell (−3.01 to +3.20pp; **0 of 6** cells exclude zero at `base`); under the
+**booster** it is large and positive in DE-LU at every rung (+3.24 to +11.71pp),
+positive in ES 2023 at every rung (+4.82 to +6.90) and ~0 in NO2 (**3 of 6**
+exclude zero at `base`). So FINDING C11-D's "except on DE-LU under the GBM" is
+robust to the whole battery specification, not measured once. The one systematic
+movement runs *opposite* to the obvious objection: the leak is worth **most** at
+`soc_daily_reset`, the hardest dispatch problem, in **11 of 12** cells (exception
+GBM/ES 2023, where `duration_4h` edges it +6.90 to +6.79). A better forecast is
+worth more when the battery has less slack — the reverse of "the leak only looks
+valuable because the battery is forgiving."
+
+**FINDING C15-G — the levers move the money with confidence and the captured
+*share* with very little.** On cash, four of five levers are decided in 42-44 of
+45 cells; on capture the best manages 11 of 45 and the worst 0. Same days, same
+draws, same battery. This is **FINDING C12-D restated across a dimension C12
+could not reach**: capture is not a bad metric, it is a ratio designed to divide
+out exactly what a battery-parameter lever changes. **C18 should quote the lever
+effects in EUR/MW/yr and treat the capture deltas as directional**, with the one
+exception of `soc_daily_reset`, whose capture effect survives at 31 and 33 of 45
+cells at the 7- and 14-day blocks.
+
+#### The one new lever, and why it needed a guard
+
+`dispatch/rolling.py` carried SoC and nothing else, so PLAN.md's daily-reset leg
+had **no implementation** — and the obvious implementation invents energy in a
+way that would not look wrong in the diff. Open every day at
+`initial_soc_fraction` with the terminal condition left as it is: under
+`terminal_mode="none"` the LP empties the battery before midnight, so the reset
+hands it 1 MWh free, 365 times a year, and the extra cash reads as a sensitivity
+result; under `trailing_value` the run books a mark on inventory the reset throws
+away.
+
+So `soc_policy="reset"` is **accepted only with a terminal floor at or above the
+opening fraction**, where the LP must hand back at least what it was given and
+the reset can therefore only ever *discard* energy. How much it discarded is
+counted (`RollingResult.soc_reset_discarded_mwh`) rather than assumed to be zero,
+`dispatch/rolling.py` refuses the unsafe spec combinations up front, and
+`check_reset_conserves_energy` re-checks the **outcome** on the days actually
+solved — every day opened at the configured SoC and no discard was negative, on
+all 1 836 runs.
+
+**This is the only pre-existing module C15 touched** (74 insertions, 1 deletion,
+all additive), and the committed default is pinned byte-for-byte by
+`test_carry_is_the_default_and_is_unchanged_by_naming_it`. Nothing under
+`tests/`, `config/`, `forecast/`, `data/`,
+`backtest/{walk_forward,metrics,bootstrap,results_store}.py`,
+`dispatch/battery.py`, `dispatch/curves.py` or any earlier runner was modified —
+`git diff --stat HEAD` over all of those came back empty.
+
+#### Comparability across rungs, and the boundary objection
+
+`run_rolling_dispatch` skips a day `no_reference` only under `trailing_value`, so
+the two rungs that switch the terminal condition off *can* dispatch days `base`
+skips. Every cross-rung number is therefore summed over the **ladder-common day
+set** — the days every rung of every curve of that (zone, year) dispatched — which
+is C11's `common_hours` definition applied to a larger run set, so **`scope`
+needed no new value**; read `source_artefact` beside any C15 row. And because the
+rungs end the year in different states, `c15_boundary_inventory.csv` bounds the
+inventory-accounting part of every cross-rung cash difference twice (the year's
+highest realised price, and the tighter last-day price) for **all five** non-base
+rungs, not only the SoC ones.
+
+#### FLAGs
+
+**FLAG C13-01 reproduced at all six rungs, and it is still a regime fact — not a
+new flag.** NO2 2020's comparable LEAR fails CLAUDE.md's pooled naive-dominance
+invariant at `base` (**−402 EUR** against the naive floor's **+253**, exactly
+C13's numbers) and at every other rung, including `throughput_0` where it earns
+**+133** against the floor's **+543**. All six failures are in
+`c15_invariant_flags.json`, the dispatch phase **exited non-zero**, **no tolerance
+was widened and no test was edited.** C15 adds only that removing the friction
+does not rescue it: with a 769 EUR/MW/yr prize, a 3.41 EUR/MWh mean realised
+spread, a 2 EUR/MWh throughput cost and a 12% round trip, there is nothing to
+trade and which curve trades *less* is luck. No later cycle should "fix" this by
+relaxing the check.
+
+**No new FLAG.** Every other check passed on every curve of every rung of every
+cell — the per-day same-start oracle bound included, on all 1 836 runs.
+**FLAG C5-01** (simultaneous charge/discharge, resolved at Checkpoint B as a
+stated limitation) and **FLAG C14-01** (the DE-LU 2023 GBM tie) carry forward
+unchanged and were not re-touched.
+
+#### Housekeeping
+
+- **Data.** `data/raw/` arrived empty — **NOTE C2-02, 26th recurrence**. All 54
+  price (zone, year) files were re-pulled, 0 flagged, and **all 54
+  `payload_sha256` fingerprints are identical to C1's committed manifest**
+  (`c15_cache_verification.json`), so the manifest was not regenerated. **No
+  ENTSO-E call at all**: NOTE C14-06 closed NOTE C8-01, so C15 adds no exogenous
+  arm and the RES leg re-dispatches C8's and C9's already-committed forecasts.
+  `ENTSOE_API_KEY` was not read.
+- **Sealed holdout verified armed.** `LADDER_YEARS` stops at 2024;
+  `main_curves` has **no mapping** for a sealed year and raises before a path is
+  built; `dispatch_cell` calls `assert_not_sealed` first; two tests pin both. A
+  sweep of every committed C15 artefact for a bare `2025` token (C14's
+  three-bucket method) finds **none**, and no `year` column anywhere in the 51
+  per-day files contains 2025. No 2025 data has been fetched, loaded, dispatched
+  or computed against at any point in C2-C15.
+- **Config hash `515d4e8d98887256`, unchanged since C8.** No `config/*.yaml` file
+  was modified — including by FINDING C15-D, which is a decision request
+  (NOTE C15-01), not a change. The frozen GBM config
+  (`a366a760e269bba6`) was not touched and is now pinned from C15's side too.
+- **Library fingerprint `856fb19ac0c4eecd`**, identical to C10-C14's (python
+  3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1, lightgbm
+  4.7.0), so C10-C15 rows are directly comparable. **No new dependency.**
+- **Repo-state note:** the detached-HEAD trap recurred — the container arrived
+  detached at `c7ffea5` with local `master` 24 commits behind. **30 recurrences
+  out of 37 containers.** `HEAD` equalled `origin/master` exactly after a fetch
+  and local `master` was a strict ancestor, so C14's safer recipe applied:
+  **`git checkout master` then `git merge --ff-only origin/master`**, which cannot
+  discard a commit and fails loudly on divergence. Keep checking
+  `git rev-parse --abbrev-ref HEAD` and `git rev-list --count master..HEAD` at the
+  start of every cycle.
+- **Artefact size — hand to C20.** C15's artefacts are ~37 MB, against ~25 MB for
+  C1-C14 combined, because the per-day ladder is 361 350 rows (6 rungs x the
+  C11/C13 dispatch surface). Nothing was trimmed, because a committed artefact
+  that does not match what the runner writes is worse than a large one. The
+  obvious saving is that the ten forecast-shape columns are **rung-invariant by
+  construction** (that is FINDING C15-E's Spearman point) and are stored six
+  times; normalising them out would save ~40%. PLAN.md gives C20 the repo-size
+  check — this is the input to it.
+
+#### Artefacts
+
+- **Full suite: 827 passed, 0 failed** (708 before C15, plus this cycle's 119).
+  The analyse phase is **deterministic**: all six C15 tables are byte-identical
+  across two independent runs (`md5sum -c`).
+- Code: `backtest/run_c15_sensitivities.py` (new, three phases: `verify`,
+  `dispatch`, `analyse`), `tests/test_c15_sensitivities.py` (new, 119 tests),
+  `docs/sensitivities.md` (new), and the `soc_policy` lever in
+  `dispatch/rolling.py`.
+- Per-day: `c15_{main,res}_<ZONE>_<YEAR>_daily.csv.gz` (51 files, 361 350 rows —
+  every dispatch column day-additive, so `backtest/bootstrap.py` takes them
+  directly) and `_summary.json` beside each (the rung specs, the skips, the
+  invariants, the curve provenance).
+- Tables: `c15_rung_points.csv` (every (leg, zone, year, rung, curve) cell's
+  pooled numbers), `c15_lever_contrasts.csv` (paired intervals at 1 / 7 / 14-day
+  blocks), `c15_lever_summary.csv`, `c15_friction_decomposition.csv`,
+  `c15_no2_ordering.csv`, `c15_boundary_inventory.csv`, `c15_res_degradation.csv`,
+  `c15_invariant_flags.json`, `c15_cache_verification.json`,
+  `c15_sensitivity_summary.json`.
+- Figures: `docs/figures/c15_capture_vs_throughput_cost.png` (capture against k,
+  one panel per year, NO2 in black), `c15_lever_effects.png`,
+  `c15_friction_share_of_shortfall.png`.
+
+#### Notes for later cycles
+
+**NOTE C15-01 (DECISION REQUEST for the human, at Checkpoint C or D) — the
+end-of-day inventory mark.** FINDING C15-D says the committed `trailing_value`
+mark (i) fails at the job `config/battery.yaml` introduced it for — the battery
+still ends 74-77% of days empty, so the rolling horizon *is* substantially a
+nightly reset to empty — and (ii) where it binds, the best point estimate is that
+it **costs** the battery ~2 900 EUR/MW/yr of realised cash, though that is
+**not established** (16 of 45 cells at the daily block, and 0 of 45 on capture).
+**C15 changed nothing.** The options, for a human:
+  **(a)** keep `trailing_value` as committed and carry FINDING C15-D as a stated
+  limitation in C18 (the conservative choice, and the one that keeps every
+  C5-C14 headline exactly as published);
+  **(b)** re-run the headline on `terminal_mode="none"`, which would move every
+  published capture and EUR/MW/yr number in the project and needs a cycle of its
+  own;
+  **(c)** keep `trailing_value` but mark closing inventory at a *lower* quantile
+  than the trailing median, which is a new modelling choice and therefore a new
+  sensitivity rather than a fix.
+**Recommendation: (a).** The effect is not established, the ladder already
+measures it, and changing a committed default on an unestablished point estimate
+is exactly what a scheduled cycle should not do on its own.
+
+**NOTE C15-02 (for C18, wording — read with NOTE C12-03, NOTE C13-01 and
+NOTE C14-02).** Two more required labels. **(i) Quote a lever in EUR/MW/yr, not
+in capture points** (FINDING C15-G): on cash four of five levers are decided in
+42-44 of 45 cells, on capture the best manages 11 of 45. The one exception is
+`soc_daily_reset`, whose capture effect survives at 31/33 of 45 at the 7- and
+14-day blocks. **(ii) "Friction costs the battery money" and "friction explains
+the capture shortfall" are different claims and only the first is true** —
++1 982 EUR/MW/yr of prize against 3% of the shortfall (FINDING C15-A).
+
+**NOTE C15-03 (for C18) — the sensitivity ordering C18 should report.** By mean
+effect on realised cash, ex the thin cell: duration **+25 094**, SoC convention
+**−3 185** (daily reset) / **+2 943** (no mark), throughput cost **±2 000-2 800**.
+By effect on the captured share: SoC convention −3.97pp, duration +1.61pp,
+throughput ±2-3pp. **The asset spec dominates the market friction on both
+scales**, which is the practical message for a desk sizing a battery: the
+duration decision is worth more than everything else in this ladder put together.
+
+**NOTE C15-04 (for C20) — the reproducibility check NOTE C14-04 asked for is
+done, and it passed at scale.** 54 756 per-day settled-cash rows across nine
+zones, five years and five curves, reproduced to 5.0e-7 EUR by a new runner in a
+fresh container off an independent price re-pull. `check_baseline_reproduction`
+and `check_res_leg_reproduction` are committed and tested; C20 should run them
+rather than start fresh, and should also decide the artefact-size question in the
+housekeeping note above.
+
+**NOTE C15-05 (for C17, and only if budget allows) — PLAN.md's 15-minute
+stretch goal was not started.** It is labelled a stretch goal ("C15+", "never
+blended into the main results") and the main hourly backtest ends before
+2025-10-01, which is inside the sealed year — so it cannot be attempted at all
+until Checkpoint C unseals 2025. It is therefore a **post-C16** item, not a C15
+omission.
+
+**Next:** **C16 — CHECKPOINT C.** PLAN.md: *"stop, push-notify, wait for explicit
+human approval to unseal the 2025 holdout. Only after approval: run a single
+evaluation of the 2025 holdout; record in PROGRESS.md that it ran exactly once,
+with the timestamp."*
+
+To be unambiguous for the next scheduled session, because this field names a
+checkpoint that is **not** yet approved: **C16's own work is to *request* the
+unseal, not to perform it.** That session should (1) produce Checkpoint C's
+required output — a short pre-unseal readiness report: what will be evaluated,
+with which frozen configuration, which exact numbers will be produced, and the
+confirmation that the guard is still armed; (2) append it to this file; (3) send
+**one** push notification; (4) commit and push; (5) **stop**. It must **not**
+load, read, feature-engineer from, train on or compute any metric against 2025
+data — the holdout stays SEALED until a human writes the unseal marker and
+records the approval here, and `data/holdout.py` will refuse it anyway.
+
+A session that fires while this field still reads a checkpoint that has already
+been requested but not approved should do no new work: verify nothing has
+changed, append a one-line wait note, and stop without a push notification.
+
+Three open FLAGs carry forward, all explained and none a bug: **FLAG C5-01**
+(resolved at Checkpoint B as a stated limitation), **FLAG C13-01** (now
+reproduced at all six C15 rungs) and **FLAG C14-01**. One new decision request:
+**NOTE C15-01**. The 2025 holdout stays **SEALED**.
+

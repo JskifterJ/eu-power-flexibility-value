@@ -26,6 +26,18 @@ Nothing resets at midnight (PLAN.md). When a day is skipped the SoC is carried
 across the gap unchanged — the battery sat idle, which is what a desk with no
 price vector would have done — and the gap is recorded, not smoothed over.
 
+``soc_policy="reset"`` is the one departure, added in C15 as PLAN.md's declared
+*daily-reset* sensitivity — the leg that measures what the carryover is worth by
+removing it. It is deliberately hard to use wrongly, because the obvious way to
+write it invents energy: a reset that opens every day half full while the
+horizon's terminal condition lets the LP end the day empty hands the battery
+``initial_soc_fraction`` of a capacity, free, 365 times a year, and the extra
+cash looks like a sensitivity result. So the reset is accepted only under a
+terminal **floor** at or above the opening fraction, where the LP must hand back
+at least what it was given and the reset can therefore only ever *discard*
+energy, never create it. How much it discarded is counted
+(:attr:`RollingResult.soc_reset_discarded_mwh`) rather than assumed to be zero.
+
 A day is skipped, never patched
 -------------------------------
 Three reasons, each counted and reported in :class:`RollingResult.skipped`:
@@ -82,6 +94,12 @@ from forecast.timing import (
 #: length is outside this set is a contract violation, not a short day.
 VALID_BLOCK_HOURS: tuple[int, ...] = (23, 24, 25)
 
+#: How a market day's opening SoC is chosen. ``"carry"`` is PLAN.md's rolling
+#: horizon and the committed default; ``"reset"`` is C15's declared daily-reset
+#: sensitivity and is guarded (see the module docstring and
+#: :func:`run_rolling_dispatch`).
+VALID_SOC_POLICIES: tuple[str, ...] = ("carry", "reset")
+
 
 class RollingError(RuntimeError):
     """The rolling horizon cannot be built from the series it was handed."""
@@ -129,6 +147,15 @@ class RollingResult:
     skipped: list[Skip] = field(default_factory=list)
     soc_opening: dict[dt.date, float] = field(default_factory=dict)
     reference_prices: dict[dt.date, float] = field(default_factory=dict)
+    #: ``"carry"`` (PLAN.md's rolling horizon) or ``"reset"`` (C15's declared
+    #: daily-reset sensitivity). Recorded on the result so a per-day artefact
+    #: cannot be read without knowing which policy produced it.
+    soc_policy: str = "carry"
+    #: Stored energy the daily reset threw away, MWh, per day it threw any away.
+    #: Empty under ``"carry"``. Counted rather than assumed: the reset is only
+    #: ever allowed to discard (see :func:`run_rolling_dispatch`), and a
+    #: sensitivity whose leg quietly destroys energy should say how much.
+    soc_reset_discarded: dict[dt.date, float] = field(default_factory=dict)
 
     # -- aggregates --------------------------------------------------------
     @property
@@ -155,6 +182,11 @@ class RollingResult:
     def equivalent_full_cycles(self) -> float:
         """Discharged grid energy in battery-fulls — the cycling the result implies."""
         return self.total_discharged_mwh / self.spec.energy_mwh
+
+    @property
+    def soc_reset_discarded_mwh(self) -> float:
+        """Total stored energy the daily reset discarded. Zero under ``"carry"``."""
+        return float(sum(self.soc_reset_discarded.values()))
 
     @property
     def n_simultaneity_days(self) -> int:
@@ -405,6 +437,7 @@ def run_rolling_dispatch(
     interval_hours: float = 1.0,
     tz: str | None = None,
     initial_soc_mwh: float | None = None,
+    soc_policy: str = "carry",
 ) -> RollingResult:
     """Dispatch day after day, carrying SoC, settling at realised prices.
 
@@ -417,7 +450,19 @@ def run_rolling_dispatch(
 
     ``days`` restricts dispatch to a subset (e.g. one evaluation year) while
     still letting the trailing reference window reach into the days before it.
+
+    ``soc_policy`` is PLAN.md's SoC lever. ``"carry"`` is the committed rolling
+    horizon. ``"reset"`` is C15's declared daily-reset sensitivity: every day
+    opens at the same SoC, so each market day is an independent problem. It is
+    refused unless the spec's terminal condition is a **floor** at or above the
+    opening fraction — without that the LP may end a day below where it started
+    and the reset would top the battery up for nothing, which is free energy
+    dressed as a sensitivity result.
     """
+    if soc_policy not in VALID_SOC_POLICIES:
+        raise RollingError(
+            f"unknown soc_policy {soc_policy!r}; expected one of {VALID_SOC_POLICIES}"
+        )
     zone_tz = tz or zone_timezone(zone)
     if not isinstance(realised_prices, pd.Series):
         raise RollingError("realised_prices must be a Series")
@@ -435,10 +480,30 @@ def run_rolling_dispatch(
     )
 
     wanted = None if days is None else set(days)
-    result = RollingResult(zone=zone, spec=spec, curve=curve)
+    result = RollingResult(zone=zone, spec=spec, curve=curve, soc_policy=soc_policy)
     soc = (
         spec.initial_soc_mwh if initial_soc_mwh is None else float(initial_soc_mwh)
     )
+    opening_soc = soc
+    if soc_policy == "reset":
+        # The guard the module docstring explains: a reset is only honest when
+        # the horizon cannot end below where it opened, so that the reset can
+        # only discard stored energy, never conjure it.
+        if spec.terminal_mode != "floor":
+            raise RollingError(
+                f"soc_policy='reset' needs terminal_mode='floor' so the day cannot "
+                f"end below its opening SoC; got terminal_mode="
+                f"{spec.terminal_mode!r}. Under 'none' the LP empties the battery "
+                f"and the reset would refill it for free; under 'trailing_value' "
+                f"the run would book a mark on inventory the reset discards."
+            )
+        if spec.terminal_floor_mwh < opening_soc - 1e-9:
+            raise RollingError(
+                f"soc_policy='reset' opens each day at {opening_soc:.6g} MWh but the "
+                f"terminal floor is {spec.terminal_floor_mwh:.6g} MWh, so a day may "
+                f"end below its opening SoC and the reset would create "
+                f"{opening_soc - spec.terminal_floor_mwh:.6g} MWh of free energy"
+            )
 
     for skip in skips:
         if wanted is None or skip.day in wanted:
@@ -512,6 +577,14 @@ def run_rolling_dispatch(
         # resets at midnight, and a skipped day carries this value across
         # unchanged rather than restarting from the initial fraction.
         soc = schedule.soc_end_mwh
+        if soc_policy == "reset":
+            # C15's declared sensitivity. The guard above means `soc` is at or
+            # above `opening_soc`, so this only ever throws energy away; what it
+            # threw away is recorded rather than rounded off.
+            discarded = soc - opening_soc
+            if discarded > 1e-9:
+                result.soc_reset_discarded[day] = float(discarded)
+            soc = opening_soc
 
     result.days.sort()
     result.skipped.sort(key=lambda s: s.day)

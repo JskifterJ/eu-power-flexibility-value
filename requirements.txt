@@ -110,3 +110,20 @@ lightgbm>=4.3
 # `backtest.bootstrap.replicate_counts`, so the two constructions cannot drift
 # apart and a C14 interval stays comparable to a C12/C13 one. The
 # library_fingerprint is unchanged from C10-C13 (856fb19ac0c4eecd).
+
+# C15 (the sensitivities: throughput cost 0/2/5, daily-reset vs rolling-horizon
+# SoC, RES-forecast degradation, 2h vs 4h duration): no new dependency, and
+# nothing in the existing set moved. The cycle re-fits nothing — every forecast
+# is read from a committed artefact — so the only numerical work is 1 836
+# rolling-horizon runs of C5/C6's LP (scipy's HiGHS, via dispatch.battery) and
+# C12's bootstrap, imported rather than re-derived. One performance note that is
+# *not* a dependency: `backtest.bootstrap.replicate_counts` is a pure function of
+# (n_days, n_replicates, block_days, seed) and C15 asks for the same matrix about
+# 1 600 times, so the runner memoises it with `functools.lru_cache` — stdlib, no
+# library, and a test asserts the memoised draw is array-equal to the uncached
+# one, because a "faster" bootstrap that drew differently would silently unpair
+# every contrast. matplotlib is used for the three figures with
+# `matplotlib.use("Agg")` before pyplot, as in C2/C6/C14. The
+# library_fingerprint is unchanged from C10-C14 (856fb19ac0c4eecd), which is what
+# makes a C15 lever delta comparable to the C11/C13 levels it is measured
+# against.
