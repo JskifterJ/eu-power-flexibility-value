@@ -1,0 +1,652 @@
+{
+  "cycle": "C8",
+  "generated_at_utc": "2026-10-10T03:30:40+00:00",
+  "git_sha": "53f0b73eb675bce9c0a1bd033b324621ed7b1d06",
+  "config_hash": "515d4e8d98887256",
+  "zone": "NO2",
+  "evaluation_years": [
+    2023
+  ],
+  "walk_forward_spec": {
+    "refit_every_days": 1,
+    "min_train_days": 365,
+    "train_window_days": null
+  },
+  "lear_spec": {
+    "selector": "aic",
+    "hour_key": "local",
+    "hour_column": "hour_of_day_local",
+    "nan_policy": "decline",
+    "cv_splits": 5,
+    "cv_alphas": 50,
+    "max_iter": 20000,
+    "min_fit_rows": 120,
+    "vst": true
+  },
+  "align_train_from": "2022-01-01",
+  "persistence_lag_hours": 24,
+  "price_series": {
+    "zone": "NO2",
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "n_points": 52608,
+    "n_duplicate_timestamps": 0,
+    "first_ts_utc": "2018-12-31T23:00:00+00:00",
+    "last_ts_utc": "2024-12-31T22:00:00+00:00"
+  },
+  "exogenous_source": {
+    "n_hours": 26304,
+    "first_utc": "2022-01-01T00:00:00+00:00",
+    "last_utc": "2024-12-31T23:00:00+00:00",
+    "leakage_status": "FLAGGED",
+    "flagged_columns": [
+      "residual_load_forecast_mw",
+      "solar_forecast_da_mw",
+      "wind_forecast_da_mw"
+    ],
+    "documents": {
+      "load_forecast_da": {
+        "stitch": {
+          "zone": "NO2",
+          "document": "load_forecast_da",
+          "years": [
+            2022,
+            2023,
+            2024
+          ],
+          "columns": [
+            "load_forecast_da_mw"
+          ],
+          "n_points_native": 26304,
+          "n_duplicate_timestamps": 0,
+          "native_resolutions_seconds": [
+            3600
+          ],
+          "first_ts_utc": "2022-01-01T00:00:00+00:00",
+          "last_ts_utc": "2024-12-31T23:00:00+00:00",
+          "n_points_hourly": 26304
+        },
+        "leakage_status": "safe",
+        "aggregation_reports": {
+          "load_forecast_da_mw": {
+            "method": "passthrough (input already hourly)",
+            "input_resolution_seconds": 3600,
+            "intervals_per_hour": 1,
+            "n_input_rows": 26304,
+            "n_output_hours": 26304,
+            "n_partial_hours": 0,
+            "partial_hours_utc": [],
+            "volume_weighted": false
+          }
+        }
+      },
+      "wind_solar_forecast_da": {
+        "stitch": {
+          "zone": "NO2",
+          "document": "wind_solar_forecast_da",
+          "years": [
+            2022,
+            2023,
+            2024
+          ],
+          "columns": [
+            "solar_forecast_da_mw",
+            "wind_forecast_da_mw"
+          ],
+          "n_points_native": 26256,
+          "n_duplicate_timestamps": 0,
+          "native_resolutions_seconds": [
+            3600
+          ],
+          "first_ts_utc": "2022-01-01T00:00:00+00:00",
+          "last_ts_utc": "2024-12-31T23:00:00+00:00",
+          "n_points_hourly": 26256
+        },
+        "leakage_status": "FLAGGED",
+        "aggregation_reports": {
+          "solar_forecast_da_mw": {
+            "method": "passthrough (input already hourly)",
+            "input_resolution_seconds": 3600,
+            "intervals_per_hour": 1,
+            "n_input_rows": 26256,
+            "n_output_hours": 26256,
+            "n_partial_hours": 0,
+            "partial_hours_utc": [],
+            "volume_weighted": false
+          },
+          "wind_forecast_da_mw": {
+            "method": "passthrough (input already hourly)",
+            "input_resolution_seconds": 3600,
+            "intervals_per_hour": 1,
+            "n_input_rows": 26256,
+            "n_output_hours": 26256,
+            "n_partial_hours": 0,
+            "partial_hours_utc": [],
+            "volume_weighted": false
+          }
+        }
+      }
+    }
+  },
+  "publication_clocks": {
+    "load_forecast_da": {
+      "document": "load_forecast_da",
+      "day_offset": -1,
+      "local_time": "10:00",
+      "tz": "Europe/Brussels",
+      "leakage_status": "safe",
+      "describes": "10:00 Europe/Brussels on D-1"
+    },
+    "wind_solar_forecast_da": {
+      "document": "wind_solar_forecast_da",
+      "day_offset": -1,
+      "local_time": "18:00",
+      "tz": "Europe/Brussels",
+      "leakage_status": "FLAGGED",
+      "describes": "18:00 Europe/Brussels on D-1"
+    }
+  },
+  "feature_build": {
+    "zone": "NO2",
+    "n_rows": 52608,
+    "first_target_utc": "2018-12-31T23:00:00+00:00",
+    "last_target_utc": "2024-12-31T22:00:00+00:00",
+    "price_columns": [
+      "price_lag_24h",
+      "price_lag_48h",
+      "price_lag_72h",
+      "price_lag_168h",
+      "price_daily_mean_lag_24h",
+      "price_daily_min_lag_24h",
+      "price_daily_max_lag_24h"
+    ],
+    "calendar_columns": [
+      "hour_of_day_local",
+      "hour_of_day_utc",
+      "day_of_week",
+      "is_weekend",
+      "month"
+    ],
+    "deferred_columns": [
+      "is_public_holiday"
+    ],
+    "daily_aggregate_source": {
+      "price_daily_mean_lag_24h": "latest fully public UTC calendar day (mean); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_min_lag_24h": "latest fully public UTC calendar day (min); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)",
+      "price_daily_max_lag_24h": "latest fully public UTC calendar day (max); e.g. target 2024-12-31T22:00:00+00:00 -> UTC day 2024-12-29 (NOTE C3-01)"
+    },
+    "n_incomplete_utc_days": 2,
+    "mask": {
+      "total_masked": 6,
+      "masked_per_column": {
+        "price_lag_24h": 6
+      },
+      "first_masked_per_column": {
+        "price_lag_24h": "2019-10-27T22:00:00+00:00"
+      }
+    }
+  },
+  "n_rows_aligned": 26304,
+  "n_rows_full_history": 52608,
+  "reference_scores": {
+    "naive_last_week": {
+      "n": 8760,
+      "n_scored": 8760,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 23.515114,
+      "rmse": 33.067444,
+      "bias": 1.054653
+    },
+    "train_mean": {
+      "n": 8760,
+      "n_scored": 8760,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 95.203912,
+      "rmse": 100.124515,
+      "bias": 94.633977
+    }
+  },
+  "arms": {
+    "price_only": {
+      "exog_spec": {
+        "variant": "price_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [],
+      "acknowledged_late_columns": [],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8759,
+        "n_missing_prediction": 1,
+        "coverage": 0.999886,
+        "mae": 17.254749,
+        "rmse": 23.507217,
+        "bias": 6.928366
+      },
+      "rmae_vs_naive": 0.733741,
+      "skill_vs_train_mean": 0.818757,
+      "n_folds": 365
+    },
+    "load_only": {
+      "exog_spec": {
+        "variant": "load_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw"
+      ],
+      "acknowledged_late_columns": [],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8759,
+        "n_missing_prediction": 1,
+        "coverage": 0.999886,
+        "mae": 17.519293,
+        "rmse": 23.775839,
+        "bias": 7.223606
+      },
+      "rmae_vs_naive": 0.74499,
+      "skill_vs_train_mean": 0.815978,
+      "n_folds": 365
+    },
+    "res_persistence": {
+      "exog_spec": {
+        "variant": "res_persistence",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "acknowledged_late_columns": [],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8759,
+        "n_missing_prediction": 1,
+        "coverage": 0.999886,
+        "mae": 17.48914,
+        "rmse": 23.762356,
+        "bias": 7.130771
+      },
+      "rmae_vs_naive": 0.743708,
+      "skill_vs_train_mean": 0.816295,
+      "n_folds": 365
+    },
+    "res_as_published": {
+      "exog_spec": {
+        "variant": "res_as_published",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 0,
+        "acknowledges_late_columns": true
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "acknowledged_late_columns": [
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "scores": {
+        "n": 8760,
+        "n_scored": 8759,
+        "n_missing_prediction": 1,
+        "coverage": 0.999886,
+        "mae": 16.922526,
+        "rmse": 22.526541,
+        "bias": 7.097953
+      },
+      "rmae_vs_naive": 0.719614,
+      "skill_vs_train_mean": 0.822246,
+      "n_folds": 365
+    }
+  },
+  "attach_reports": {
+    "price_only": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "price_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [],
+      "clocks": {},
+      "column_vintage": {},
+      "acknowledged_late_columns": [],
+      "acknowledged_violations": [],
+      "masked_per_column": {},
+      "persistence_masked_dst_rows": 0,
+      "persistence_masked_dst_timestamps": [],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26304,
+      "first_complete_exogenous_utc": null,
+      "coverage_per_column": {},
+      "exogenous_source": {}
+    },
+    "load_only": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "load_only",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw"
+      ],
+      "clocks": {
+        "load_forecast_da": {
+          "document": "load_forecast_da",
+          "day_offset": -1,
+          "local_time": "10:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "safe",
+          "describes": "10:00 Europe/Brussels on D-1"
+        },
+        "wind_solar_forecast_da": {
+          "document": "wind_solar_forecast_da",
+          "day_offset": -1,
+          "local_time": "18:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "FLAGGED",
+          "describes": "18:00 Europe/Brussels on D-1"
+        }
+      },
+      "column_vintage": {
+        "load_forecast_da_mw": "as published for the target market day; public 10:00 Europe/Brussels on D-1"
+      },
+      "acknowledged_late_columns": [],
+      "acknowledged_violations": [],
+      "masked_per_column": {},
+      "persistence_masked_dst_rows": 0,
+      "persistence_masked_dst_timestamps": [],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26303,
+      "first_complete_exogenous_utc": "2022-01-01T00:00:00+00:00",
+      "coverage_per_column": {
+        "load_forecast_da_mw": 0.999962
+      },
+      "exogenous_source": {
+        "leakage_status": "FLAGGED",
+        "flagged_columns": [
+          "residual_load_forecast_mw",
+          "solar_forecast_da_mw",
+          "wind_forecast_da_mw"
+        ],
+        "native_resolutions_seconds": [
+          3600
+        ],
+        "unit": "MW"
+      }
+    },
+    "res_persistence": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "res_persistence",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 24,
+        "acknowledges_late_columns": false
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "clocks": {
+        "load_forecast_da": {
+          "document": "load_forecast_da",
+          "day_offset": -1,
+          "local_time": "10:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "safe",
+          "describes": "10:00 Europe/Brussels on D-1"
+        },
+        "wind_solar_forecast_da": {
+          "document": "wind_solar_forecast_da",
+          "day_offset": -1,
+          "local_time": "18:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "FLAGGED",
+          "describes": "18:00 Europe/Brussels on D-1"
+        }
+      },
+      "column_vintage": {
+        "load_forecast_da_mw": "as published for the target market day; public 10:00 Europe/Brussels on D-1",
+        "wind_forecast_da_mw": "the vintage published 24h earlier (for market day D-1); public 18:00 Europe/Brussels on D-1 of that day",
+        "solar_forecast_da_mw": "the vintage published 24h earlier (for market day D-1); public 18:00 Europe/Brussels on D-1 of that day",
+        "residual_load_forecast_mw": "derived: load_forecast_da_mw - wind_forecast_da_mw - solar_forecast_da_mw, each at this variant's own vintage; information time is the latest of the three"
+      },
+      "acknowledged_late_columns": [],
+      "acknowledged_violations": [],
+      "masked_per_column": {
+        "wind_forecast_da_mw": 3,
+        "solar_forecast_da_mw": 3,
+        "residual_load_forecast_mw": 3
+      },
+      "persistence_masked_dst_rows": 3,
+      "persistence_masked_dst_timestamps": [
+        "2022-10-30T22:00:00+00:00",
+        "2023-10-29T22:00:00+00:00",
+        "2024-10-27T22:00:00+00:00"
+      ],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26228,
+      "first_complete_exogenous_utc": "2022-01-02T00:00:00+00:00",
+      "coverage_per_column": {
+        "load_forecast_da_mw": 0.999962,
+        "wind_forecast_da_mw": 0.997111,
+        "solar_forecast_da_mw": 0.997111,
+        "residual_load_forecast_mw": 0.997111
+      },
+      "exogenous_source": {
+        "leakage_status": "FLAGGED",
+        "flagged_columns": [
+          "residual_load_forecast_mw",
+          "solar_forecast_da_mw",
+          "wind_forecast_da_mw"
+        ],
+        "native_resolutions_seconds": [
+          3600
+        ],
+        "unit": "MW"
+      }
+    },
+    "res_as_published": {
+      "zone": "NO2",
+      "spec": {
+        "variant": "res_as_published",
+        "persistence_lag_hours": 24,
+        "include_residual_load": true,
+        "res_lag_hours": 0,
+        "acknowledges_late_columns": true
+      },
+      "exogenous_columns": [
+        "load_forecast_da_mw",
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "clocks": {
+        "load_forecast_da": {
+          "document": "load_forecast_da",
+          "day_offset": -1,
+          "local_time": "10:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "safe",
+          "describes": "10:00 Europe/Brussels on D-1"
+        },
+        "wind_solar_forecast_da": {
+          "document": "wind_solar_forecast_da",
+          "day_offset": -1,
+          "local_time": "18:00",
+          "tz": "Europe/Brussels",
+          "leakage_status": "FLAGGED",
+          "describes": "18:00 Europe/Brussels on D-1"
+        }
+      },
+      "column_vintage": {
+        "load_forecast_da_mw": "as published for the target market day; public 10:00 Europe/Brussels on D-1",
+        "wind_forecast_da_mw": "as published for the target market day; public 18:00 Europe/Brussels on D-1",
+        "solar_forecast_da_mw": "as published for the target market day; public 18:00 Europe/Brussels on D-1",
+        "residual_load_forecast_mw": "derived: load_forecast_da_mw - wind_forecast_da_mw - solar_forecast_da_mw, each at this variant's own vintage; information time is the latest of the three"
+      },
+      "acknowledged_late_columns": [
+        "wind_forecast_da_mw",
+        "solar_forecast_da_mw",
+        "residual_load_forecast_mw"
+      ],
+      "acknowledged_violations": [
+        {
+          "kind": "after_gate_closure",
+          "column": "wind_forecast_da_mw",
+          "detail": "feature embeds information published after the bidding deadline for its own target day",
+          "n_rows": 26255,
+          "first_timestamp": "2022-01-01T00:00:00+00:00",
+          "worst_lateness_seconds": 21600.0
+        },
+        {
+          "kind": "after_gate_closure",
+          "column": "solar_forecast_da_mw",
+          "detail": "feature embeds information published after the bidding deadline for its own target day",
+          "n_rows": 26255,
+          "first_timestamp": "2022-01-01T00:00:00+00:00",
+          "worst_lateness_seconds": 21600.0
+        },
+        {
+          "kind": "after_gate_closure",
+          "column": "residual_load_forecast_mw",
+          "detail": "feature embeds information published after the bidding deadline for its own target day",
+          "n_rows": 26255,
+          "first_timestamp": "2022-01-01T00:00:00+00:00",
+          "worst_lateness_seconds": 21600.0
+        }
+      ],
+      "masked_per_column": {},
+      "persistence_masked_dst_rows": 0,
+      "persistence_masked_dst_timestamps": [],
+      "n_rows": 26304,
+      "n_rows_with_all_exogenous": 26255,
+      "first_complete_exogenous_utc": "2022-01-01T00:00:00+00:00",
+      "coverage_per_column": {
+        "load_forecast_da_mw": 0.999962,
+        "wind_forecast_da_mw": 0.998137,
+        "solar_forecast_da_mw": 0.998137,
+        "residual_load_forecast_mw": 0.998137
+      },
+      "exogenous_source": {
+        "leakage_status": "FLAGGED",
+        "flagged_columns": [
+          "residual_load_forecast_mw",
+          "solar_forecast_da_mw",
+          "wind_forecast_da_mw"
+        ],
+        "native_resolutions_seconds": [
+          3600
+        ],
+        "unit": "MW"
+      }
+    }
+  },
+  "common_hours": {
+    "n_hours": 8759,
+    "n_hours_dropped": 1,
+    "scores": {
+      "price_only": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 17.254749,
+        "rmse": 23.507217,
+        "bias": 6.928366
+      },
+      "load_only": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 17.519293,
+        "rmse": 23.775839,
+        "bias": 7.223606
+      },
+      "res_persistence": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 17.48914,
+        "rmse": 23.762356,
+        "bias": 7.130771
+      },
+      "res_as_published": {
+        "n": 8759,
+        "n_scored": 8759,
+        "n_missing_prediction": 0,
+        "coverage": 1.0,
+        "mae": 16.922526,
+        "rmse": 22.526541,
+        "bias": 7.097953
+      }
+    },
+    "note": "The arms decline different hours (the committed LEAR declines an hour whose design has a hole, and the exogenous columns carry FINDING C7-C's source gaps). These are the only scores in this summary that compare the arms on one evaluation set; the per-arm block above is each arm on its own coverage."
+  },
+  "degradation": {
+    "capturable_exogenous_gain": {
+      "arms": "load_only vs price_only",
+      "mae_improvement_eur_mwh": -0.264544,
+      "mae_improvement_fraction": -0.015332,
+      "mae_improvement_as_fraction_of_naive_mae": -0.01125
+    },
+    "vintage_premium": {
+      "arms": "res_as_published vs res_persistence",
+      "mae_improvement_eur_mwh": 0.566614,
+      "mae_improvement_fraction": 0.032398,
+      "mae_improvement_as_fraction_of_naive_mae": 0.024096
+    },
+    "ladder": {
+      "variants": [
+        "price_only",
+        "load_only",
+        "res_persistence",
+        "res_as_published"
+      ],
+      "mae": [
+        17.254749,
+        17.519293,
+        17.48914,
+        16.922526
+      ],
+      "listed_in_information_order": true,
+      "mae_monotone_non_increasing": false,
+      "note": "Each arm's information set contains the previous arm's, so MAE is expected to be non-increasing along the ladder. A violation is a finding about the model \u2014 a column the LASSO cannot exploit, or a weak signal swamped by the extra parameters it costs \u2014 not a plumbing bug, and it is reported as such rather than smoothed."
+    }
+  }
+}
