@@ -5128,6 +5128,10 @@ mechanism FINDING C12-C asked for; and **NOTE C13-04** (the 2023 exogenous
 ladder), which ran in full and **closes NOTE C8-01 — the answer is no**. Full
 write-up in `docs/fundamentals.md`.
 
+**Full suite: 708 passed, 0 failed, 51 warnings** (640 before C14 + 68 new). The 51
+warnings are the same pre-existing sklearn LARS notices from the C8 LEAR tests that
+C13 recorded; C14 adds none.
+
 **No checkpoint, no blocker, no new dependency.** The cycle is one new runner
 (`backtest/run_c14_fundamentals.py`), one new test file
 (`tests/test_c14_fundamentals.py`, 68 tests — C11/C12/C13's precedent, a
