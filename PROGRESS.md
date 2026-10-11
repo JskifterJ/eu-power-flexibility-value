@@ -6364,3 +6364,31 @@ room; the evaluation and its record come first.
   C17 stays blocked until a human does the four things in `docs/checkpoint_c.md` §4.
 
 **The 2025 holdout is SEALED.**
+
+---
+
+### Checkpoint C wait — 2026-10-11 (scheduled cycle, 2nd wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT C**, so per
+  CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has changed
+  and stopped. `origin/master` == local HEAD at `89049ed` (the 1st-wait commit — no human
+  commits since, `git status` clean, `git fetch origin master` fast-forwarded only the
+  stale local ref); all four unseal conditions still **unmet**, this time confirmed by
+  running the guard rather than by reading it — `holdout_is_unsealed()` = `False`,
+  `sealed_years()` = `{2025}`, `assert_not_sealed(2025, ...)` raised `SealedHoldoutError`,
+  and (i) the marker is absent from this file (its only occurrence is inside backticks in
+  the C16 instructions at line 6263, not alone on a line), (ii) `config/data.yaml`
+  `fetch_years` is still `[2019, 2020, 2021, 2022, 2023, 2024]`, (iii) **NOTE C15-01** is
+  undecided, (iv) the status line still reads AWAITING HUMAN. Checkpoint C artefacts
+  present and byte-identical to HEAD (`backtest/results/c16_seal_verification.json`,
+  `backtest/results/c16_preregistration.json`, `docs/checkpoint_c.md`). No 2025 file
+  anywhere under `data/`; the price manifest's `year` column holds exactly
+  2019-2024 and the exogenous manifest's 2022-2024, and the only `2025` strings in
+  `data/manifest/` are the exclusive `periodEnd=202501010000` boundaries of the 2024
+  ENTSO-E pulls. **No 2025 data was fetched, loaded, read or measured.** No push
+  notification sent (the Checkpoint C ping went out with the C16 entry — repeat pings for
+  the same wait are noise). The detached-HEAD trap recurred a third time: the container
+  arrived detached at `89049ed` with local `master` stranded at `0108407`, reattached with
+  `git checkout -B master 89049ed` and re-tracked `origin/master` before anything else.
+  C17 stays blocked until a human does the four things in `docs/checkpoint_c.md` §4.
+
+**The 2025 holdout is SEALED.**
