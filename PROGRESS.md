@@ -6341,3 +6341,26 @@ README rewrite, figures) follows in the same cycle only if the evaluation leaves
 room; the evaluation and its record come first.
 
 **The 2025 holdout is SEALED.**
+
+---
+
+### Checkpoint C wait — 2026-10-11 (scheduled cycle, 1st wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — CHECKPOINT C**, so per
+  CLAUDE.md / PLAN.md this cycle did no new work: verified only that nothing has changed
+  and stopped. `origin/master` == local HEAD at `24a37a2` (the C16 checkpoint commit — no
+  human commits since, `git status` clean, `git fetch origin master` brought nothing new);
+  all four unseal conditions still **unmet** — (i) the unseal marker is absent from this
+  file (the only occurrence of the string is inside backticks in the C16 instructions at
+  line 6263, not alone on a line, so `holdout_is_unsealed()` = `False` and `sealed_years()`
+  = `{2025}`), (ii) `config/data.yaml` `fetch_years` is still
+  `[2019, 2020, 2021, 2022, 2023, 2024]`, (iii) **NOTE C15-01** is undecided, (iv) the
+  status line still reads AWAITING HUMAN. Checkpoint C artefacts present and unmodified
+  (`backtest/results/c16_seal_verification.json`, `backtest/results/c16_preregistration.json`,
+  `docs/checkpoint_c.md`). No 2025 file anywhere under `data/`; **no 2025 data was fetched,
+  loaded, read or measured.** No push notification sent (the Checkpoint C ping went out with
+  the C16 entry — repeat pings for the same wait are noise). The detached-HEAD trap recurred
+  again: the container arrived detached at `24a37a2`, reattached with
+  `git checkout -B master 24a37a2` and re-pointed at `origin/master` before anything else.
+  C17 stays blocked until a human does the four things in `docs/checkpoint_c.md` §4.
+
+**The 2025 holdout is SEALED.**
