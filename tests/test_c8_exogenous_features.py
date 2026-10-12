@@ -37,7 +37,12 @@ import pandas as pd
 import pytest
 
 from backtest.metrics import score
-from backtest.walk_forward import WalkForwardSpec, evaluation_days, run_walk_forward
+from backtest.walk_forward import (
+    WalkForwardError,
+    WalkForwardSpec,
+    evaluation_days,
+    run_walk_forward,
+)
 from data.exogenous import (
     LOAD_COLUMN,
     RESIDUAL_LOAD_COLUMN,
@@ -634,12 +639,21 @@ def test_the_feature_spec_still_declares_the_art_14_columns_flagged():
 # ---------------------------------------------------------------------------
 
 
-def test_no_arm_can_be_evaluated_against_a_sealed_year(matrix, exog):
+def test_every_arm_now_passes_the_holdout_guard_for_2025(matrix, exog):
+    """Was test_no_arm_can_be_evaluated_against_a_sealed_year. sealed_years()
+    (data/config.py) still declares 2025 by design — splits.holdout.years/sealed
+    stay permanent, independent of whether the holdout is currently unsealed.
+    What changed at Checkpoint C (2026-10-12) is holdout_is_unsealed(), which
+    evaluation_days() checks by default. `matrix`/`exog` are synthetic fixtures
+    never populated with real 2025 rows (unneeded when the point was proving the
+    guard fired first), so past the now-passing guard this reaches a different,
+    expected complaint instead of succeeding outright — see
+    test_harness_now_passes_the_holdout_guard_for_2025 in
+    tests/test_c3_leakage_harness.py for the same pattern."""
     from data.config import sealed_years
-    from data.holdout import SealedHoldoutError
 
     sealed = sorted(sealed_years())
-    assert sealed == [2025], "C8 must still find 2025 sealed"
+    assert sealed == [2025], "the declared holdout year is permanent"
     attached, _ = _attach(matrix, exog, "load_only")
-    with pytest.raises(SealedHoldoutError):
+    with pytest.raises(WalkForwardError, match="no complete market days"):
         evaluation_days(attached, sealed)

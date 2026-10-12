@@ -31,10 +31,14 @@ splits:
 # be touched. Written only by a human, never by an agent cycle.
 holdout_unseal_marker: "CHECKPOINT C APPROVED: 2025 holdout unsealed"
 
-# Years to fetch in ordinary (non-holdout) cycles. Deliberately stops at 2024:
-# 2025 is sealed, and 2026 is outside the study window (the main hourly backtest
-# ends 2025-09-30, the day before the SDAC 15-minute go-live).
-fetch_years: [2019, 2020, 2021, 2022, 2023, 2024]
+# Years to fetch in ordinary cycles. 2025 added 2026-10-12 (Checkpoint C
+# approved — see PROGRESS.md and docs/checkpoint_c.md): the holdout guard in
+# data/holdout.py is the actual enforcement mechanism (this list alone does not
+# gate the Energy-Charts price fetch), but ENTSO-E's exogenous pull is bounded
+# by this list via entsoe.exogenous_years, so 2025 has to be here for C17 to
+# fetch it at all. 2026 stays excluded: the main hourly backtest ends
+# 2025-09-30, the day before the SDAC 15-minute go-live.
+fetch_years: [2019, 2020, 2021, 2022, 2023, 2024, 2025]
 
 # ---------------------------------------------------------------------------
 # Structural dates

@@ -289,7 +289,13 @@ def guard_census(root: Path | None = None) -> dict[str, Any]:
                 continue
             calls = _guard_calls(path)
             if calls:
-                per_module[str(path.relative_to(base))] = calls
+                # .as_posix(), not str(): str(WindowsPath) is backslash-separated
+                # on Windows, which silently fails every lookup against
+                # REQUIRED_GUARD_MODULES's forward-slash literals below — found
+                # 2026-10-12, this repo's first run outside a Linux container,
+                # when all six required modules reported "missing" despite every
+                # one of them genuinely containing a guard call.
+                per_module[path.relative_to(base).as_posix()] = calls
     missing = [m for m in REQUIRED_GUARD_MODULES if not per_module.get(m)]
     if missing:
         raise CheckpointError(

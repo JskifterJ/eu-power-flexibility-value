@@ -147,11 +147,14 @@ def test_load_document_carries_no_psr_type():
     assert ec.document_spec(WS_DOC).carries_psr_type is True
 
 
-def test_exogenous_years_start_in_2022_and_exclude_the_holdout():
+def test_exogenous_years_start_in_2022_and_now_include_the_unsealed_holdout():
+    """Was ...and_exclude_the_holdout. exogenous_years() derives from fetch_years
+    (data/config.py), which Checkpoint C (2026-10-12) extended to include 2025
+    on approval (docs/checkpoint_c.md §4(b)) — exactly so this would be true."""
     years = ec.exogenous_years()
     assert min(years) == 2022, "PLAN.md: no archived D-1 forecast vintage before 2022"
     assert 2021 not in years
-    assert 2025 not in years, "the sealed holdout must never be fetchable"
+    assert 2025 in years, "C17 needs this to fetch the holdout's exogenous features"
 
 
 def test_column_leakage_status_including_the_derived_column():
@@ -523,13 +526,24 @@ def test_a_response_containing_a_sealed_year_timestamp_is_refused():
         ec.parse_document(payload, LOAD_DOC, "ctx")
 
 
-def test_fetching_a_sealed_year_raises_before_any_request():
-    with pytest.raises(SealedHoldoutError):
+def test_fetching_2025_now_passes_the_holdout_guard():
+    """Was test_fetching_a_sealed_year_raises_before_any_request. The holdout
+    guard (checked first, before exogenous_years, caching, or the token) no
+    longer refuses 2025. What's left is this local environment genuinely having
+    no ENTSOE_API_KEY set (api_token() is called before any network request,
+    per data/entsoe.py's fetch_year) — MissingCredential, not SealedHoldoutError,
+    is the proof the guard passed; CLAUDE.md's own instruction for a missing
+    credential is to flag and continue rather than block, which is exactly what
+    this environment difference is."""
+    with pytest.raises(ec.MissingCredential, match="ENTSOE_API_KEY"):
         ec.fetch_year("DE-LU", LOAD_DOC, 2025)
 
 
-def test_reading_a_cached_sealed_year_raises():
-    with pytest.raises(SealedHoldoutError):
+def test_reading_a_cached_2025_year_now_passes_the_holdout_guard():
+    """Was test_reading_a_cached_sealed_year_raises. No 2025 ENTSO-E file has
+    ever been cached (C17 hasn't run), so past the now-passing holdout guard
+    this correctly reaches 'no such file', not 'sealed'."""
+    with pytest.raises(FileNotFoundError):
         ec.read_cached_year("DE-LU", LOAD_DOC, 2025)
 
 

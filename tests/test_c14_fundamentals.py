@@ -77,8 +77,8 @@ from data.exogenous import (
     RESIDUAL_LOAD_COLUMN,
     SOLAR_COLUMN,
     WIND_COLUMN,
+    ExogenousDataError,
 )
-from data.holdout import SealedHoldoutError
 
 RESULTS = Path(RESULTS_DIR)
 FUNDAMENTALS = RESULTS / "c14_fundamentals_summary.json"
@@ -589,19 +589,19 @@ def test_the_declared_years_stop_before_the_holdout():
     assert max(EXOG_YEARS) == 2024
 
 
-def test_a_fundamentals_frame_refuses_a_sealed_year_before_touching_a_path():
-    """The guard fires on the year list, so 2025 cannot arrive as a file error.
-
-    If it fired later, a missing-file message would be the *only* thing standing
-    between this cycle and the holdout, and a cached 2025 file would be enough
-    to defeat it.
+def test_2025_now_passes_the_holdout_guard_in_fundamentals_frame():
+    """Was test_a_fundamentals_frame_refuses_a_sealed_year_before_touching_a_path.
+    2025 was unsealed at Checkpoint C (2026-10-12); past the now-passing guard
+    this correctly reaches the next real check — no cached ENTSO-E exogenous
+    data for 2025 (C17 hasn't fetched it yet) — rather than succeeding outright.
     """
-    with pytest.raises(SealedHoldoutError):
+    with pytest.raises(ExogenousDataError, match="no cached ENTSO-E"):
         fundamentals_frame("DE-LU", [2025])
 
 
-def test_a_headroom_frame_refuses_a_sealed_year_before_touching_a_path():
-    with pytest.raises(SealedHoldoutError):
+def test_2025_now_passes_the_holdout_guard_in_headroom_frame():
+    """Was test_a_headroom_frame_refuses_a_sealed_year_before_touching_a_path."""
+    with pytest.raises(ExogenousDataError, match="no cached ENTSO-E"):
         headroom_frame("DE-LU", [2024, 2025])
 
 

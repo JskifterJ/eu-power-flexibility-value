@@ -42,10 +42,100 @@ def test_every_zone_has_a_bzn_and_iana_timezone():
         assert "/" in zone.local_tz, f"{zone.key}: local_tz must be an IANA name"
 
 
-def test_fetch_years_never_overlap_the_sealed_holdout():
+def test_fetch_years_overlaps_the_sealed_holdout_now_that_it_is_unsealed():
+    """Checkpoint C (2026-10-12): fetch_years was extended to include 2025,
+    exactly as docs/checkpoint_c.md §4(b) requires, because entsoe.exogenous_years()
+    derives from this list. This is the real repo's actual, permanent post-unseal
+    state — holdout.years stays {2025} by declaration; fetch_years including 2025
+    is now correct, not a leak, because holdout_is_unsealed() is True. The
+    synthetic, config_dir-isolated tests below cover the refuse/allow logic
+    itself without depending on this repo's real, one-way PROGRESS.md state.
+    """
     cfg = config_mod.load_data_config()
     assert config_mod.sealed_years() == {2025}
-    assert not set(cfg["fetch_years"]) & config_mod.sealed_years()
+    assert set(cfg["fetch_years"]) & config_mod.sealed_years() == {2025}
+    assert holdout_mod.holdout_is_unsealed() is True
+
+
+def _write_minimal_data_yaml(config_dir, *, sealed_year: int, fetch_years: list[int]) -> str:
+    """A synthetic, minimal-but-valid data.yaml isolated from the real repo's.
+
+    Returns the marker string, so a test can write it (or not) into its own
+    synthetic PROGRESS.md.
+    """
+    marker = "TEST MARKER — not the real repo's, see config/data.yaml"
+    (config_dir / "data.yaml").write_text(
+        f"""
+splits:
+  holdout:
+    years: [{sealed_year}]
+    sealed: true
+fetch_years: {fetch_years}
+holdout_unseal_marker: {marker!r}
+sources: {{}}
+time: {{}}
+""",
+        encoding="utf-8",
+    )
+    return marker
+
+
+def test_load_data_config_refuses_fetch_years_overlap_when_not_unsealed(tmp_path):
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    _write_minimal_data_yaml(config_dir, sealed_year=9999, fetch_years=[2020, 9999])
+    progress = tmp_path / "PROGRESS.md"
+    progress.write_text("### no marker here\n", encoding="utf-8")
+
+    with pytest.raises(config_mod.ConfigError, match="fetch_years overlaps"):
+        config_mod.load_data_config(config_dir=config_dir, progress_path=progress)
+
+
+def test_load_data_config_allows_fetch_years_overlap_when_unsealed(tmp_path):
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    marker = _write_minimal_data_yaml(config_dir, sealed_year=9999, fetch_years=[2020, 9999])
+    progress = tmp_path / "PROGRESS.md"
+    progress.write_text(f"### approved\n{marker}\n", encoding="utf-8")
+
+    cfg = config_mod.load_data_config(config_dir=config_dir, progress_path=progress)
+    assert cfg["fetch_years"] == [2020, 9999]
+
+
+def test_load_data_config_still_refuses_when_marker_only_quoted_in_prose(tmp_path):
+    """The same hardening as Checkpoint A's holdout_is_unsealed() fix, duplicated
+    here deliberately (see the comment in data/config.py) — the marker embedded
+    in a sentence must not count as unsealing the overlap check either."""
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    marker = _write_minimal_data_yaml(config_dir, sealed_year=9999, fetch_years=[9999])
+    progress = tmp_path / "PROGRESS.md"
+    progress.write_text(f"The marker is {marker!r}, quoted, not alone.\n", encoding="utf-8")
+
+    with pytest.raises(config_mod.ConfigError, match="fetch_years overlaps"):
+        config_mod.load_data_config(config_dir=config_dir, progress_path=progress)
+
+
+def test_data_config_and_holdout_module_agree_on_the_marker_check(tmp_path):
+    """load_data_config()'s inline marker check (data/config.py) and
+    data.holdout.holdout_is_unsealed() are two independent implementations of
+    the same rule, kept that way only to avoid the recursive import described in
+    data/config.py's comment. This test is what keeps them from drifting apart.
+    """
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    marker = _write_minimal_data_yaml(config_dir, sealed_year=9999, fetch_years=[9999])
+
+    sealed = tmp_path / "sealed.md"
+    sealed.write_text("no marker\n", encoding="utf-8")
+    assert holdout_mod.holdout_is_unsealed(progress_path=sealed, config_dir=config_dir) is False
+    with pytest.raises(config_mod.ConfigError):
+        config_mod.load_data_config(config_dir=config_dir, progress_path=sealed)
+
+    unsealed = tmp_path / "unsealed.md"
+    unsealed.write_text(f"{marker}\n", encoding="utf-8")
+    assert holdout_mod.holdout_is_unsealed(progress_path=unsealed, config_dir=config_dir) is True
+    config_mod.load_data_config(config_dir=config_dir, progress_path=unsealed)  # does not raise
 
 
 def test_config_hash_is_stable_and_short():
@@ -64,21 +154,49 @@ def test_non_sealed_year_passes_guard():
 
 
 @pytest.mark.parametrize("years", [2025, {2024, 2025}, [2025, 2026]])
-def test_sealed_year_is_refused(years):
+def test_sealed_year_is_refused_when_not_unsealed(years, tmp_path):
+    """Checkpoint C (2026-10-12) unsealed the real repo's 2025 holdout, so this
+    no longer refuses against the default (real) PROGRESS.md — see
+    test_sealed_year_is_permitted_now_that_the_holdout_is_unsealed below for
+    that. The refuse mechanism itself is still real and still tested here,
+    against a synthetic "not yet unsealed" PROGRESS.md so coverage of it does
+    not depend on this repo's own, now one-way, unseal event.
+    """
+    still_sealed = tmp_path / "PROGRESS.md"
+    still_sealed.write_text("### no marker here\n", encoding="utf-8")
     with pytest.raises(holdout_mod.SealedHoldoutError):
-        holdout_mod.assert_not_sealed(years, "test")
+        holdout_mod.assert_not_sealed(years, "test", progress_path=still_sealed)
 
 
-def test_range_spanning_into_the_holdout_is_refused():
+def test_sealed_year_is_permitted_now_that_the_holdout_is_unsealed():
+    """The flip side of the test above, against the real (now unsealed)
+    PROGRESS.md: this must NOT raise, because C17 depends on it not raising."""
+    holdout_mod.assert_not_sealed(2025, "test")  # does not raise
+
+
+def test_range_spanning_into_the_holdout_is_refused_when_not_unsealed(tmp_path):
+    still_sealed = tmp_path / "PROGRESS.md"
+    still_sealed.write_text("### no marker here\n", encoding="utf-8")
     with pytest.raises(holdout_mod.SealedHoldoutError):
         holdout_mod.assert_range_not_sealed(
-            dt.date(2024, 12, 20), dt.date(2025, 1, 3), "test"
+            dt.date(2024, 12, 20), dt.date(2025, 1, 3), "test", progress_path=still_sealed
         )
 
 
-def test_repo_progress_file_does_not_yet_unseal_the_holdout():
-    """Tripwire: this must stay False until a human writes the marker at C16."""
-    assert holdout_mod.holdout_is_unsealed() is False
+def test_range_spanning_into_the_holdout_is_permitted_now_that_unsealed():
+    holdout_mod.assert_range_not_sealed(
+        dt.date(2024, 12, 20), dt.date(2025, 1, 3), "test"
+    )  # does not raise
+
+
+def test_repo_progress_file_now_unseals_the_holdout():
+    """Was the Checkpoint A/B/C16-era tripwire: 'this must stay False until a
+    human writes the marker at C16.' A human did, at Checkpoint C, 2026-10-12
+    — see the "Checkpoint C — approved, holdout unsealed" entry in PROGRESS.md.
+    This now asserts the marker is present and recognised, the mirror image of
+    the old tripwire, so a future accidental removal of that line is still
+    caught."""
+    assert holdout_mod.holdout_is_unsealed() is True
 
 
 def test_guard_opens_only_when_the_exact_marker_is_present(tmp_path):
@@ -288,10 +406,28 @@ def test_successful_fetch_writes_cache_with_provenance(tmp_path):
     assert list(frame[ec.PRICE_COLUMN]) == [7.0, -1.0]
 
 
-def test_fetching_a_sealed_year_is_refused_before_any_request(tmp_path):
+def test_fetching_2025_now_succeeds_past_the_holdout_guard(tmp_path):
+    """Was test_fetching_a_sealed_year_is_refused_before_any_request. fetch_year
+    and read_cached_year call holdout.assert_not_sealed() with no progress_path
+    override, so they always check this repo's real PROGRESS.md and cannot be
+    pointed at a synthetic one — unlike the lower-level guard tests above, this
+    one can only test against real state, and that state changed at Checkpoint C
+    (2026-10-12). Rather than only prove the guard no longer blocks (which the
+    weaker version of this fix would do by hitting _ExplodingSession's trap),
+    this runs a complete, successful fetch of 2025 — the thing C17 actually
+    needs to work, with a stub session rather than the real network, mirroring
+    test_fetch_year_caches_a_successful_response above it for 2024.
+    """
     cfg = _config_with_cache(tmp_path)
-    with pytest.raises(holdout_mod.SealedHoldoutError):
-        ec.fetch_year("DE-LU", 2025, cfg, session=_ExplodingSession())
+    payload = {"unix_seconds": [1735689600, 1735693200], "price": [3.0, -2.0],
+               "unit": "EUR / MWh", "deprecated": False, "license_info": "CC BY 4.0"}
+    session = _StubSession(_StubResponse(200, payload=payload))
+    path, downloaded = ec.fetch_year("DE-LU", 2025, cfg, session=session, sleep_after=False)
+    assert downloaded is True
+    stored = json.loads(path.read_text())
+    assert stored["_fetch_meta"]["year"] == 2025
+    frame = ec.read_cached_year("DE-LU", 2025, cfg)
+    assert list(frame[ec.PRICE_COLUMN]) == [3.0, -2.0]
 
 
 # ---------------------------------------------------------------------------
@@ -386,8 +522,13 @@ def test_build_and_write_manifest_round_trip(tmp_path):
     assert doc["config_hash"] == config_mod.config_hash()
 
 
-def test_manifest_cannot_include_a_sealed_year_even_if_cached(tmp_path):
-    """Belt and braces: a stray sealed-year cache file must still not be read."""
+def test_manifest_now_includes_2025_now_that_it_is_unsealed(tmp_path):
+    """Was test_manifest_cannot_include_a_sealed_year_even_if_cached ('belt and
+    braces: a stray sealed-year cache file must still not be read'). Checkpoint C
+    (2026-10-12) unsealed 2025, and build_manifest calling the real, default-args
+    holdout guard (like fetch_year above, it threads no progress_path override)
+    means this now has to succeed and produce a real row — exactly what C17's
+    manifest rebuild depends on."""
     cfg = _config_with_cache(tmp_path)
     path = ec.cache_path("DE-LU", 2025, cfg)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -395,5 +536,8 @@ def test_manifest_cannot_include_a_sealed_year_even_if_cached(tmp_path):
         {"unix_seconds": [1735689600], "price": [123.0], "unit": "EUR / MWh"}
     ))
     assert ec.cached_years("DE-LU", cfg) == [2025]
-    with pytest.raises(holdout_mod.SealedHoldoutError):
-        manifest_mod.build_manifest(["DE-LU"], None, cfg)
+    frame = manifest_mod.build_manifest(["DE-LU"], None, cfg)
+    assert len(frame) == 1
+    row = frame.iloc[0]
+    assert row["zone"] == "DE-LU" and row["year"] == 2025
+    assert row["price_mean"] == 123.0

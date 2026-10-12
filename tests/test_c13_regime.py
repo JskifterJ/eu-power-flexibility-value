@@ -65,7 +65,6 @@ from backtest.run_c13_regime import (
     unpaired_difference,
 )
 from backtest.run_c3_naive import RESULTS_DIR
-from data.holdout import SealedHoldoutError
 from data.manifest import MANIFEST_CSV
 
 RESULTS = Path(RESULTS_DIR)
@@ -240,8 +239,13 @@ def test_a_flat_forecast_day_has_no_ordering_and_is_counted_not_dropped():
 # ---------------------------------------------------------------------------
 
 
-def test_a_sealed_year_is_refused_before_any_path_is_built():
-    with pytest.raises(SealedHoldoutError):
+def test_2025_now_passes_the_holdout_guard_in_load_daily_by_year():
+    """Was test_a_sealed_year_is_refused_before_any_path_is_built. 2025 was
+    unsealed at Checkpoint C (2026-10-12); past the now-passing guard this
+    correctly reaches a RegimeError for the dispatch artefact C17 has not
+    produced yet (no cycle has run a 2025 dispatch), rather than succeeding
+    outright — that different, specific error is the proof the guard passed."""
+    with pytest.raises(RegimeError, match="2025.*missing"):
         load_daily_by_year(["DE-LU"], [2025])
 
 
@@ -391,8 +395,12 @@ def test_the_cutover_flag_says_every_evaluated_row_is_pre_cutover():
     assert max(status["evaluated_years"]) <= VALIDATION_YEAR
 
 
-def test_the_regime_table_refuses_a_sealed_year():
-    with pytest.raises(SealedHoldoutError):
+def test_2025_now_passes_the_holdout_guard_in_regime_price_table():
+    """Was test_the_regime_table_refuses_a_sealed_year. Same pattern as
+    test_2025_now_passes_the_holdout_guard_in_load_daily_by_year above: the
+    guard passes, and the next real check — no cached 2025 price series — is
+    what's reached instead."""
+    with pytest.raises(RegimeError, match="2025.*no hourly price"):
         regime_price_table(["DE-LU"], [2025])
 
 

@@ -44,7 +44,6 @@ from data.contracts import (
     utc_day_counts,
 )
 from data.energy_charts import PRICE_COLUMN
-from data.holdout import SealedHoldoutError
 from data.prices import PriceDataError, load_zone_series, wide_prices
 
 PRICE = PRICE_COLUMN
@@ -423,12 +422,20 @@ def test_loader_refuses_an_unknown_zone(cache_config, tmp_path):
         load_zone_series("ZZ-NOPE", [2024], cache_config)
 
 
-def test_loader_refuses_to_load_a_sealed_year(cache_config, tmp_path):
-    """Even with a sealed-year file sitting in the cache, the loader says no."""
+def test_loader_now_loads_2025_now_that_it_is_unsealed(cache_config, tmp_path):
+    """Was test_loader_refuses_to_load_a_sealed_year ('even with a sealed-year
+    file sitting in the cache, the loader says no'). Checkpoint C (2026-10-12)
+    unsealed 2025; load_zone_series calls the real, default-args holdout guard
+    (no progress_path override, like fetch_year and build_manifest in
+    tests/test_c1_data_layer.py), so this now has to succeed — stitching across
+    the 2024/2025 boundary is exactly what C17's evaluation window needs."""
     _write_cache(tmp_path, "DE-LU", 2024, _local_year_payload(2024))
     _write_cache(tmp_path, "DE-LU", 2025, _local_year_payload(2025))
-    with pytest.raises(SealedHoldoutError):
-        load_zone_series("DE-LU", [2024, 2025], cache_config)
+    frame = load_zone_series("DE-LU", [2024, 2025], cache_config)
+    assert frame.index.min().year == 2023  # the local-time request window's leading UTC hours
+    assert frame.index.max().year == 2025
+    assert frame.index.is_monotonic_increasing
+    assert not frame.index.duplicated().any()
 
 
 def test_loader_never_fills_a_gap_it_finds(cache_config, tmp_path):

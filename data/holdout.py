@@ -25,7 +25,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from data.config import REPO_ROOT, load_data_config, sealed_years
+from data.config import REPO_ROOT, raw_holdout_unseal_marker, sealed_years
 
 
 class SealedHoldoutError(RuntimeError):
@@ -33,7 +33,11 @@ class SealedHoldoutError(RuntimeError):
 
 
 def unseal_marker(config_dir: Path | None = None) -> str:
-    return str(load_data_config(config_dir)["holdout_unseal_marker"])
+    # Reads the marker directly (data.config.raw_holdout_unseal_marker), not via
+    # load_data_config(): that function's sealed/fetch_years-overlap check (added
+    # at Checkpoint C) needs the marker to decide whether an overlap is
+    # legitimate, so getting the marker can never be gated behind that check.
+    return raw_holdout_unseal_marker(config_dir)
 
 
 def holdout_is_unsealed(

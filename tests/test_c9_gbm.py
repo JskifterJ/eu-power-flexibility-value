@@ -38,8 +38,12 @@ import pytest
 
 from backtest import diagnostics as dx
 from backtest.metrics import score, skill_score
-from backtest.walk_forward import WalkForwardSpec, evaluation_days, run_walk_forward
-from data.holdout import SealedHoldoutError
+from backtest.walk_forward import (
+    WalkForwardError,
+    WalkForwardSpec,
+    evaluation_days,
+    run_walk_forward,
+)
 from forecast.features import build_features
 from forecast.gbm import (
     CATEGORICAL_FEATURES,
@@ -733,14 +737,18 @@ def test_a_leading_feature_would_be_worth_a_lot_to_the_gbm():
     assert leaking_mae < 0.8 * honest_mae, (honest_mae, leaking_mae)
 
 
-def test_the_gbm_cannot_be_evaluated_against_a_sealed_year(matrix):
-    """The booster inherits :mod:`data.holdout`'s refusal; it has no door of its own."""
-    with pytest.raises(SealedHoldoutError):
+def test_the_gbm_now_passes_the_holdout_guard_for_2025(matrix):
+    """Was test_the_gbm_cannot_be_evaluated_against_a_sealed_year. The booster
+    inherits :mod:`data.holdout`'s check with no door of its own — unchanged —
+    and that check now permits 2025, unsealed by Checkpoint C (2026-10-12).
+    `matrix` is a synthetic fixture never populated with real 2025 rows, so past
+    the now-passing guard this reaches a different, expected complaint — see
+    test_harness_now_passes_the_holdout_guard_for_2025 in
+    tests/test_c3_leakage_harness.py for the same pattern."""
+    with pytest.raises(WalkForwardError, match="no complete market days"):
         evaluation_days(matrix, [2025])
-    with pytest.raises(SealedHoldoutError):
-        run_walk_forward(
-            matrix, gbm_factory(SMALL), [dt.date(2025, 6, 1)], SPEC
-        )
+    with pytest.raises(WalkForwardError, match="no fold could be run"):
+        run_walk_forward(matrix, gbm_factory(SMALL), [dt.date(2025, 6, 1)], SPEC)
 
 
 # ---------------------------------------------------------------------------

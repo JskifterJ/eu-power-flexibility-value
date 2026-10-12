@@ -291,18 +291,16 @@ def test_the_metrics_c11_and_c12_will_write_need_no_schema_change(tmp_path, metr
 # ---------------------------------------------------------------------------
 
 
-def test_a_metric_against_the_sealed_year_cannot_be_written(tmp_path):
-    from data.holdout import SealedHoldoutError
+def test_a_metric_against_2025_can_now_be_written(tmp_path):
+    """Was test_a_metric_against_the_sealed_year_cannot_be_written. 2025 was
+    unsealed at Checkpoint C (2026-10-12); the store accepting a 2025 row is
+    exactly what C17 needs to succeed at."""
+    append(tmp_path, [a_row(evaluation_years="2025")])  # does not raise
 
-    with pytest.raises(SealedHoldoutError):
-        append(tmp_path, [a_row(evaluation_years="2025")])
 
-
-def test_a_sealed_year_hidden_in_a_multi_year_spelling_is_still_caught(tmp_path):
-    from data.holdout import SealedHoldoutError
-
-    with pytest.raises(SealedHoldoutError):
-        append(tmp_path, [a_row(evaluation_years="2024-2025")])
+def test_a_multi_year_spelling_including_2025_can_now_be_written(tmp_path):
+    """Was test_a_sealed_year_hidden_in_a_multi_year_spelling_is_still_caught."""
+    append(tmp_path, [a_row(evaluation_years="2024-2025")])  # does not raise
 
 
 def test_an_evaluation_years_spelling_the_guard_cannot_read_is_refused(tmp_path):
@@ -312,11 +310,15 @@ def test_an_evaluation_years_spelling_the_guard_cannot_read_is_refused(tmp_path)
 
 
 def test_nothing_is_written_when_a_row_is_refused(tmp_path):
+    """The 2025 row this used to demonstrate refusal with no longer refuses
+    (unsealed at Checkpoint C, 2026-10-12) — switched to the still-genuinely-
+    refused unparseable-spelling case (see
+    test_an_evaluation_years_spelling_the_guard_cannot_read_is_refused above)
+    so this keeps testing what it is actually named for: atomicity, not the
+    holdout guard specifically."""
     results, runs = store(tmp_path)
-    from data.holdout import SealedHoldoutError
-
-    with pytest.raises(SealedHoldoutError):
-        append(tmp_path, [a_row(), a_row(zone="ES", evaluation_years="2025")])
+    with pytest.raises(ResultsStoreError, match="four-digit year"):
+        append(tmp_path, [a_row(), a_row(zone="ES", evaluation_years="validation")])
     assert not results.exists()
     assert not runs.exists()
 

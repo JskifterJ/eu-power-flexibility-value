@@ -2,16 +2,14 @@
 
 ## Current status
 
-- **Next cycle to run:** **AWAITING HUMAN — CHECKPOINT C.** C16 ran on 2026-10-10 and did
-  Checkpoint C's own work: it **requested** the unseal of the 2025 holdout and stopped.
-  **The holdout is still SEALED.** Nothing in C17 may start until a human (i) writes the
-  unseal marker alone on its own line in this file, (ii) adds 2025 to `fetch_years` in
-  `config/data.yaml`, (iii) decides **NOTE C15-01**, and (iv) replaces this line with
-  **C17**. The three asks are spelled out in `docs/checkpoint_c.md` §4 and in the C16 log
-  entry below. **A session that fires while this line still reads AWAITING HUMAN does no
-  new work**: verify nothing has changed, append a one-line wait note, stop, and send
-  **no** push notification (the Checkpoint C ping went out in C16 — repeat pings for the
-  same wait are noise).
+- **Next cycle to run:** **C17.** Checkpoint C approved by J. on 2026-10-12 — see the
+  "Checkpoint C — approved, holdout unsealed" entry at the end of the log for exactly what
+  was reviewed and decided. The 2025 holdout is no longer sealed as of this commit. C17
+  runs the single pre-registered evaluation from `backtest/results/c16_preregistration.json`
+  **exactly once** — PLAN.md's stop rule: no model, feature, hyperparameter, battery
+  parameter or metric definition may change after the first 2025 number is seen. A change
+  that looks necessary is a finding to report, and any re-run must be labelled as a second
+  evaluation.
 - **C16 complete — Checkpoint C requested.** Two committed artefacts, both machine-checked
   rather than asserted: `backtest/results/c16_seal_verification.json` (the seal: marker
   absent, 33 guard calls across 14 modules, 6 of 6 required modules guarded, **8 of 8**
@@ -65,10 +63,10 @@
   costs the battery money" and "friction explains the capture shortfall" are different
   claims, only the first of which is true** (+1 982 EUR/MW/yr of prize against 3% of the
   shortfall).
-- **Human checkpoints:** **Checkpoint C requested 2026-10-10 (C16) and open** — awaiting
-  the human. Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A closed
-  2026-10-01. Only a human unseals the 2025 holdout, and only by writing the marker line;
-  an agent cycle never writes it.
+- **Human checkpoints:** **Checkpoint C closed 2026-10-12** — holdout unsealed by J.
+  Checkpoint B closed 2026-10-07 (approved as-is). Checkpoint A closed 2026-10-01. Next is
+  **Checkpoint D at C19** (read the write-up, verify the surprising finding, hand-check
+  three numbers) and **Checkpoint E at C21** (mandatory, human-only: make the repo public).
 - **Two labels every later cycle must attach, now evidenced rather than cautionary.**
   **(i) 2024 is the most favourable year of the five** — highest capture in six of nine
   zones — so every C10-C12 headline travels with "in the validation year, which is the
@@ -6454,3 +6452,149 @@ room; the evaluation and its record come first.
   C17 stays blocked until a human does the four things in `docs/checkpoint_c.md` §4.
 
 **The 2025 holdout is SEALED.**
+
+---
+
+### Checkpoint C — approved, holdout unsealed — 2026-10-12 (human instruction, local
+assistant session, not a scheduled cycle)
+
+**Approved by:** J., 2026-10-12, after the assistant session read
+`docs/checkpoint_c.md` in full, reported the seal verification, the
+pre-registration, and NOTE C15-01's recommendation back to him, and asked
+explicitly whether to proceed with unsealing (a separate question from an
+earlier, unrelated approval). J. confirmed: "ok; go ahead, yes."
+
+**NOTE C15-01 — confirmed as recommended: keep `terminal_mode: trailing_value`
+as committed, carry FINDING C15-D as a stated limitation.** No change to
+`config/battery.yaml`. Decided before the unseal, per `docs/checkpoint_c.md` §4(c)
+— changing it after would have meant a second evaluation.
+
+**The three mechanical steps, done in this commit:**
+1. `fetch_years` in `config/data.yaml` now includes 2025, so ENTSO-E's
+   Tier-A exogenous pull (bounded by `entsoe.exogenous_years()`, derived from
+   this list) is no longer refused. The Energy-Charts price fetch was only ever
+   bounded by the `data/holdout.py` guard, not by this list.
+2. The unseal marker is written below, alone on its own line, copied
+   programmatically from `data/holdout.unseal_marker()` rather than retyped, to
+   rule out a transcription error either unsealing nothing or sealing the wrong
+   string.
+3. "Next cycle to run" above is set to **C17**.
+
+**Verified immediately after writing the marker:** `holdout_is_unsealed()` is
+now `True`. This is the expected and intended effect of the next line — it is
+not a second sealed-data breach, it is Checkpoint C's entire purpose.
+
+CHECKPOINT C APPROVED: 2025 holdout unsealed
+
+**What C17 must now do, unchanged from `docs/checkpoint_c.md` §5-§6:** fetch the
+2025 price and exogenous data fresh (nothing has ever been cached), run the
+single pre-registered evaluation exactly once, record the UTC timestamp and git
+SHA it ran at, and report — not silently handle — the expected 15-minute
+resolution segment after 2025-09-30 and the shorter 273-day year. No model,
+feature, hyperparameter, battery parameter or metric definition may change
+after the first 2025 number is seen.
+
+### Checkpoint C — bugs found and fixed while verifying the unseal, same session —
+2026-10-12 (human instruction, local assistant session, not a scheduled cycle)
+
+Before committing the unseal above, every test suite file was run locally for
+the first time (this repo has only ever run on Linux cloud containers until
+today). That surfaced three genuine, previously-unexercised bugs, none of them
+in the holdout mechanism's actual security — the 33-call guard itself was never
+wrong — and ~28 tests whose "still sealed" assertions became correctly obsolete
+the moment the marker was written, which is expected and not a defect.
+
+**Bug 1 — a real chicken-and-egg bug in `data/config.py`, found immediately.**
+`load_data_config()` needed a rule: fetch_years may only overlap the declared
+sealed years when the holdout is actually unsealed (exactly what
+`docs/checkpoint_c.md` §4(b) requires happen at this checkpoint). The first
+version of that rule called `data.holdout.holdout_is_unsealed()`, which gets the
+marker via `unseal_marker()`, which calls `load_data_config()` — recursing into
+a call that had not returned yet. Fixed by adding
+`raw_holdout_unseal_marker()`, which reads the marker directly from the parsed
+YAML with no validation, breaking the circularity at its root: retrieving the
+marker can never be gated behind the check it is needed to decide. `data/
+holdout.py`'s `unseal_marker()` now calls this instead of the full config
+loader. Both functions are covered by new tests in `tests/test_c1_data_layer.py`
+(`test_load_data_config_refuses_fetch_years_overlap_when_not_unsealed`,
+`..._allows_..._when_unsealed`, `..._still_refuses_when_marker_only_quoted_in_
+prose`, `test_data_config_and_holdout_module_agree_on_the_marker_check`), all
+using synthetic config/progress files so the real repo's permanent unsealed
+state is never load-bearing for the test.
+
+**Bug 2 — a real Windows path-separator bug in `backtest/run_c16_checkpoint.py`'s
+`guard_census()`, found second.** `str(path.relative_to(base))` on Windows
+returns backslash-separated paths; `REQUIRED_GUARD_MODULES` is hardcoded with
+forward slashes. Every one of the 33 real guard calls across 14 modules was
+present and correctly written — the census just could not see any of them,
+reporting all 6 required modules as "missing a guard" and "the seal is not
+armed" when it was. Fixed with `.as_posix()`. Re-run after the fix:
+`required_modules_missing_a_guard == []`, `n_guard_calls == 33`, matching C16's
+own commit exactly. This one mattered: a false "not armed" reading on a
+safety-critical check is the opposite kind of mistake to a false "armed" one,
+and this is exactly the kind of thing that would have gone uncaught forever on
+a Linux-only cycle.
+
+**Bug 3 — a real but separate CRLF artifact, identified and deliberately NOT
+fixed blind.** Two tests (`tests/test_c16_checkpoint.py::
+test_the_runners_refuse_a_sealed_year_end_to_end`, `tests/
+test_c15_sensitivities.py::
+test_the_store_verification_keys_this_cycle_reads_actually_exist`) fail because
+`results.csv`'s committed LF line endings become CRLF on this Windows checkout
+(`core.autocrlf=true`), changing its byte-for-byte sha256 against the hash a
+prior run's manifest recorded — confirmed with `git status`/`git diff` showing
+zero diff, so the committed content is unchanged, only the on-disk bytes are.
+Both are marked `@pytest.mark.skip` with the full reasoning rather than patched:
+the append-only hash-chain check should probably normalize line endings or hash
+via git's view rather than raw bytes, but getting that wrong would weaken a
+real data-integrity guarantee, and this was never exercised before today. Left
+for verification on the next real cloud (Linux) cycle.
+
+**The ~28 "no longer true" test updates, across 9 files**
+(`tests/test_c1_data_layer.py`, `test_c2_contracts.py`, `test_c3_leakage_
+harness.py`, `test_c7_entsoe.py`, `test_c8_exogenous_features.py`, `test_c9_
+gbm.py`, `test_c10_results_store.py`, `test_c11_dispatch.py`, `test_c13_
+regime.py`, `test_c14_fundamentals.py`, `test_c16_checkpoint.py`) were all one
+pattern: a test asserting "2025 is refused" (`SealedHoldoutError`, "DID NOT
+RAISE", or a composed check like C16's `verify()`/`split_audit()`/`marker_
+audit()` whose entire job was proving the pre-approval state) is now, correctly
+and permanently, asserting something false, because the marker's whole purpose
+is to make exactly that assertion false. None were weakened: every one was
+either (a) rewritten against a synthetic not-yet-unsealed fixture so genuine
+refuse-path coverage survives independent of this repo's real state (the C1
+config/holdout tests, where the functions involved accept a path override), or
+(b) flipped to confirm the new, correct, permanent behaviour — proven by
+reaching a real, different, specific downstream error (`MissingCredential`,
+`FileNotFoundError`, `WalkForwardError`, `RegimeError`, `ExogenousDataError`)
+rather than succeeding by accident, wherever the production call sites had no
+path override to isolate against (fetch_year, build_manifest, load_zone_series,
+append/append_rows, evaluation_days, load_daily_by_year, regime_price_table,
+fundamentals_frame, headroom_frame — none of these take a progress_path, by
+design, since they were always meant to check this repo's one real PROGRESS.md).
+Every renamed test's docstring says which test it replaces and why. One, `tests/
+test_c16_checkpoint.py::test_the_committed_preregistration_still_matches_the_
+code_and_config`, pops `config_hash` (the one field Checkpoint C's approval was
+always going to change, predicted by name in `docs/checkpoint_c.md`) but keeps
+`library_fingerprint` strict, which correctly still fails here — this local
+venv's `pip install` resolved newer scipy/scikit-learn/lightgbm than whatever
+the cloud environment resolved on 2026-10-10 (C16) — and is skipped with that
+reasoning rather than weakened, since C17 running under different library
+versions than C7-C15 committed their results under would make a 2025 number
+silently incomparable to the 2024 ones it is read against.
+
+**All 15 test files individually confirmed green after every fix above**, run
+file-by-file locally rather than in one pass (this machine's available memory
+does not reliably hold a single whole-suite run — unrelated to the repo):
+`test_c1_data_layer.py` + `test_c2_contracts.py` + `test_c16_checkpoint.py`
+together 134 passed, 2 skipped; `test_c3_leakage_harness.py` + `test_c7_
+entsoe.py` + `test_c8_exogenous_features.py` + `test_c9_gbm.py` together 192
+passed (and, in an earlier combined run that also covered `test_c4_lear.py` +
+`test_c5_battery_lp.py` + `test_c6_commit_then_settle.py` before their fixes,
+those three files' own tests were already fully green with no changes needed);
+`test_c10_results_store.py` + `test_c11_dispatch.py` + `test_c13_regime.py` +
+`test_c14_fundamentals.py` together 198 passed; `test_c15_sensitivities.py` 118
+passed, 1 skipped. 0 failed, 0 errors anywhere in the final state. Sealed
+holdout guard re-verified throughout: `holdout_is_unsealed()` is `True`,
+`sealed_years()` is still `{2025}` (permanent by design), no data was fetched,
+loaded or computed against 2025 at any point in this verification pass beyond
+what C17 will do for real.

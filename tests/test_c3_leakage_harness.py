@@ -35,7 +35,6 @@ from backtest.walk_forward import (
     make_folds,
     run_walk_forward,
 )
-from data.holdout import SealedHoldoutError
 from forecast.features import build_features
 from forecast.leakage import LeakageError, assert_no_leakage, find_leakage, mask_unavailable
 from forecast.models import ModelError, NaiveLastWeek, TrainMeanBaseline
@@ -288,11 +287,19 @@ def test_spec_refuses_a_window_smaller_than_its_own_minimum():
         WalkForwardSpec(refit_every_days=0)
 
 
-def test_harness_refuses_a_sealed_holdout_year(matrix):
-    """2025 is sealed. Only bare date labels are used here — no sealed data is read."""
-    with pytest.raises(SealedHoldoutError, match="SEALED HOLDOUT"):
+def test_harness_now_passes_the_holdout_guard_for_2025(matrix):
+    """Was test_harness_refuses_a_sealed_holdout_year. Checkpoint C (2026-10-12)
+    unsealed 2025 in this repo's real PROGRESS.md, which evaluation_days()
+    checks by default — exactly the capability C17's evaluation depends on.
+    `matrix` is a synthetic fixture with bare date labels built only to test the
+    guard, never populated with actual 2025 rows (it never needed to be, when
+    the point was proving the guard fired before any data was touched), so past
+    the now-passing guard this correctly reaches a *different* complaint —
+    WalkForwardError for having no 2025 rows at all — rather than succeeding
+    outright. That different error is the proof: SealedHoldoutError is gone."""
+    with pytest.raises(WalkForwardError, match="no complete market days"):
         evaluation_days(matrix, [2025])
-    with pytest.raises(SealedHoldoutError, match="SEALED HOLDOUT"):
+    with pytest.raises(WalkForwardError, match="no fold could be run"):
         run_walk_forward(matrix, NaiveLastWeek, [dt.date(2025, 6, 1)], SPEC)
 
 

@@ -473,17 +473,19 @@ def test_no_row_is_written_for_a_metric_that_could_not_be_computed(
     assert ("common_hours", "capture_same_start_pooled") in by
 
 
-def test_a_capture_ratio_against_a_sealed_year_cannot_be_written(
+def test_a_capture_ratio_against_2025_can_now_be_written(
     tmp_path, pooled_for_rows, runs
 ):
-    """The store's own tripwire, re-asserted for a dispatch metric."""
+    """Was test_a_capture_ratio_against_a_sealed_year_cannot_be_written. The
+    store's own tripwire (tests/test_c10_results_store.py) now permits 2025,
+    unsealed at Checkpoint C (2026-10-12); re-asserted here for a dispatch
+    metric specifically."""
     arms = [a for a in arms_for("DE-LU", "A") if a.curve == "lear_full_history"]
     rows = store_rows("DE-LU", "A", "r", arms,
                       {"lear_full_history": pooled_for_rows["good"]},
                       [2025], runs["spec"], None)
-    with pytest.raises(Exception, match="SEALED HOLDOUT"):
-        append_rows(rows, cycle="C11-test", git_sha="x", config_hash="y",
-                    path=tmp_path / "r.csv", runs_path=tmp_path / "runs.json")
+    append_rows(rows, cycle="C11-test", git_sha="x", config_hash="y",
+                path=tmp_path / "r.csv", runs_path=tmp_path / "runs.json")  # does not raise
 
 
 def test_every_metric_name_this_cycle_writes_is_snake_case_and_in_range():
