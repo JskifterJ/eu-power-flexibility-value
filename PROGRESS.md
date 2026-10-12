@@ -2,14 +2,44 @@
 
 ## Current status
 
-- **Next cycle to run:** **C17.** Checkpoint C approved by J. on 2026-10-12 — see the
-  "Checkpoint C — approved, holdout unsealed" entry at the end of the log for exactly what
-  was reviewed and decided. The 2025 holdout is no longer sealed as of this commit. C17
-  runs the single pre-registered evaluation from `backtest/results/c16_preregistration.json`
+- **Next cycle to run:** **AWAITING HUMAN — C17 BLOCKED.** The holdout is unsealed and the
+  pre-registered evaluation is ready to run, but it **has not run**: this repo's own
+  ENTSO-E parser refuses every 2025 response (**FLAG C17-01**), and the fix is an edit to a
+  sealed-holdout assertion, which CLAUDE.md makes a flag-and-stop event and PLAN.md lists
+  among its five human checkpoints. **No 2025 forecast, dispatch or metric value has been
+  computed.** Read `docs/c17_blocker.md` — §5 is the three-part decision, of which §5(a),
+  approving a one-call fix to `data/entsoe.py`, is the only one that unblocks the cycle.
+  A scheduled cycle firing while this line still reads AWAITING HUMAN does no new work: it
+  verifies nothing has changed, appends a one-line note and stops. Once approved, C17 runs
+  the single pre-registered evaluation from `backtest/results/c16_preregistration.json`
   **exactly once** — PLAN.md's stop rule: no model, feature, hyperparameter, battery
   parameter or metric definition may change after the first 2025 number is seen. A change
   that looks necessary is a finding to report, and any re-run must be labelled as a second
   evaluation.
+- **FLAG C17-01 — `data/entsoe.py`'s sealed-timestamp check never asks whether the human
+  unsealed the holdout, so the whole Tier-A 2025 exogenous pull is refused.** `sealed_years()`
+  is the permanent declaration in `config/data.yaml` and still reads `{2025}` by design;
+  `holdout_is_unsealed()` is the approval, and `parse_document` consults only the first.
+  Right before Checkpoint C ("contains a sealed year" and "leaked past the requested
+  window" were then the same condition), wrong after it. Observed 6 times of 6 on the live
+  pull and reproduced offline by `entsoe_parse_guard_probe()` with a synthetic A65
+  document. The repo's own
+  `tests/test_c7_entsoe.py::test_fetching_2025_now_passes_the_holdout_guard` already
+  asserts the behaviour the code lacks — it passed locally at Checkpoint C only because no
+  API key was set there. Proposed fix (not applied): route the hit through
+  `assert_not_sealed`, exactly as the two sibling checks in `data/prices.py:120` and
+  `data/exogenous.py:275` already do.
+- **FLAG C17-02 — seven tests are red and six of them are correctly obsolete, not broken.**
+  One is FLAG C17-01's own regression test; the other six assert a pre-fetch or
+  pre-approval state that this cycle legitimately changed (2025 prices are now cached and
+  in the download record, and the seal is open). They are the same family the Checkpoint C
+  session rewrote across nine files, and they could only go red once a real 2025 fetch
+  happened. **Nothing under `tests/` was touched.** The table in `docs/c17_blocker.md` §5(b)
+  names each one and why. Related and now settled: **Bug 3 from the Checkpoint C session is
+  a Windows-only artefact** — on Linux `results.csv` holds no CRLF bytes and
+  `verify_append_only()` returns `verified: True` over 6 runs and 14 265 rows, so no
+  committed result is affected; the two skip markers stay in place because removing them is
+  a `tests/` edit.
 - **C16 complete — Checkpoint C requested.** Two committed artefacts, both machine-checked
   rather than asserted: `backtest/results/c16_seal_verification.json` (the seal: marker
   absent, 33 guard calls across 14 modules, 6 of 6 required modules guarded, **8 of 8**
@@ -6598,3 +6628,131 @@ holdout guard re-verified throughout: `holdout_is_unsealed()` is `True`,
 `sealed_years()` is still `{2025}` (permanent by design), no data was fetched,
 loaded or computed against 2025 at any point in this verification pass beyond
 what C17 will do for real.
+
+### C17 — blocked before the holdout evaluation; data layer updated, no 2025 number
+computed — 2026-10-12 (scheduled cycle)
+
+Fired with "Next cycle to run" reading **C17** and the holdout unsealed, so this cycle
+started C17 for real. It did not finish it. **The single pre-registered evaluation did
+not run, and no forecast, dispatch schedule, capture ratio, error metric or price
+statistic was computed against 2025 data.** Full report, with the decision the human
+needs to make, in `docs/c17_blocker.md`; machine-checked artefact in
+`backtest/results/c17_preflight.json`, reproducible with
+`python -m backtest.run_c17_holdout --phase preflight` (exits non-zero while the blocker
+stands).
+
+**Environment, first.** The detached-HEAD trap recurred a sixth time: the container
+arrived detached at `2143fe1` with local `master` stranded at `0108407`; reattached with
+`git checkout -B master 2143fe1` and re-tracked `origin/master` before anything else.
+The venv was built pinning **numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy
+1.17.1, lightgbm 4.7.0** on Python 3.11.17 — read off `c10_scale_summary.json` rather
+than resolved freely — so `library_fingerprint()` is **`856fb19ac0c4eecd`**, identical to
+C10-C15. That is the precondition the Checkpoint C session's skipped
+`test_the_committed_preregistration_still_matches_the_code_and_config` was protecting:
+a 2025 number produced under different library versions would not be comparable to the
+2024 numbers the pre-registration reads it against. `requirements.txt` still declares
+floors, not pins; the pinning is done at install time and recorded here.
+
+**Preflight, all green except one.** `holdout_is_unsealed()` is `True` (run, not read).
+**15 of 15 frozen specs agree with `c16_preregistration.json`** — LEAR selector `aic`,
+hour key `local`, VST on; GBM fingerprint `a366a760e269bba6`; all seven battery
+parameters including `terminal_mode: trailing_value` at 7 days / quantile 0.5 (NOTE
+C15-01 decided as recommended, unchanged); refit 1 / min-train 365 / expanding. The only
+pre-registered field that moved is `config_hash` (`515d4e8d98887256` ->
+`99005aeccae76c70`), predicted by name in `docs/checkpoint_c.md` §4(b) because the
+approval added 2025 to `fetch_years`.
+
+**The data was fetched, and the re-pull reproduced the committed record.** Nothing was
+cached in this container, so everything came down fresh: **63 of 63 zone-years of
+Energy-Charts prices, 0 flagged**, and **18 of 18 ENTSO-E documents for 2022-2024**.
+Two reproduction results fall out of that and are worth keeping: the price manifest's
+**54 rows for 2019-2024 reproduce exactly** — every count, every price statistic, every
+`payload_sha256` — with `fetched_at_utc` the only column that moved; and the exogenous
+manifest's **27 rows reproduce exactly** on every value, with `fetched_at_utc` and
+`gzip_bytes` (gzip is not byte-deterministic) the only columns that moved. The manifests
+and the contract report are rebuilt and committed; `data/raw/` stays gitignored.
+
+**The 15-minute cutover, reported rather than absorbed** (`docs/checkpoint_c.md` §5
+asked for exactly this). All nine zones show **one** resolution change at
+**2025-09-30T22:00:00Z** = 2025-10-01 00:00 CEST, 3600s -> 900s: 59 159 hourly intervals
+before it, 8 835 quarter-hourly after, `cutover_violations` empty. The last hourly row
+starts 2025-09-30T21:00Z, the final hour of local market day 2025-09-30, so the window
+closes on a complete day and no 15-minute row can enter it. The evaluation window is
+confirmed at **273 market days, 2025-01-01..2025-09-30, in every one of the nine zones**
+— the pre-registered count, checked against real data for the first time, and every row
+inside it at 3600s. Two artefacts now read oddly and are left as the builders produced
+them, with the reading attached rather than the number massaged: the contract report
+carries **100 violations per zone, all post-cutover** (hourly day-count contract meeting
+96-row days; lists capped at 50 each; nothing before the cutover violates anything), and
+the 2025 manifest row reads `coverage_ratio` **0.439** with 6 550 "gap intervals",
+because the year's modal resolution is 900s and the hourly Jan-Sep rows are being counted
+against a 15-minute expectation. Nothing is missing in either case.
+
+**FLAG C17-01 — the blocker.** `data/entsoe.py`'s `parse_document` raises
+`UnexpectedResponse` when the parsed frame's years intersect `sealed_years()`, without
+consulting `holdout_is_unsealed()`. `sealed_years()` is the permanent declaration and
+still reads `{2025}`; the marker is what overrides it. So since the approval the parser
+refuses **every** 2025 ENTSO-E response: **6 refusals out of 6** on the live pull (3
+Tier-A zones x A65 and A69), each one downloaded, refused at parse time and **not
+cached**, so the six requests bought nothing and must be made again after a fix. It is
+reproduced offline, without a network request, by `entsoe_parse_guard_probe()` handing
+the parser a three-point synthetic A65 dated 2025-03-01 — evidence about the code, not
+about one run. The check was *right* before Checkpoint C: its purpose is catching an
+inclusive `periodEnd`, and while 2025 was sealed "contains a sealed year" and "leaked
+past the requested window" were the same condition. The approval separated them. The
+proposed fix, **not applied**, is to route the same hit through
+`data.holdout.assert_not_sealed`, which applies the identical test and then honours the
+marker — exactly what the two sibling belt-and-braces checks in `data/prices.py:120` and
+`data/exogenous.py:275` already do. It loses nothing: the check never compared the
+response against the *requested* year, so it never guarded the exclusive-`periodEnd`
+property for an unsealed year either. **Not applied because it is a sealed-holdout
+assertion** — CLAUDE.md makes editing a data-contract or leakage-assertion file a
+flag-and-stop event, and PLAN.md lists "before modifying a frozen test/contract" among
+its five human checkpoints. An unattended cycle editing a seal tripwire, in the cycle
+that first touches the holdout, is the case those rules exist for.
+
+**FLAG C17-02 — seven red tests, six of them correctly obsolete.** Nothing under
+`tests/` was touched. `test_c7_entsoe.py::test_fetching_2025_now_passes_the_holdout_guard`
+is FLAG C17-01's own regression test and is the one genuine failure — it passed at
+Checkpoint C only because that machine had no `ENTSOE_API_KEY`, so the call stopped at
+`MissingCredential` before reaching the parser. CLAUDE.md's rule applies literally here:
+the test is right and the code is wrong. The other six assert a pre-fetch or
+pre-approval state this cycle legitimately changed — `test_c13_regime.py` (expects "no
+hourly price" for 2025; the prices are now cached), two in `test_c14_fundamentals.py`
+(expect "no cached ENTSO-E"; did not raise), and three in `test_c16_checkpoint.py` (the
+entry-point probes now reach the open guard and `run_probes()` raises its pre-approval
+catastrophe message, the download record legitimately names 2025, and the raw cache is
+no longer absent). Same family as the ~28 the Checkpoint C session rewrote across nine
+files; these six could only go red once a real 2025 fetch happened. **A consequence for
+C20: `run_c16_checkpoint.py --phase verify` cannot pass again, by design** — it verifies
+a seal that has been deliberately opened, so the reproducibility check must not expect
+it. **Bug 3 from the Checkpoint C session is now settled as a Windows-only artefact**:
+on this Linux container `backtest/results/results.csv` contains no CRLF bytes and
+`verify_append_only()` returns `verified: True` over 6 runs and 14 265 rows, so no
+committed result was ever affected. The underlying portability question (the hash chain
+reads raw bytes, not git's normalized view) is real and unfixed, and the two
+`@pytest.mark.skip` markers stay in place because removing them is a `tests/` edit.
+Suite state otherwise: **882 passed, 7 failed, 2 skipped** — the 15 new tests in
+`tests/test_c17_preflight.py` (the only `tests/` file this cycle touched, and it is a new
+one) all pass, and nothing else moved between the run before them and the run after.
+
+**Why the headline was not run anyway, stated plainly.** The nine-zone comparable arm
+(LEAR `price_only` vs the naive floor vs the perfect-foresight oracle) needs
+Energy-Charts prices only and is **not** blocked. It was still not run. Splitting the
+single pre-registered evaluation into "the headline now, the Tier-A exogenous arms after
+a code change" would mean the second half ran under a fix made *after* the first 2025
+numbers were visible — the shape the pre-registration's stop rule exists to forbid, even
+though a parser guard is none of the five things that rule names. Waiting costs one
+cycle out of a plan that budgets three to four for exactly this; not waiting costs the
+one property that makes a once-only holdout worth having. The evaluation will run
+**whole, once, after the fix**.
+
+**What the human needs to decide** (`docs/c17_blocker.md` §5): (a) approve the one-call
+fix to `data/entsoe.py` — this is the only one that unblocks C17; (b) what to do about
+the six obsolete tests, none of which may be touched without the same approval; (c)
+nothing is required for Bug 3, which is now verified as Windows-only. One push
+notification sent (a genuine blocker, per PLAN.md's "flag and stop"). Committed: the
+rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
+`backtest/results/c17_preflight.json`, `docs/c17_blocker.md` and this entry.
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**

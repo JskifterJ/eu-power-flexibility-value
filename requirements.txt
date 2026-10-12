@@ -127,3 +127,26 @@ lightgbm>=4.3
 # library_fingerprint is unchanged from C10-C14 (856fb19ac0c4eecd), which is what
 # makes a C15 lever delta comparable to the C11/C13 levels it is measured
 # against.
+
+# C17 (the holdout cycle). No new dependency: the preflight is pandas plus the
+# project's own modules, and the evaluation it was supposed to run would have
+# been C4's LEAR, C9's LightGBM and C5/C6's scipy HiGHS LP, all already here.
+# What C17 adds is a *pinning discipline*, because this is the cycle where a
+# version drift would have done real damage. Everything above declares floors,
+# which is right for a project that keeps re-resolving in fresh containers —
+# but a 2025 holdout number is read against the 2024 numbers C10-C15 published,
+# and those were all produced under library_fingerprint 856fb19ac0c4eecd. A
+# freely-resolved container (as the Checkpoint C session's local venv showed,
+# picking up newer scipy/scikit-learn/lightgbm) would have made the comparison
+# meaningless without anything looking wrong. So the holdout cycle installs the
+# exact set recorded in backtest/results/c10_scale_summary.json:
+#
+#   python 3.11.17
+#   numpy==2.4.6  pandas==3.0.6  scikit-learn==1.9.1  scipy==1.17.1
+#   lightgbm==4.7.0
+#
+# and backtest/run_c17_holdout.py --phase preflight refuses to call the
+# evaluation ready unless library_fingerprint() comes back 856fb19ac0c4eecd.
+# The floors above are deliberately left as floors: pinning them in this file
+# would freeze every future cycle, and the constraint is specific to runs whose
+# numbers must be comparable to the published ones.
