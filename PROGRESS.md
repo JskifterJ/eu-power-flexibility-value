@@ -6882,3 +6882,46 @@ rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
   `docs/c17_blocker.md` §5(a).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+---
+
+### C17-blocked wait — 2026-10-14 (scheduled cycle, 4th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**, so per
+  CLAUDE.md / PLAN.md this cycle did no new work: checked that nothing has changed and
+  stopped. **No 2025 forecast, dispatch schedule, capture ratio, error metric or price
+  statistic was computed**, and nothing was fetched — no Energy-Charts or ENTSO-E request
+  was made at all.
+- **Nothing has changed.** `git fetch origin master` brought only the 3rd-wait commit this
+  container had not yet seen (`426a97d..2ca04a6`); local HEAD == `origin/master` ==
+  `2ca04a6`, no human commits since, `git status` clean. `git diff --stat 03b4d41 HEAD` is
+  **`PROGRESS.md` only, 126 insertions**, and `git diff 03b4d41 HEAD -- tests/` is empty —
+  every line of code, and every test, is byte-identical to the tree on which the C17 cycle
+  refused the synthetic 2025 A65 document. **Nothing under `tests/` was touched.**
+- **FLAG C17-01 still stands**, verified at source level (the identity argument is the
+  stronger check on byte-identical code; this container again has no venv and no pandas, so
+  re-running the probe would mean building an environment to re-confirm a result that
+  cannot have moved). `data/entsoe.py:741` still opens with `sealed = sealed_years()` and
+  raises on any 2025 timestamp without ever consulting `holdout_is_unsealed()`; the file's
+  only `assert_not_sealed` calls remain the two at lines 860 and 972, not the parse hit.
+  The one-call fix in `docs/c17_blocker.md` §5(a) is **not applied** — it edits a
+  sealed-holdout assertion and no human approval of §5(a) is recorded (the only approval in
+  the log remains Checkpoint C's unseal line at `PROGRESS.md:6517`, which predates the flag).
+- Nothing in §5 has been answered. The five artefacts (`docs/c17_blocker.md`,
+  `backtest/results/c17_preflight.json`, `backtest/results/c16_preregistration.json`,
+  `backtest/results/c16_seal_verification.json`, `docs/checkpoint_c.md`) are all present
+  with an empty `git diff HEAD`. The results store still holds **14 265 rows** with `cycle`
+  of exactly C10-C15 (447/1 638/1 341/4 824/315/5 700) and `evaluation_years` of exactly
+  2020-2024 — **no 2025 row, no C17 row**, so the single pre-registered evaluation
+  demonstrably has not run. The seal is open as recorded, and
+  `data/manifest/prices_manifest.csv` still carries 63 rows including its 2025
+  Energy-Charts rows from the C17 cycle's legitimate post-unseal price pull.
+- Environment, unchanged from the 1st-3rd waits: `ENTSOE_API_KEY` **is set** (36 chars);
+  `data/raw/` is **absent**, so the post-approval run is still a full fresh download of
+  both sources. The detached-HEAD trap recurred a **ninth** time: the container arrived
+  detached at `2ca04a6` with local `master` stranded at `426a97d`; reattached with
+  `git checkout -B master 2ca04a6` and re-tracked `origin/master` before anything else.
+- No push notification sent — the blocker ping went out with the C17 entry, and repeat
+  pings for the same wait are noise. C17 stays blocked until a human decides
+  `docs/c17_blocker.md` §5(a).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
