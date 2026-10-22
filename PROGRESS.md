@@ -8028,3 +8028,32 @@ rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
   the twenty-seven waits now span ~8.5 days.
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+---
+
+### C17-blocked wait — 2026-10-22 (scheduled cycle, 28th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**: checked
+  that nothing has changed and stopped. **Nothing fetched, nothing computed** — no 2025
+  forecast, dispatch schedule, capture ratio, error metric or price statistic, and no
+  Energy-Charts or ENTSO-E request of any kind.
+- **Nothing has changed.** `origin/master` == HEAD == `0004372` (the 27th wait's commit)
+  after `git fetch origin master`; detached HEAD again, stale local `master` at `2268eca`
+  left alone. All **27** commits since `03b4d41` are this agent's, **no human commits**,
+  `git status` clean, and `git diff --stat 03b4d41 HEAD` is **`PROGRESS.md` only** (1 272
+  insertions, zero other files, `tests/` empty). **FLAG C17-01 still stands**:
+  `data/entsoe.py:741` still opens its parse guard with `sealed = sealed_years()`,
+  `holdout_is_unsealed` appears **0 times** in the file, its only `assert_not_sealed`
+  calls are still lines 860 and 972, and the siblings at `data/prices.py:122` /
+  `data/exogenous.py:277` still route through `assert_not_sealed`. The §5(a) fix is **not
+  applied** and **no human approval of §5(a) is recorded**. Results store unchanged at
+  **14 265 rows** (C10-C15; `evaluation_years` 2020-2024; **0** whole-cell `2025` hits
+  outside the `value` column), `data/manifest/prices_manifest.csv` still 63 rows, all five
+  decision artefacts present and byte-identical to HEAD. Environment unchanged:
+  `ENTSOE_API_KEY` set (36 chars), `data/raw/` absent, no venv/pandas (scan run with the
+  stdlib `csv` module under `python3 -I`).
+- **Still waiting on the human for `docs/c17_blocker.md` §5** — §5(a) is the only part
+  that unblocks C17. No push notification, per the standing instruction not to re-ping the
+  same wait; the twenty-eight waits now span ~9.7 days since the C17 cycle (`03b4d41`,
+  2026-10-12).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
