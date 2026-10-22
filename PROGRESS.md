@@ -8057,3 +8057,34 @@ rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
   2026-10-12).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+---
+
+### C17-blocked wait — 2026-10-22 (scheduled cycle, 29th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**: verified
+  that nothing has changed, appended this note, stopped. **Nothing fetched, nothing
+  computed** — no 2025 forecast, dispatch schedule, capture ratio, error metric or price
+  statistic, and no Energy-Charts or ENTSO-E request of any kind.
+- **Nothing has changed.** After `git fetch origin master`, `origin/master` == HEAD ==
+  `de1c312` (the 28th wait's commit); detached HEAD again, stale local `master` at
+  `2268eca` left alone. All **28** commits since `03b4d41` are this agent's, **no human
+  commits**, `git status` clean, and `git diff --stat 03b4d41 HEAD` is **`PROGRESS.md`
+  only** (1 301 insertions, zero other files; `tests/` untouched).
+- **FLAG C17-01 still stands.** `data/entsoe.py:741` still opens its parse guard with
+  `sealed = sealed_years()`, `holdout_is_unsealed` appears **0 times** in the file, its
+  only `assert_not_sealed` calls remain lines 860 and 972, and the siblings at
+  `data/prices.py:122` / `data/exogenous.py:277` still route through `assert_not_sealed`.
+  The §5(a) fix is **not applied** and **no human approval of §5(a) is recorded**.
+- Artefacts and store unchanged: results store **14 265 rows**,
+  `data/manifest/prices_manifest.csv` still 63 rows, and all five decision artefacts
+  (`docs/c17_blocker.md`, `docs/checkpoint_c.md`, `docs/sensitivities.md`,
+  `backtest/results/c16_seal_verification.json`,
+  `backtest/results/c16_preregistration.json`) present and byte-identical to HEAD.
+  Environment unchanged: `ENTSOE_API_KEY` set (36 chars), `data/raw/` absent, so the
+  post-approval run is still a full fresh download of both sources.
+- **Still waiting on the human for `docs/c17_blocker.md` §5** — §5(a) (approve the
+  one-call fix to `data/entsoe.py`) is the only one of the three parts that unblocks C17.
+  No push notification, per the standing instruction not to re-ping the same wait; the
+  twenty-nine waits now span ~10 days since the C17 cycle (`03b4d41`, 2026-10-12).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
