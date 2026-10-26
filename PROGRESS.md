@@ -8404,3 +8404,44 @@ rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
   thirty-eight waits now span ~12.9 days since the C17 cycle (`03b4d41`, 2026-10-12).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+---
+
+### C17-blocked wait — 2026-10-26T02:12Z (scheduled cycle, 39th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**: verified
+  nothing has changed, appended this note, stopped. **Nothing fetched, nothing computed** —
+  no 2025 forecast, dispatch schedule, capture ratio, error metric or price statistic, and
+  no Energy-Charts or ENTSO-E request of any kind. No push notification, per the standing
+  instruction not to re-ping the same wait.
+- Verified unchanged: `origin/master` == HEAD == `3d1435a` (the 38th wait's commit) after
+  `git fetch origin master`; all **38** commits since `03b4d41` this agent's
+  (`Claude <noreply@anthropic.com>`), **no human commits**; `git status` clean;
+  `git diff --stat 03b4d41 origin/master` is **`PROGRESS.md` only** (1 648 insertions, zero
+  other files, **0** paths changed under `tests/`). **FLAG C17-01 still stands**:
+  `data/entsoe.py:741` still opens its parse guard with `sealed = sealed_years()`;
+  `holdout_is_unsealed` appears **0 times** in the file; `assert_not_sealed` appears only as
+  the line-109 import and the two unrelated call sites at 860/972; siblings
+  `data/prices.py:122` and `data/exogenous.py:277` still routed through it. The §5(a) fix is
+  **not applied** and **no human approval of §5(a) is recorded** anywhere in this log — a
+  search for any affirmative approval of §5(a) or of an `entsoe` fix returns only this
+  agent's own "no approval is recorded" sentences, 0 affirmative.
+- Results store **14 265 rows**, `evaluation_years` ∈ {2020, 2021, 2022, 2023, 2024},
+  **0** whole-cell `2025` outside `value`; `data/manifest/prices_manifest.csv` still 63 rows
+  + header, of which the nine `year=2025` rows are the post-Checkpoint-C price pull already
+  recorded under FLAG C17-02 and not a new change; the five decision artefacts
+  (`docs/c17_blocker.md`, `docs/checkpoint_c.md`,
+  `backtest/results/c16_preregistration.json`,
+  `backtest/results/c16_seal_verification.json`, `backtest/run_c16_checkpoint.py`) all
+  present and byte-identical to HEAD; environment unchanged (`ENTSOE_API_KEY` set, 36 chars;
+  `data/raw/` absent, so the post-approval run is still a full fresh download of both
+  sources; no venv/pandas, so the store scan again used the stdlib `csv` module under
+  `python3 -I`).
+- Housekeeping only, same as the previous six waits: the container came up with a
+  **detached HEAD** at `3d1435a` and a stale local `master` at `747ff8d`; re-attached with
+  `git checkout master` and `git merge --ff-only origin/master` (7 commits fast-forwarded,
+  `PROGRESS.md` only), which changed no file and no history.
+- **Still waiting on the human for `docs/c17_blocker.md` §5** — §5(a) (approve the one-call
+  fix to `data/entsoe.py`) is the only one of the three parts that unblocks C17. The
+  thirty-nine waits now span ~13.3 days since the C17 cycle (`03b4d41`, 2026-10-12).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
