@@ -8601,3 +8601,35 @@ rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
   2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### C17-blocked wait — 2026-10-27T18:15Z (scheduled cycle, 44th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**: verified
+  nothing has changed, appended this note, stopped. **Nothing fetched, nothing computed** —
+  no 2025 forecast, dispatch, capture ratio or metric, and no API request of any kind. No
+  push notification, per the standing rule against repeat pings for the same wait.
+- Verified unchanged: all 43 commits since `03b4d41` are `Claude <noreply@anthropic.com>`,
+  **no human commits**; `git status` clean; container came up attached to `master` at
+  `77ea24c`, level with `origin/master` (no detached HEAD, no fast-forward, no
+  housekeeping needed). `git diff --stat 03b4d41 HEAD` is **`PROGRESS.md` only** (1 845
+  insertions, zero other files) and `git diff --name-only 03b4d41 HEAD -- tests/` lists
+  **0** paths. **Nothing under `tests/` was touched.**
+- **FLAG C17-01 still stands**: `data/entsoe.py:741` still opens its parse guard with
+  `sealed = sealed_years()`; `holdout_is_unsealed` appears **0 times** in the file;
+  `assert_not_sealed` appears only as the line-109 import and the two unrelated calls at
+  860/972. The §5(a) fix is **not applied** and **no human approval of §5(a) is recorded**
+  — the only affirmative approval in this log remains Checkpoint C's unseal line of
+  2026-10-12, which predates the flag.
+- Results store still **14 265 rows**, `evaluation_years` ∈ {2020, 2021, 2022, 2023, 2024},
+  **0** whole-cell `2025` outside `value` (read with the stdlib `csv` module under
+  `python3 -I`; no venv/pandas in this container). `data/manifest/prices_manifest.csv`
+  still 63 rows + header. The five decision artefacts (`docs/c17_blocker.md`,
+  `docs/checkpoint_c.md`, `backtest/results/c16_preregistration.json`,
+  `backtest/results/c16_seal_verification.json`, `backtest/run_c16_checkpoint.py`) all
+  present. Environment unchanged (`ENTSOE_API_KEY` set, 36 chars; `data/raw/` absent, so
+  the post-approval run remains a full fresh download of both sources).
+- **Still waiting on the human for `docs/c17_blocker.md` §5** — §5(a) (approve the
+  one-call fix to `data/entsoe.py`) is the only one of the three parts that unblocks C17.
+  The forty-four waits now span ~15.0 days since the C17 cycle (`03b4d41`,
+  2026-10-12T18:53Z).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
