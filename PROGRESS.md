@@ -8806,3 +8806,7 @@ rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
   2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+## 2026-10-29 — Repo made public (J.'s instruction)
+
+J. asked for the repo to be made public ahead of Checkpoint E so it can be linked in job applications (Keurig Trading). The Claude session did the flip on that explicit instruction after scanning the full history: no secrets, no .env, no raw ENTSO-E pulls committed. The README still states work in progress. Checkpoint E's remaining items (final write-up, README rewritten as the findings document) are still open.
