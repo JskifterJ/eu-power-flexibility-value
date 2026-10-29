@@ -40,6 +40,15 @@
   `verify_append_only()` returns `verified: True` over 6 runs and 14 265 rows, so no
   committed result is affected; the two skip markers stay in place because removing them is
   a `tests/` edit.
+- **FLAG C-E-01 — the repo is PUBLIC as of 2026-10-29, outside Checkpoint E, and a Claude
+  session performed the flip** (commit `283fe58`, J.'s explicit instruction, logged by J.;
+  `list_repos` confirms `visibility: public`). Not reverted — J. asked for it and reversing it
+  is a human call. The consequence that needs a human eye: **C20, the pre-public gate**
+  (gitleaks, size/raw-data, licence+attribution, fresh-clone reproducibility, README-claims
+  alignment) **has not run**, so the public repo carries a work-in-progress README and
+  never-claims-checked results, with **no 2025 holdout number at all**. A read-only check of
+  this shallow 50-commit clone + full tree found no committed secret, `.env` or raw pull; C20
+  on a full clone is still required. See the 2026-10-29T18:13Z wait entry for the detail.
 - **C16 complete — Checkpoint C requested.** Two committed artefacts, both machine-checked
   rather than asserted: `backtest/results/c16_seal_verification.json` (the seal: marker
   absent, 33 guard calls across 14 modules, 6 of 6 required modules guarded, **8 of 8**
@@ -8810,3 +8819,63 @@ rebuilt manifests and contract report, `backtest/run_c17_holdout.py`,
 ## 2026-10-29 — Repo made public (J.'s instruction)
 
 J. asked for the repo to be made public ahead of Checkpoint E so it can be linked in job applications (Keurig Trading). The Claude session did the flip on that explicit instruction after scanning the full history: no secrets, no .env, no raw ENTSO-E pulls committed. The README still states work in progress. Checkpoint E's remaining items (final write-up, README rewritten as the findings document) are still open.
+
+### C17-blocked wait — 2026-10-29T18:13Z (scheduled cycle, 50th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**: verified
+  state, appended this note, stopped. **Nothing fetched, nothing computed** — no 2025
+  forecast, dispatch, capture ratio or metric, and no API request of any kind. No push
+  notification (see the last bullet for why this cycle does not ping either).
+- **One thing DID change since the 49th wait, and it is not an approval of §5(a):** commit
+  `283fe58` ("Note: repo made public 2026-10-29 on J.'s instruction"), author
+  **Johannes <jskifterj@gmail.com>**, 2026-10-29T13:08+01:00 — the first non-Claude-authored
+  commit since the C17 cycle. It touches **`PROGRESS.md` only** (`git diff --name-only
+  HEAD~1 HEAD`). `list_repos` confirms the live state: **`visibility: public`**.
+- **FLAG C-E-01 — the repo went public outside Checkpoint E, and a Claude session performed
+  the flip.** CLAUDE.md: "Never change repo visibility to public. Only a human does this, at
+  Checkpoint E (Cycle 21), never an agent cycle." PLAN.md C21 makes it "mandatory,
+  human-only". Per `283fe58`'s own note the instruction was J.'s and explicit (link the repo
+  in Keurig Trading applications), but the hands on the control were a local Claude session's,
+  which is the one thing that rule names. Recording it so the deviation is on the record, not
+  disputing J.'s decision. **This cycle did not and will not revert the visibility** — that is
+  outward-facing, J. asked for it, and reversing it is a human call, not a scheduled cycle's.
+  Two consequences worth stating plainly:
+  - **C20 — the pre-public gate — has not run.** Its scope (gitleaks secret scan, repo
+    size / raw-data check, licence + attribution check, fresh-clone reproducibility check,
+    align README claims with actual results) is precisely what was meant to precede going
+    public. It is still open, as is C18's write-up and C17's own evaluation.
+  - **The public README still describes work in progress**, and the published results have
+    never been through C20's claims-alignment step. The headline finding set (C13/C15) is
+    committed and public while **no 2025 holdout number exists at all** (FLAG C17-01).
+- **Independent read-only check of what is now public** (not C20 — no gitleaks installed, and
+  installing it would be C20 work): **0** tracked `.env`/`*.pem`/`*.p12`/`id_rsa`/credential/
+  secret-named files; **0** files tracked under `data/raw/`; `.gitignore` still covers `.env`,
+  `.env.*`, `data/raw/`, `*.parquet`; `.env.example` holds empty values only. Scanning the
+  **available** history and the whole working tree for key-shaped strings (`ENTSOE_API_KEY=`
+  with a value, bare UUIDs — the shape of an ENTSO-E key, `AKIA…`, `ghp_…`, `sk-…`) returns
+  **no matches**. Caveat stated honestly: this container holds a **shallow clone, 50 commits**,
+  so "history" here means those 50 plus the tree, not the full history — C20 on a full clone
+  is still required. Largest tracked file `backtest/results/results.csv` (4.3 MB); `.git` 51 MB.
+- **FLAG C17-01 still stands, unchanged**: `data/entsoe.py:741` still opens its parse guard
+  with `sealed = sealed_years()`; `holdout_is_unsealed` appears **0 times** in the file;
+  `assert_not_sealed` appears only as the line-109 import and the two unrelated calls at
+  860/972. The §5(a) fix is **not applied** and **no human approval of §5(a) is recorded** —
+  `283fe58` is about visibility and says nothing about the parse guard; the only approval
+  entries in this log remain Checkpoints A/B/C (2026-10-01/07/12).
+  `backtest/results/c17_preflight.json` still reports `status: BLOCKED`,
+  `blockers_standing: ["tier_a_2025_pull_blocked"]`.
+- Verified unchanged otherwise: `git status` clean, `master` level with `origin/master`;
+  **nothing under `tests/` was touched**. Results store still **14 265 rows** over 6 run ids,
+  `evaluation_years` ∈ {2020, 2021, 2022, 2023, 2024}, **0** whole-cell `2025` outside `value`
+  (stdlib `csv` under `python3 -I`; no venv/pandas in this container).
+  `data/manifest/prices_manifest.csv` still 63 rows + header with the same 9 `2025` rows from
+  C17's legitimate post-unseal Energy-Charts price pull, not a new fetch. Environment
+  unchanged (`ENTSOE_API_KEY` set, 36 chars; `data/raw/` absent, so the post-approval run
+  remains a full fresh download of both sources).
+- **Still waiting on the human for `docs/c17_blocker.md` §5** — §5(a) (approve the one-call
+  fix to `data/entsoe.py`) is the only one of the three parts that unblocks C17. The forty-nine
+  waits now span ~16.97 days since the C17 cycle (`03b4d41`, 2026-10-12T18:53Z).
+- **No push notification this cycle.** The C17 wait is a repeat ping, and FLAG C-E-01 reports
+  an action J. himself instructed ~5h earlier and already logged, so a ping would tell him his
+  own news. The flag is in this log where the next cycle and the next human read will see it.
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
