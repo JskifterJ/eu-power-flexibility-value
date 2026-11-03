@@ -9492,3 +9492,53 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   sixty-three waits now span ~21.31 days since the C17 cycle (`03b4d41`, 2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### C17-blocked wait — 2026-11-03T10:12Z (scheduled cycle, 64th wait, no new work)
+- Fired while "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**: verified
+  state, appended this note, stopped. **Nothing fetched, nothing computed** — no 2025
+  forecast, dispatch, capture ratio or metric, and no API request of any kind. No push
+  notification, per the standing rule against repeat pings for the same wait.
+- **Nothing has changed since the 63rd wait.** The only commit after `e3c8633` is the 63rd
+  wait's own (`cb497c9`, `Claude`, `PROGRESS.md` only); across `285af41..HEAD` (10 commits)
+  **0** files other than `PROGRESS.md` changed. Still **no human-authored commit since**
+  J.'s `283fe58` (2026-10-29T13:08+01:00, the repo-public note) — the only non-`Claude`
+  commit in reachable history. `git status` clean (0 modified paths).
+- **Container note (mechanical, not a state change):** the clone again came up on a
+  **detached HEAD** at `cb497c9` (the true remote tip) with local `master` and a stale
+  `origin/master` both ten commits behind at `285af41`. Resolved by `git fetch origin
+  master`, checking out `master` and fast-forwarding to `cb497c9` — ref-only moves; no file,
+  no history and no committed content changed.
+- **FLAG C17-01 still stands, unchanged**: `data/entsoe.py` still opens its parse guard with
+  `sealed = sealed_years()` (line 741); `holdout_is_unsealed` appears **0 times** in the
+  file; `assert_not_sealed` appears only as the line-109 import and the two unrelated calls
+  at 860/972. The two sibling checks it should match are still there (`data/prices.py:122`,
+  `data/exogenous.py:277`). The §5(a) fix is **not applied** and **no human approval of
+  §5(a) is recorded** — the only approval strings in this log remain Checkpoints A/B/C
+  (2026-10-01/07/12). `backtest/results/c17_preflight.json` still reports `status: BLOCKED`,
+  `blockers_standing: ["tier_a_2025_pull_blocked"]`, with `unseal.holdout_is_unsealed: true`.
+  All five decision artefacts present (`c16_seal_verification.json`,
+  `c16_preregistration.json`, `docs/c17_blocker.md`, `docs/checkpoint_c.md`,
+  `backtest/run_c17_holdout.py`).
+- Verified unchanged otherwise: results store still **14 265 rows** over **6** run ids,
+  `evaluation_years` ∈ {2020: 2 106, 2021: 2 106, 2022: 2 167, 2023: 2 897, 2024: 4 989},
+  **0** whole-cell `2025` outside `value`, **0** CRLF bytes (stdlib `csv` under
+  `python3 -I`; no venv and no pandas in this container, so `verify_append_only()` itself
+  was not re-run this cycle — the byte and row checks were).
+  `data/manifest/prices_manifest.csv` still 63 rows + header with the same 9 `2025` rows
+  from C17's legitimate post-unseal Energy-Charts price pull, not a new fetch. Environment
+  unchanged (`ENTSOE_API_KEY` set, 36 chars; `data/raw/` absent, so the post-approval run
+  remains a full fresh download of both sources). **Nothing under `tests/` was touched.**
+- **Shallow-clone note:** this container's clone is again **50 commits** deep and its oldest
+  reachable commit has rolled forward to `a298a07` (the 15th wait), so the C17 cycle
+  `03b4d41` remains out of reach for a diff here. The equivalent check over the **available**
+  history is clean: **0** paths under `tests/` changed across all reachable commits. A C20
+  run still needs a full (non-shallow) clone.
+- **FLAG C-E-01 unchanged** — re-verified this cycle: `list_repos` still reports
+  `visibility: public`. The repo was flipped public 2026-10-29 outside Checkpoint E, C20 has
+  not run, and this cycle neither reverted the visibility nor did any C20 work. Both remain
+  human calls.
+- **Still waiting on the human for `docs/c17_blocker.md` §5** — §5(a) (approve the one-call
+  fix to `data/entsoe.py`) is the only one of the three parts that unblocks C17. The
+  sixty-four waits now span ~21.64 days since the C17 cycle (`03b4d41`, 2026-10-12T18:53Z).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
