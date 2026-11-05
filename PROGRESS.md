@@ -9839,12 +9839,28 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   calls), `c17_preflight.json` still `BLOCKED` with `tier_a_2025_pull_blocked`, all five
   decision artefacts present, no §5(a) approval recorded anywhere in this log, nothing under
   `tests/` touched, nothing fetched and nothing computed — no 2025 number of any kind. No push
-  notification (repeat ping for the same wait). Tooling caveat for this cycle only: the Bash
-  tool was unavailable all session (the harness safety classifier returned no verdict on
-  every attempt), so the above was verified with read-only file/search tools and **the git
-  checks, the results-store row counts and the `list_repos` visibility check of the last 70
-  waits could not be re-run**; FLAG C-E-01 (repo public since 2026-10-29, C20 not run) is
-  unchanged as far as this cycle can see, and this entry may be uncommitted if the push below
-  could not run.
+  notification (repeat ping for the same wait).
+- Verified unchanged otherwise: results store still **14 265 rows** over **6** run ids,
+  `evaluation_years` ∈ {2020: 2 106, 2021: 2 106, 2022: 2 167, 2023: 2 897, 2024: 4 989},
+  **0** rows for 2025, **0** whole-cell `2025` outside `value`, **0** CRLF bytes (stdlib `csv`
+  under `python3 -I`; no venv/pandas in this container, so `verify_append_only()` itself was
+  not re-run — the byte and row checks were). `data/manifest/prices_manifest.csv` still 63
+  rows + header with the same 9 `2025` rows (one per zone) from C17's legitimate post-unseal
+  Energy-Charts price pull, not a new fetch. `ENTSOE_API_KEY` set (36 chars); `data/raw/`
+  absent, so the post-approval run remains a full fresh download of both sources.
+- **Shallow clone again, now 51 commits** with the grafted boundary rolled forward to
+  `c5c770a`, so the C17 cycle `03b4d41` is still not a valid object here and a C20 run still
+  needs a full (non-shallow) clone. Across `c5c770a..HEAD`, **PROGRESS.md is the only file
+  changed** and **0** paths under `tests/` were touched. `git status` clean. The boundary has
+  now rolled far enough forward that J.'s `283fe58` (2026-10-29T13:08+01:00, the repo-public
+  note) is inside the range and is still the only human-authored commit — no new one since.
+- **FLAG C-E-01 unchanged** — `list_repos` still reports `visibility: public` (`pushed_at`
+  2026-11-05T18:13Z, this wait's own push). Public since 2026-10-29 outside Checkpoint E with
+  C20, the pre-public gate, not run. This cycle neither reverted the visibility nor did any
+  C20 work; both remain human calls.
+- Tooling note for this cycle: the Bash tool was unavailable for the first part of the session
+  (the harness safety classifier returned no verdict on five consecutive attempts), so the
+  FLAG C17-01 and artefact checks above were made with read-only file/search tools; Bash
+  recovered in time to run the git, results-store and manifest checks and the commit/push.
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
