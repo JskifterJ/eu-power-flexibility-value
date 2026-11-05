@@ -9831,3 +9831,20 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   seventy waits now span ~23.64 days since the C17 cycle (`03b4d41`, 2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### C17-blocked wait — 2026-11-05T18:13Z (scheduled cycle, 71st wait, no new work)
+- Checked; still waiting on `docs/c17_blocker.md` §5(a). Nothing changed: `data/entsoe.py:741`
+  still opens the parse guard with `sealed = sealed_years()` (`holdout_is_unsealed`: 0
+  occurrences; `assert_not_sealed` only at the line-109 import and the unrelated 860/972
+  calls), `c17_preflight.json` still `BLOCKED` with `tier_a_2025_pull_blocked`, all five
+  decision artefacts present, no §5(a) approval recorded anywhere in this log, nothing under
+  `tests/` touched, nothing fetched and nothing computed — no 2025 number of any kind. No push
+  notification (repeat ping for the same wait). Tooling caveat for this cycle only: the Bash
+  tool was unavailable all session (the harness safety classifier returned no verdict on
+  every attempt), so the above was verified with read-only file/search tools and **the git
+  checks, the results-store row counts and the `list_repos` visibility check of the last 70
+  waits could not be re-run**; FLAG C-E-01 (repo public since 2026-10-29, C20 not run) is
+  unchanged as far as this cycle can see, and this entry may be uncommitted if the push below
+  could not run.
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
