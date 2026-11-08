@@ -10098,3 +10098,49 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   2026-10-12T18:53Z). §5(a) is still the only one of the three parts that unblocks C17.
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### C17-blocked wait — 2026-11-08T02:11Z (scheduled cycle, 77th wait, no new work)
+- Checked; still waiting on `docs/c17_blocker.md` §5(a). **Nothing has changed, nothing was
+  fetched and nothing was computed** — no 2025 forecast, dispatch, capture ratio or metric, and
+  no API request of any kind. No push notification (repeat ping for the same wait).
+- **FLAG C17-01 unchanged**: `data/entsoe.py:741` still opens the parse guard with
+  `sealed = sealed_years()`; `holdout_is_unsealed` appears **0** times in the file;
+  `assert_not_sealed` only at the line-109 import and the unrelated 860/972 calls, while the
+  sibling checks it should match are still at `data/prices.py:122` and `data/exogenous.py:277`.
+  The §5(a) fix is **not applied** and **no §5(a) approval is recorded** — the only `APPROVED`
+  lines in this log remain the `config/data.yaml` quotation at 6300 and the unseal marker at
+  6526. `backtest/results/c17_preflight.json` still `BLOCKED` /
+  `blockers_standing: ["tier_a_2025_pull_blocked"]` / `unseal.holdout_is_unsealed: true`, and
+  all five decision artefacts are present (`c16_seal_verification.json`,
+  `c16_preregistration.json`, `docs/c17_blocker.md`, `docs/checkpoint_c.md`,
+  `backtest/run_c17_holdout.py`).
+- **Repo state:** container came up detached at the true remote tip `c66e57d` (the 76th wait's
+  `PROGRESS.md`-only commit) with the local `master` ref stale at `c7c57ff`;
+  `git fetch origin master` moved `origin/master` to `c66e57d` and confirmed nothing after it —
+  the 76th wait *was* pushed and only the clone's refs lagged. Shallow clone again **50 commits**
+  deep, boundary rolled forward to `f4f5cb9`, so C17's `03b4d41` is still not a valid object here
+  and C20 still needs a full (non-shallow) clone. Across `f4f5cb9..HEAD`: **`PROGRESS.md` is the
+  only file changed** (+2 010 lines, 1 file) and **0** paths under `tests/` touched; 48 Claude
+  commits and J.'s `283fe58` (2026-10-29T13:08+01:00), whose added lines are about visibility
+  only and carry no approval. `git status` clean (0 porcelain lines).
+- Verified unchanged otherwise: results store **14 265 rows** over **6** run ids,
+  `evaluation_years` ∈ {2020: 2 106, 2021: 2 106, 2022: 2 167, 2023: 2 897, 2024: 4 989},
+  **0** rows for 2025, **0** whole-cell `2025` outside `value`, **0** CRLF bytes — stdlib `csv`
+  under `python3 -I`; no venv/pandas in this container, so `verify_append_only()` itself was not
+  re-run, the byte and row checks were. `data/manifest/prices_manifest.csv` still 63 rows +
+  header with the same 9 `2025` rows (one per zone) from C17's legitimate post-unseal
+  Energy-Charts price pull, not a new fetch, and `data/manifest/exogenous_manifest.csv` still
+  **27** rows with **0** for 2025 — the Tier-A exogenous pull FLAG C17-01 blocks has still never
+  landed. Seal declaration unchanged (`config/data.yaml` holdout `years: [2025]`,
+  `sealed: true`; `holdout_unseal_marker` intact) with the marker present exactly once as a
+  whole line (`PROGRESS.md:6526`). `ENTSOE_API_KEY` set (36 chars); `data/raw/` absent, so the
+  post-approval run remains a full fresh download of both sources. **Nothing under `tests/` was
+  touched** — 20 files, 0 modified against HEAD, 0 untracked.
+- **FLAG C-E-01 unchanged** — `list_repos` still reports `visibility: public` (`pushed_at`
+  2026-11-07T10:12Z, the 76th wait's push). Public since 2026-10-29 outside Checkpoint E with
+  C20, the pre-public gate, not run. This cycle neither reverted the visibility nor did any C20
+  work; both remain human calls.
+- The seventy-seven waits now span **~26.0 days** since the C17 cycle (`03b4d41`,
+  2026-10-12T18:53Z). §5(a) is still the only one of the three parts that unblocks C17.
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
