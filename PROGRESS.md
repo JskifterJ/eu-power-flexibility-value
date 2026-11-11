@@ -10483,3 +10483,49 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   2026-10-12T18:53Z). §5(a) is still the only one of the three parts that unblocks C17.
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### C17-blocked wait — 2026-11-11T02:11Z (scheduled cycle, 85th wait, no new work)
+- Checked; still waiting on `docs/c17_blocker.md` §5(a). **Nothing has changed, nothing was
+  fetched and nothing was computed** — no 2025 forecast, dispatch, capture ratio or metric, and
+  no API request of any kind. No push notification (repeat ping for the same wait).
+- **FLAG C17-01 unchanged**: `data/entsoe.py:741` still opens the parse guard with
+  `sealed = sealed_years()`; `holdout_is_unsealed` appears **0** times in the file;
+  `assert_not_sealed` only at the line-109 import and the unrelated 860/972 calls, while the
+  sibling checks it should match are still at `data/prices.py:122` and `data/exogenous.py:277`.
+  The §5(a) fix is **not applied** and **no §5(a) approval is recorded** — checked with
+  `grep -nx` for the marker (present exactly once, `PROGRESS.md:6526`) and the `APPROVED` line
+  list, which outside wait entries quoting themselves is still only the `config/data.yaml`
+  quotation at 6300 and that marker. `backtest/results/c17_preflight.json` still `BLOCKED` /
+  `blockers_standing: ["tier_a_2025_pull_blocked"]` / `unseal.holdout_is_unsealed: true`.
+- **Repo state:** container came up detached at `79aa844` (the 84th wait's `PROGRESS.md`-only
+  commit); `git fetch origin master` moved `origin/master` from `c7c57ff` to `79aa844` and
+  confirmed **nothing after it** — the 84th wait *was* pushed and only the clone's refs lagged,
+  the same pattern as the 76th–84th. Shallow clone again **50 commits** deep, oldest reachable
+  commit now `31e7e05`, so C17's `03b4d41` is still not a valid object here (`git cat-file -e`
+  fails) and C20 still needs a full (non-shallow) clone. Across `31e7e05..HEAD`: **`PROGRESS.md`
+  is the only file changed** (1 file) and **0** paths under `tests/` touched; the only non-Claude
+  commit remains J.'s `283fe58` (2026-10-29T13:08+01:00), about visibility only and carrying no
+  approval. `git status` clean, **0** untracked files (`--untracked-files=all`).
+- Verified unchanged otherwise: results store **14 265 rows** over **6** run ids,
+  `evaluation_years` ∈ {2020: 2 106, 2021: 2 106, 2022: 2 167, 2023: 2 897, 2024: 4 989},
+  **0** rows carrying 2025 in any column but `value`, **0** CRLF bytes — stdlib `csv` under
+  `python3 -I`; no venv and no pandas in this container, so `verify_append_only()` itself was not
+  re-run, the byte and row checks were. (Nuance for future waits: the blunt "any cell contains
+  2025" count is **13**, all of them inside the `value` column — numeric results, not a 2025
+  evaluation; the `evaluation_years` column is the one to read.)
+  `data/manifest/prices_manifest.csv` still 63 rows + header (9 per year 2019–2025 — the 2025
+  rows are the Energy-Charts prices cached by C17 before the ENTSO-E step failed) and
+  `data/manifest/exogenous_manifest.csv` still **27** rows, `year` ∈ {2022: 9, 2023: 9, 2024: 9}
+  and **0** rows for 2025 — so the Tier-A exogenous pull FLAG C17-01 blocks has still never
+  landed. Seal declaration unchanged (`config/data.yaml` holdout `years: [2025]`, `sealed: true`;
+  `holdout_unseal_marker` intact at line 32). `ENTSOE_API_KEY` set (36 chars); `data/raw/`
+  absent, so the post-approval run remains a full fresh download of both sources. **Nothing
+  under `tests/` was touched** — 20 files, 0 modified against HEAD, 0 untracked.
+- **FLAG C-E-01 unchanged** — the repo has been public since 2026-10-29, outside Checkpoint E,
+  with C20 (the pre-public gate) not run. This cycle neither reverted the visibility nor did any
+  C20 work; both remain human calls. (Not re-queried this cycle: no `list_repos` call, nothing
+  in the tree changed that could affect it.)
+- The eighty-five waits now span **~29.3 days** since the C17 cycle (`03b4d41`,
+  2026-10-12T18:53Z). §5(a) is still the only one of the three parts that unblocks C17.
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
