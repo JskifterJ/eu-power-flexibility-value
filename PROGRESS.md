@@ -10775,3 +10775,14 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   ninety waits now span **~31.3 days** since the C17 cycle (`03b4d41`, 2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### 2026-11-13T10:14Z — C17-blocked wait (91st)
+- Checked; still waiting. Fired while "Next cycle to run" reads **AWAITING HUMAN — C17
+  BLOCKED**. Read CLAUDE.md, PLAN.md and the PROGRESS.md status block; verified the
+  working tree is clean (HEAD = 90th-wait commit `b98b837`) and no §5(a) approval exists —
+  `grep -ic "5(a) approved"` returns 1, but that one hit is a wait entry quoting the phrase,
+  not a human decision (flagged at PROGRESS.md line 10257). FLAG C17-01, FLAG C17-02 and
+  FLAG C-E-01 all unchanged. **No 2025 forecast, dispatch or metric was computed.** Still
+  waiting on the human for `docs/c17_blocker.md` §5(a) — approve the one-call fix to
+  `data/entsoe.py` — the only one of the three parts that unblocks C17. No push notification
+  (repeat wait). The 2025 holdout is UNSEALED and has not yet been evaluated.
