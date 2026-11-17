@@ -11447,3 +11447,63 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   a full clone).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### 2026-11-17T18:12Z — C17-blocked wait (104th)
+
+- Checked; still waiting. "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**, so
+  this cycle verified state, appended this note and stopped. **Nothing fetched, nothing
+  computed** — no 2025 forecast, dispatch, capture ratio or metric, and no API request of any
+  kind. No push notification (repeat ping for the same wait).
+- **Nothing has changed since the 103rd wait.** `git fetch origin master`: tip is `b29f8c3`, the
+  103rd wait's own `PROGRESS.md`-only commit, with nothing after it (0 commits in
+  `HEAD..origin/master`, 0 in `origin/master..HEAD`). Container started detached at `b29f8c3`
+  with local `master` stale at `f1e9383`; reattached and fast-forwarded (`--ff-only`, 15
+  commits, `PROGRESS.md` +774 lines only). `HEAD` = `master` = `origin/master` = `b29f8c3`,
+  `git status` clean, 0 untracked anywhere in the tree — which is also what proves every
+  tracked file below is byte-identical to HEAD. Across the 49 non-boundary reachable commits
+  (shallow boundary now `e0dd9e1`, derived fresh via `git rev-list HEAD | tail -1` — it moves
+  every cycle, never copy it from an earlier entry) **1** path changed, `PROGRESS.md`, and **0**
+  under `tests/`. Author tally over the 50 reachable commits is **50 `Claude`, 0 `Johannes`**,
+  which is the graft window again, not evidence about what the human has or has not done;
+  asking that question needs a full (non-shallow) clone.
+- **No §5(a) approval exists.** `grep -c "5(a) approved"` is **16** (one more than the 103rd
+  wait, which is that wait's own entry quoting the phrase); all sixteen hits are at lines
+  10208–11409, every one of them wait-entry prose, not a human decision. The unseal marker
+  `CHECKPOINT C APPROVED: 2025 holdout unsealed` is still present exactly once as a whole line
+  (`PROGRESS.md:6526`) — that is Checkpoint C's approval, not §5(a)'s. A search for any other
+  approval-shaped marker (`APPROVED BY HUMAN`, `C17 APPROVED`, `FIX APPROVED`, `§5(a) APPROVED`)
+  returns **4** hits (lines 11242, 11298, 11355, 11414), each one a wait entry's own prose
+  listing those strings.
+- **State verified, all unchanged:** `tests/` 20 files (+`.gitkeep`), 0 modified against HEAD,
+  0 untracked — **nothing under `tests/` touched**. `prices_manifest.csv` 63 rows + header,
+  9 per year for 2019–2025 (the 2025 rows are C17's legitimate post-unseal Energy-Charts price
+  pull, not a new fetch); `exogenous_manifest.csv` **27** rows, `year` ∈ {2022: 9, 2023: 9,
+  2024: 9} and **0** for 2025, so the Tier-A exogenous pull FLAG C17-01 blocks has still never
+  landed. `results.csv` 14 265 rows + header over **6** runs, **0** CR bytes,
+  `evaluation_years` ∈ {2020: 2106, 2021: 2106, 2022: 2167, 2023: 2897, 2024: 4989} and **0**
+  rows whose `evaluation_years` mentions 2025 (the blunt "any cell contains 2025" count is 13,
+  and a per-column tally confirms all 13 sit in the numeric `value` column — digit substrings,
+  not a 2025 evaluation). Checked with `python3 -I`; no venv/pandas in this container, so
+  `verify_append_only()` was not re-run, the byte and row checks were. Seal declaration
+  unchanged (`config/data.yaml` holdout `years: [2025]`, `sealed: true`, marker intact;
+  `fetch_years` still ends at 2025). `ENTSOE_API_KEY` set (36 chars); `data/raw/` absent, so the
+  post-approval run remains a full fresh download of both sources. FLAG C17-01's code unchanged:
+  `parse_document` still opens with `sealed = sealed_years()` (`data/entsoe.py:741`) and
+  `holdout_is_unsealed` appears **0** times in `data/entsoe.py`, while the siblings at
+  `data/entsoe.py:860`/`:972`, `data/prices.py:69`/`:122`, `data/exogenous.py:110`/`:277` and
+  `data/energy_charts.py:210`/`:287` do route through `assert_not_sealed`. The four decision
+  artefacts are present and byte-unchanged: `c16_preregistration.json` (8 709 B),
+  `c16_seal_verification.json` (8 403 B), `c17_preflight.json` (17 231 B),
+  `docs/c17_blocker.md` (12 439 B, §5 at line 186).
+- **FLAG C17-02 unchanged** (six correctly-obsolete tests + FLAG C17-01's regression test).
+  **FLAG C-E-01 unchanged** — repo public since 2026-10-29, outside Checkpoint E, with C20 (the
+  pre-public gate) not run; this cycle neither reverted the visibility nor did any C20 work,
+  both remain human calls. (Not re-queried: no `list_repos` call, nothing in the tree could have
+  changed it.)
+- **Still waiting on the human for `docs/c17_blocker.md` §5** — §5(a) (approve the one-call fix
+  to `data/entsoe.py`) remains the only one of the three parts that unblocks C17. The
+  one hundred and four waits now span **~36.0 days** since the C17 cycle (`03b4d41`,
+  2026-10-12T18:53Z, still not a valid object in this shallow clone — so a C20 run still needs
+  a full clone).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
