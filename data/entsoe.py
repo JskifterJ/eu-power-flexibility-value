@@ -742,11 +742,12 @@ def parse_document(
     if sealed:
         hit = sorted(set(int(y) for y in frame.index.year) & sealed)
         if hit:
-            raise UnexpectedResponse(
-                f"{context}: response contains timestamps in SEALED year(s) {hit}. "
-                f"ENTSO-E's periodEnd is meant to be exclusive, so this must not "
-                f"happen; refusing to parse or cache it. See CLAUDE.md and "
-                f"data/holdout.py."
+            # Routed through assert_not_sealed so the tripwire yields only to the
+            # human's unseal marker (C17-01, approved by J. 2026-11-20).
+            assert_not_sealed(
+                hit,
+                f"parse a response for {context} carrying timestamps in year(s) "
+                f"{hit} (ENTSO-E's periodEnd is meant to be exclusive)",
             )
 
     frame.attrs["unit"] = expected_unit

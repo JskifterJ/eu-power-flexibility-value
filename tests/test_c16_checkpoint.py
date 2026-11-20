@@ -356,15 +356,27 @@ def test_artefact_scan_allows_the_structural_2025_dates(tmp_path: Path):
 # ---------------------------------------------------------------------------
 
 
-def test_the_download_record_names_no_sealed_year():
-    report = c16.manifest_scan()
+def test_the_download_record_now_names_2025_and_nothing_else_sealed():
+    """Was test_the_download_record_names_no_sealed_year. Updated 2026-11-20
+    (C17 blocker 5(b), J. approved): after Checkpoint C the committed record
+    legitimately contains the post-unseal 2025 Energy-Charts pull, so the
+    pre-approval scan correctly refuses it; it must name only 2025."""
+    with pytest.raises(c16.CheckpointError, match="2025") as exc:
+        c16.manifest_scan()
+    assert "year: [2025]" in str(exc.value)
+
+
+def test_the_download_record_scan_is_clean_for_the_pre_holdout_years(tmp_path: Path):
+    pd.DataFrame(
+        {"zone": ["DE-LU"] * 3, "year": [2022, 2023, 2024],
+         "first_ts_utc": ["2022-01-01T00:00:00+00:00", "2023-01-01T00:00:00+00:00",
+                          "2024-01-01T00:00:00+00:00"],
+         "last_ts_utc": ["2022-12-31T22:00:00+00:00", "2023-12-31T22:00:00+00:00",
+                         "2024-12-31T22:00:00+00:00"]}
+    ).to_csv(tmp_path / "prices_manifest.csv", index=False)
+    report = c16.manifest_scan(tmp_path)
     assert report["clean"] is True
     assert report["sealed_years_found"] == []
-    assert report["years_in_manifests"]["prices_manifest.csv"] == [
-        2019, 2020, 2021, 2022, 2023, 2024
-    ]
-    assert report["years_in_manifests"]["exogenous_manifest.csv"] == [2022, 2023, 2024]
-    assert report["raw_files_naming_a_sealed_year"] == []
 
 
 def test_manifest_scan_finds_a_fetched_sealed_year(tmp_path: Path):
@@ -387,9 +399,16 @@ def test_manifest_scan_finds_a_sealed_coverage_timestamp(tmp_path: Path):
         c16.manifest_scan(tmp_path)
 
 
-def test_manifest_scan_is_explicit_that_an_absent_raw_cache_is_not_evidence():
-    """`data/raw/` is gitignored, so zero raw hits must not read as verified."""
-    report = c16.manifest_scan()
+def test_manifest_scan_is_explicit_that_an_absent_raw_cache_is_not_evidence(tmp_path: Path):
+    """`data/raw/` is gitignored, so zero raw hits must not read as verified.
+    Updated 2026-11-20 (C17 blocker 5(b)): run on a clean temp manifest dir,
+    because the real record now names 2025 and the real scan refuses it."""
+    pd.DataFrame(
+        {"zone": ["DE-LU"], "year": [2024],
+         "first_ts_utc": ["2024-01-01T00:00:00+00:00"],
+         "last_ts_utc": ["2024-12-31T22:00:00+00:00"]}
+    ).to_csv(tmp_path / "prices_manifest.csv", index=False)
+    report = c16.manifest_scan(tmp_path)
     assert "raw_cache_present" in report
     assert report["raw_cache_present"] == (REPO_ROOT / "data" / "raw").exists()
 

@@ -2,7 +2,13 @@
 
 ## Current status
 
-- **Next cycle to run:** **AWAITING HUMAN — C17 BLOCKED.** The holdout is unsealed and the
+- **Next cycle to run:** **C17 — UNBLOCKED 2026-11-20 (J. approved §5(a)+(b); see the entry
+  at the end of this file). Two things still stand before the single evaluation may run:
+  (1) `backtest/run_c17_holdout.py` has only `--phase preflight`, so the evaluation phase is
+  not written; (2) the local venv is Python 3.14.5 / numpy 2.5.3 / scipy 1.18.1, not the
+  pre-registered 3.11.17 / 2.4.6 / 1.17.1, so `library_fingerprint` would not match
+  `856fb19ac0c4eecd`. No 2025 number has been computed.** *(Superseded text of the old
+  status follows for the record: AWAITING HUMAN — C17 BLOCKED.)* The holdout is unsealed and the
   pre-registered evaluation is ready to run, but it **has not run**: this repo's own
   ENTSO-E parser refuses every 2025 response (**FLAG C17-01**), and the fix is an edit to a
   sealed-holdout assertion, which CLAUDE.md makes a flag-and-stop event and PLAN.md lists
@@ -11896,3 +11902,27 @@ J. asked for the repo to be made public ahead of Checkpoint E so it can be linke
   hundred and twelve waits now span **~38.6 days** since the C17 cycle (2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+## 2026-11-20 — HUMAN APPROVAL: C17 blocker §5(a) + §5(b) (J.)
+
+J. approved, in an interactive session, both **§5(a)** (the one-call fix to
+`data/entsoe.py`: route the sealed-year parse check through `assert_not_sealed`, which
+honours the unseal marker) and **§5(b)** (updating the seven tests that are red because
+they assert the pre-unseal state). This clears FLAG C17-01. The edit to `data/entsoe.py`
+and the test updates are made under this approval and no other; each test change is listed
+below as it is made. The pre-registered 2025 evaluation still runs **once, whole, after**
+the fix.
+
+### 2026-11-20 — C17 unblock work done under the approval above (no 2025 number computed)
+- `data/entsoe.py` parse guard now calls `assert_not_sealed(...)` (§5(a)); `tests/test_c7_entsoe.py`
+  passes 69/69.
+- Tests changed under §5(b), on this Windows checkout (no `data/raw/`, so only 3 of the 7 were red here):
+  `test_c7_entsoe.py::test_a_response_containing_a_sealed_year_timestamp_is_refused` (**an eighth test,
+  not in the blocker doc's list**, same pre-unseal-state family) split into a still-sealed case with
+  the marker forced False plus a new 2025-parses-once-unsealed regression test;
+  `test_c16_checkpoint.py::test_the_download_record_names_no_sealed_year` rewritten to assert the
+  real record now names only 2025, with a clean-tmp-dir companion;
+  `...::test_manifest_scan_is_explicit_that_an_absent_raw_cache_is_not_evidence` moved onto a clean tmp
+  manifest dir. The c13/c14/c16-probe tests pass here and will go red wherever `data/raw/` holds 2025
+  data; not edited yet.
+- **Not done:** the 6 refused ENTSO-E 2025 documents were not re-fetched, and the evaluation was not run.

@@ -515,15 +515,31 @@ def test_conflicting_resolutions_for_one_timestamp_raise():
 # ---------------------------------------------------------------------------
 
 
-def test_a_response_containing_a_sealed_year_timestamp_is_refused():
-    # periodEnd is meant to be exclusive, so this must never happen; the parser
-    # checks rather than trusting it.
-    payload = gl_document(
+def _sealed_2025_payload():
+    return gl_document(
         [series_xml("A04", [period_xml("2025-01-01T00:00Z", "2025-01-01T02:00Z",
                                        "PT60M", [(1, 1.0)])])]
     )
-    with pytest.raises(ec.UnexpectedResponse, match="SEALED"):
-        ec.parse_document(payload, LOAD_DOC, "ctx")
+
+
+def test_a_response_containing_a_sealed_year_timestamp_is_refused_while_sealed(monkeypatch):
+    # periodEnd is meant to be exclusive, so this must never happen; the parser
+    # checks rather than trusting it. Updated 2026-11-20 (C17-01, J. approved):
+    # the check now yields to the unseal marker, so the *sealed* state is
+    # simulated by forcing holdout_is_unsealed() False.
+    import data.holdout as holdout
+    monkeypatch.setattr(holdout, "holdout_is_unsealed", lambda *a, **k: False)
+    with pytest.raises(holdout.SealedHoldoutError, match="SEALED"):
+        ec.parse_document(_sealed_2025_payload(), LOAD_DOC, "ctx")
+
+
+def test_a_2025_timestamp_parses_once_the_holdout_is_unsealed(monkeypatch):
+    # The C17-01 regression: before the fix this raised UnexpectedResponse even
+    # with the human's unseal marker in PROGRESS.md.
+    import data.holdout as holdout
+    monkeypatch.setattr(holdout, "holdout_is_unsealed", lambda *a, **k: True)
+    frame = ec.parse_document(_sealed_2025_payload(), LOAD_DOC, "ctx")
+    assert len(frame) == 2
 
 
 def test_fetching_2025_now_passes_the_holdout_guard():
