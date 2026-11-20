@@ -2,26 +2,30 @@
 
 ## Current status
 
-- **Next cycle to run:** **C17 — UNBLOCKED 2026-11-20 (J. approved §5(a)+(b); see the entry
-  at the end of this file). Two things still stand before the single evaluation may run:
-  (1) `backtest/run_c17_holdout.py` has only `--phase preflight`, so the evaluation phase is
-  not written; (2) the local venv is Python 3.14.5 / numpy 2.5.3 / scipy 1.18.1, not the
-  pre-registered 3.11.17 / 2.4.6 / 1.17.1, so `library_fingerprint` would not match
-  `856fb19ac0c4eecd`. No 2025 number has been computed.** *(Superseded text of the old
-  status follows for the record: AWAITING HUMAN — C17 BLOCKED.)* The holdout is unsealed and the
-  pre-registered evaluation is ready to run, but it **has not run**: this repo's own
-  ENTSO-E parser refuses every 2025 response (**FLAG C17-01**), and the fix is an edit to a
-  sealed-holdout assertion, which CLAUDE.md makes a flag-and-stop event and PLAN.md lists
-  among its five human checkpoints. **No 2025 forecast, dispatch or metric value has been
-  computed.** Read `docs/c17_blocker.md` — §5 is the three-part decision, of which §5(a),
-  approving a one-call fix to `data/entsoe.py`, is the only one that unblocks the cycle.
-  A scheduled cycle firing while this line still reads AWAITING HUMAN does no new work: it
-  verifies nothing has changed, appends a one-line note and stops. Once approved, C17 runs
-  the single pre-registered evaluation from `backtest/results/c16_preregistration.json`
-  **exactly once** — PLAN.md's stop rule: no model, feature, hyperparameter, battery
-  parameter or metric definition may change after the first 2025 number is seen. A change
-  that looks necessary is a finding to report, and any re-run must be labelled as a second
-  evaluation.
+- **Next cycle to run:** **C17 — UNBLOCKED (J. approved §5(a)+(b) on 2026-11-20; J. also asked
+  that scheduled cycles keep building this).** Work through these in order, one or more per
+  cycle, logging each to this file; do not skip ahead and do not stop at "wait":
+  1. **Write the evaluation phase** of `backtest/run_c17_holdout.py` (today only
+     `--phase preflight` exists). It must implement exactly `c16_preregistration.json`: frozen
+     specs, commit-then-settle (solve on forecast, freeze, value at realised), the oracle >=
+     forecast per-day and naive <= forecast on-average assertions, one append to `results.csv`.
+     Test it on 2024 first (visible); it must refuse to run the 2025 phase twice.
+  2. **Environment:** run only in an environment matching the pre-registered fingerprint
+     `856fb19ac0c4eecd` (Python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1,
+     scipy 1.17.1, lightgbm 4.7.0). The Windows venv is 3.14.5/numpy 2.5.3/scipy 1.18.1 and does
+     NOT match: there, do steps 1 and 3 only and flag, do not evaluate.
+  3. **Fetch** the 6 refused ENTSO-E 2025 documents via `python -m data.fetch_exogenous`
+     (needs `ENTSOE_API_KEY`; check the manifest first, never re-download cached data), then run
+     `--phase preflight` and confirm `status` is no longer BLOCKED.
+  4. **Only then run the 2025 evaluation once, whole.** PLAN.md stop rule: no model, feature,
+     hyperparameter, battery parameter or metric definition may change after the first 2025
+     number is seen; a change that looks necessary is a finding, and any re-run is labelled a
+     second evaluation. Record the timestamp. Then do C17's remaining outputs (`results.csv`,
+     README rewrite, figures) and stop; do not start C18.
+  Any test that goes red where `data/raw/` holds 2025 data (c13/c14/c16-probe, listed in
+  `docs/c17_blocker.md` §5b) is covered by J.'s §5(b) approval to update for the post-unseal
+  state; log each edit. Any other `tests/` or leakage-assertion edit still needs a FLAG and stop.
+  No 2025 number has been computed as of 2026-11-20.
 - **FLAG C17-01 — `data/entsoe.py`'s sealed-timestamp check never asks whether the human
   unsealed the holdout, so the whole Tier-A 2025 exogenous pull is refused.** `sealed_years()`
   is the permanent declaration in `config/data.yaml` and still reads `{2025}` by design;
