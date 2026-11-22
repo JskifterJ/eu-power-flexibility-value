@@ -255,7 +255,14 @@ or a URL — or else be *bound*: named in a table that says which committed
 artefact and which field it came from, and checked against it. There is one
 bound claim today ("no secret in any of the 181 commits" →
 `c20_secret_scan.json: history_scan.n_commits`), it agrees, and there are zero
-unbound numbers. **That table is the thing C17's README rewrite has to grow**: a
+unbound numbers.
+
+**One consequence to know about before re-running the gate**: that count is the
+history as the scan saw it, so the moment a later cycle re-runs
+`--phase secrets` on a longer history the artefact moves ahead of the README and
+the `claims` phase fails, naming both values. That is the intended behaviour —
+a README quoting a stale measurement is exactly what this phase is for — but it
+means **re-running the gate and updating that one number go together**. **That table is the thing C17's README rewrite has to grow**: a
 findings README quoting a capture ratio adds a row, and the gate re-reads it.
 
 **The factual claims, against artefacts rather than prose.** Three, and the

@@ -12650,3 +12650,9 @@ download this cycle made.
 3. If the human answers **NOTE C20-02** with "yes, commit the pins", that is a five-minute job
    (`requirements-published.txt` + one README line) and can ride along with whatever cycle
    comes next.
+4. **If any cycle re-runs `python -m backtest.run_c20_gate --phase all`, update the README's
+   "no secret in any of the 181 commits" at the same time.** The number is bound to
+   `c20_secret_scan.json: history_scan.n_commits`, the history grows with every commit, and
+   the `claims` phase will fail and name both values until the sentence is refreshed. That
+   is the binding doing its job, not a bug — but re-running the gate and bumping that number
+   go together.
