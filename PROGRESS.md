@@ -12656,3 +12656,61 @@ download this cycle made.
    the `claims` phase will fail and name both values until the sentence is refreshed. That
    is the binding doing its job, not a bug — but re-running the gate and bumping that number
    go together.
+
+### 2026-11-22T18:12Z — C17-blocked wait (113th)
+
+- Checked; still waiting. "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**, so
+  this cycle verified state, appended this entry and stopped. **Nothing fetched, nothing
+  computed** — no 2025 forecast, dispatch, capture ratio or metric, and no API request of any
+  kind. No push notification (repeat ping for the same wait).
+- **Neither open decision has been answered.** **NOTE C17-01** (may the single pre-registered
+  evaluation run under CPython 3.11.18 instead of 3.11.17 — options (a)/(b)/(c) in
+  `docs/c17_environment.md` §4) has no answering entry in this file: all 30 hits for `C17-01`
+  are the request itself, the earlier `FLAG C17-01` thread (closed 2026-11-22) or wait entries
+  quoting it. **NOTE C20-02** (commit `requirements-published.txt` with the five exact pins)
+  likewise has no answer, so the five-minute ride-along job was **not** done — the standing
+  instruction is not to do it unasked. The newest `## HUMAN APPROVAL` header in this file is
+  still **2026-11-20 (§5(a) + §5(b), J.)**, both already applied. A tree-wide scan for
+  approval-shaped markers excluding `PROGRESS.md` returns only the three Checkpoint-C
+  pre-registration files (`c16_preregistration.json`, `run_c16_checkpoint.py`,
+  `test_c16_checkpoint.py`), which carry the unseal approval, not an answer to NOTE C17-01.
+- **Nothing has changed since the C20 cycle.** Container started with `HEAD` *detached* at
+  `12690aa` (the C20 cycle's own last commit) and the stale local `master` label 18 commits
+  behind at `637368e`; `git fetch origin` moved `origin/master` 637368e..12690aa, so
+  `HEAD` = `origin/master` = `12690aa`, `git status` clean, **0** modified and **0** untracked
+  paths — which is what proves every file checked below is byte-identical to HEAD. **No human
+  commit has landed.** `master` was fast-forwarded onto HEAD (`git checkout master` then
+  `git merge --ff-only origin/master`, C14's recipe) before committing; no history rewritten or
+  discarded. Detached-HEAD arrival is now **33 of 40 containers** (NOTE C2-02's sibling).
+- **FLAG C17-03 still stands, for exactly the recorded reason.** This container's interpreter
+  is **CPython 3.11.18**, not the pre-registered 3.11.17, so `library_fingerprint()` would
+  again come back `00a12bd6aadb09f3` against `c16_preregistration.json`'s
+  `856fb19ac0c4eecd` and `--phase evaluate --year 2025` would refuse before computing
+  anything. **Nothing was installed and no venv was created this cycle** (no `.venv` present),
+  so the gate was not re-exercised — the Python version alone settles it, and every scheduled
+  cycle gets the same image. The gate was **not** relaxed, and
+  `test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+  **must stay red** until NOTE C17-01 is answered.
+- **No 2025 number exists.** `results.csv` **14 265** rows + header over 27 columns, **0** rows
+  whose `evaluation_years` mentions 2025 (the blunt any-cell count is 13, all 13 in the numeric
+  `value` column — digit substrings, not a 2025 evaluation). `prices_manifest.csv` 63 rows +
+  header, 9 per year for 2019–2025. `exogenous_manifest.csv` **36** rows + header, `year` ∈
+  {2022: 9, 2023: 9, 2024: 9, **2025: 9**} — that 2025 block is the legitimate post-§5(a)
+  Tier-A exogenous pull the 2026-11-22 C17 cycle made (24 ENTSO-E documents), **not** a metric;
+  it is the input the once-only evaluation will consume, and the evaluation has not run.
+  Checked with `python3 -I`; no venv/pandas in this container, so `verify_append_only()` was not
+  re-run (row/field/column counts were). `data/raw/` absent on arrival (NOTE C2-02, 28th
+  recurrence); **no download of any kind was made this cycle.**
+- **`tests/` untouched:** 22 `.py` files in `tests/`, **0** modified against HEAD, 0 untracked.
+  The four decision artefacts are present and byte-unchanged: `c16_preregistration.json`
+  (8 709 B), `c16_seal_verification.json` (8 403 B), `c17_preflight.json` (17 231 B),
+  `docs/c17_blocker.md` (12 439 B); `docs/c17_environment.md` (7 794 B) and
+  `docs/c20_pre_public_gate.md` (19 268 B) likewise. `ENTSOE_API_KEY` set (36 chars).
+- **C18 was not started** and the fingerprint gate was not touched in code, per the status
+  block's point 3. **C20's fallback is spent** (`docs/c20_pre_public_gate.md`, 2026-11-22), so
+  there was no second unblocked cycle to substitute — this cycle is a wait by design, not by
+  omission. The gate was **not** re-run, so the README's commit-count claim needs no refresh.
+- **Still waiting on the human for NOTE C17-01.** The one hundred and thirteen waits now span
+  **~40.9 days** since the C17 cycle (2026-10-12T18:53Z).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
