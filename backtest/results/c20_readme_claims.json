@@ -1,0 +1,82 @@
+{
+  "cycle": "C20",
+  "phase": "claims",
+  "generated_at_utc": "2026-11-22T10:44:29Z",
+  "git_sha": "7058c8b104418682f7e048b25eac34ac9152cf54",
+  "holds": true,
+  "bound_claims": {
+    "holds": true,
+    "n_bindings": 1,
+    "bindings": [
+      {
+        "name": "commits_scanned_for_secrets",
+        "found_in_readme": true,
+        "readme_value": "181",
+        "artefact": "c20_secret_scan.json",
+        "field": "history_scan.n_commits",
+        "artefact_value": 181,
+        "holds": true
+      }
+    ]
+  },
+  "quantitative_claims": {
+    "holds": true,
+    "n_exempt_by_rule": {
+      "calendar_year": 2,
+      "cycle_reference": 3,
+      "iso_date": 2,
+      "legal_article": 2,
+      "licence_version": 3,
+      "markdown_file": 10,
+      "url": 1
+    },
+    "n_unbound": 0,
+    "unbound": [],
+    "rule": "A number survives only if it is a date, a calendar year, a cycle reference, a licence version or a filename. A surviving number is a result claim and must be bound to a committed artefact before it may stand in a public README."
+  },
+  "factual_claims": {
+    "holds": true,
+    "n_checks": 3,
+    "checks": [
+      {
+        "claim": "the 2025 holdout has not been evaluated",
+        "asserted_in_readme": true,
+        "evaluation_years_in_results_csv": [
+          "2020",
+          "2021",
+          "2022",
+          "2023",
+          "2024"
+        ],
+        "results_csv_has_2025": false,
+        "holdout_ledger_has_a_completed_run": false,
+        "holds": true,
+        "evidence": [
+          "results.csv",
+          "c17_holdout_run_ledger.json"
+        ]
+      },
+      {
+        "claim": "the pre-public review gate has not run",
+        "asserted_in_readme": false,
+        "c20_artefacts_present": [
+          "c20_secret_scan.json",
+          "c20_repo_size.json",
+          "c20_licence_attribution.json",
+          "c20_reproducibility.json",
+          "c20_readme_claims.json"
+        ],
+        "holds": true,
+        "reason": "Once four or more C20 artefacts are committed, a README that still says the gate has not run is out of date \u2014 which is the alignment failure this check exists to catch."
+      },
+      {
+        "claim": "the repository is public, since a stated date",
+        "asserted_in_readme": true,
+        "commits_mentioning_the_flip": 22,
+        "holds": true,
+        "reason": "Visibility itself cannot be read offline; what is checkable is that the README states it and that the log records the flip (FLAG C-E-01)."
+      }
+    ]
+  },
+  "note": "The README is still a build log, not C17's findings document, so the alignment check is the inverse of the usual one: it asserts that no number in the file is an unbound result claim, and it verifies the file's factual statements against committed artefacts rather than against prose."
+}

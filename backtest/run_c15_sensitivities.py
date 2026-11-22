@@ -1770,6 +1770,13 @@ def contrast_summary(contrasts: pd.DataFrame, block_days: int = HEADLINE_BLOCK
 
 FIGURES_DIR = RESULTS_DIR.parent.parent / "docs" / "figures"
 
+#: Every figure in this repo has to carry the data attribution, because a PNG
+#: travels on its own: a reader who lifts it out of ``docs/figures/`` has no
+#: ``config/data.yaml`` to consult. C15's three figures shipped without it until
+#: C20's attribution gate found them (the string is the one declared in
+#: ``config/data.yaml``, which is what the other 17 figures use).
+ATTRIBUTION = "Data: Energy-Charts (Fraunhofer ISE), CC BY 4.0"
+
 
 def write_figures(points: pd.DataFrame, friction: pd.DataFrame) -> list[str]:
     """Three figures, each answering one of PLAN.md's four sensitivities."""
@@ -1833,6 +1840,7 @@ def write_figures(points: pd.DataFrame, friction: pd.DataFrame) -> list[str]:
         "thin-regime cell NO2 2020, which runs to −1.07, is named in its panel)",
         fontsize=9)
     fig.tight_layout(rect=(0, 0.06, 1, 0.92))
+    fig.text(0.005, -0.075, ATTRIBUTION, fontsize=7, color="#5a5a55")
     path = FIGURES_DIR / "c15_capture_vs_throughput_cost.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -1887,6 +1895,7 @@ def write_figures(points: pd.DataFrame, friction: pd.DataFrame) -> list[str]:
         "the comparable LEAR\n(thin-regime cells excluded, so NO2 is a four-year "
         "mean; cash effects are in c15_lever_summary.csv)", fontsize=9)
     fig.tight_layout()
+    fig.text(0.005, -0.175, ATTRIBUTION, fontsize=7, color="#5a5a55")
     path = FIGURES_DIR / "c15_lever_effects.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -1917,6 +1926,7 @@ def write_figures(points: pd.DataFrame, friction: pd.DataFrame) -> list[str]:
         "C15: how much of the capture shortfall disappears when the throughput "
         "cost is removed\n(NOTE C13-02; thin-regime cells excluded)", fontsize=10)
     fig.tight_layout()
+    fig.text(0.005, -0.195, ATTRIBUTION, fontsize=7, color="#5a5a55")
     path = FIGURES_DIR / "c15_friction_share_of_shortfall.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)

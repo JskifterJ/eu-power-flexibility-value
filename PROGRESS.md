@@ -2,14 +2,16 @@
 
 ## Current status
 
-- **Next cycle to run:** **C17 evaluation — written, tested, rehearsed, and BLOCKED on one
-  thing only: the environment.** Steps 1 and 3 of the 2026-11-20 list are **done** (the
-  evaluation phase exists and reproduces the published 2024 numbers on a rehearsal; all 24
-  ENTSO-E documents including the 6 refused 2025 ones are fetched). Step 2 is a hard blocker:
-  **CPython 3.11.17 cannot be installed in a cloud container**, so `library_fingerprint()`
-  comes back `00a12bd6aadb09f3` instead of the pre-registered `856fb19ac0c4eecd`, and
-  `--phase evaluate --year 2025` refuses. **See `docs/c17_environment.md` §4 and NOTE C17-01 —
-  that decision is the only thing standing between here and the holdout number.**
+- **Next cycle to run:** **AWAITING HUMAN — C17 BLOCKED on NOTE C17-01, and there is no
+  longer a second unblocked cycle to substitute.** The evaluation phase exists, is tested,
+  and reproduces the published 2024 numbers on a nine-zone rehearsal; all 24 ENTSO-E
+  documents are fetched. The one blocker is the environment: **CPython 3.11.17 cannot be
+  installed in a cloud container**, so `library_fingerprint()` comes back
+  `00a12bd6aadb09f3` instead of the pre-registered `856fb19ac0c4eecd`, and
+  `--phase evaluate --year 2025` refuses. **See `docs/c17_environment.md` §4 and NOTE C17-01
+  — that decision is the only thing standing between here and the holdout number.**
+  **C20's pre-public gate, which the 2026-11-22 C17 cycle left as the fallback work, was done
+  on 2026-11-22 and passes** (`docs/c20_pre_public_gate.md`); that fallback is spent.
   What the next cycle does, in order:
   1. **Check whether the human answered NOTE C17-01** (an entry in this file naming it). If
      yes: under option (a) or (c), run `python -m backtest.run_c17_holdout --phase evaluate`
@@ -17,13 +19,11 @@
      record the UTC timestamp and git SHA here, regenerate `c17_preflight.json` in the
      environment it evaluated in, then do C17's remaining outputs (the ingest phase writes
      `results.csv`; then the README rewrite and figures) and stop.
-  2. **If not answered, do C20's pre-public gate rather than a wait entry** — gitleaks, repo
-     size / raw-data, licence + attribution, fresh-clone reproducibility (NOTE C15-04: reuse
-     `check_baseline_reproduction`, do not start fresh), README-claims alignment. It is
-     unblocked, computes no 2025 number, and **FLAG C-E-01 makes it overdue** (the repo has
-     been public since 2026-10-29 with the gate never run). This is a deliberate departure
-     from PLAN.md's cycle order for that reason; the human can veto it. C20 needs a **full**
-     clone, not the shallow 50-commit one containers arrive with.
+  2. **If not answered, append a one-line wait entry and stop.** No push notification — the
+     standing instruction is not to re-ping the same wait. C20 is done, so there is nothing
+     else unblocked to pick up. The one small thing that *is* available, if and only if the
+     human has answered **NOTE C20-02**, is committing `requirements-published.txt` with the
+     five exact pins plus a README line; do not do it unasked.
   3. **Do not start C18**, and do not relax the fingerprint gate in code to get past it.
   Standing permissions, unchanged: J. approved §5(a) (applied 2026-11-20) and §5(b) (six test
   updates applied 2026-11-22, each logged in the 2026-11-22 entry). **Any other `tests/` or
@@ -71,6 +71,58 @@
   re-deriving them, and tests assert `DAILY_COLUMNS`, `STORE_METRICS` and `STORE_KEY` equal
   to C13's — which is what makes a 2025 number joinable to a 2020-2024 one.
   `tests/test_c17_evaluation.py` is 31 tests, each gate tested by making it fail.
+- **C20 complete — the pre-public gate ran on 2026-11-22 and passes, 24 days after the
+  repository went public (FLAG C-E-01).** All five of PLAN.md's clauses:
+  **secrets** 0 findings over 181 commits / 806 blobs / 352 MB decompressed (663
+  `detect-secrets` findings triaged to 0 unresolved); **size** 0 of 608 paths ever added
+  match `data/raw/`, `*.parquet` or a real `.env`, HEAD tree 71.7 MiB, largest file 4.1 MiB;
+  **licence** 20 of 20 figures attributed and the README now carries both required
+  attributions; **repro** an independent clone reproduces the published numbers exactly
+  (FINDING C20-C); **claims** 0 unbound numbers and the "holdout not evaluated" claim checked
+  against `results.csv` and the ledger. Two findings were fixed in the cycle
+  (FINDING C20-A, FINDING C20-B); two notes are for the human (NOTE C20-01, NOTE C20-02).
+  Write-up: `docs/c20_pre_public_gate.md`. Runner: `backtest/run_c20_gate.py`.
+  **No 2025 number was computed.**
+- **FLAG C20-01 — four tests are red in a container with no price cache, and three of them
+  were made that way by C17's §5(b) edits. NOT fixed: the repair is a `tests/` edit and
+  needs human review.** Full suite this cycle: **972 passed, 7 skipped, 5 failed**. One red
+  is FLAG C17-03's fingerprint test, which must stay red. The other four —
+  `test_c13_regime.py::test_2025_now_passes_the_holdout_guard_in_regime_price_table`,
+  `test_c14_fundamentals.py::test_2025_now_passes_the_holdout_guard_in_{fundamentals,headroom}_frame`
+  and `test_c15_sensitivities.py::test_dispatching_the_sealed_year_raises_before_any_path_is_built`
+  — all fail for one reason: **`data.prices.PriceDataError` is not in their `except` /
+  `pytest.raises` tuple**, and `data/raw/` does not survive a container (NOTE C2-02).
+  **Not this cycle's doing**: a pristine worktree at `7058c8b` fails the same five.
+  **Nothing about the seal is wrong** — `sealed_years()` is still `{2025}`,
+  `holdout_is_unsealed()` is still `True`, `assert_not_sealed({2025}, ...)` returns, which is
+  the post-Checkpoint-C state those tests exist to assert; they just cannot reach it. The
+  repair is one line each, ideally the project's own idiom
+  (`pytest.skip("the price cache is not present in this working tree")`, already used at
+  `test_c14_fundamentals.py:701` and `test_c17_preflight.py:156/169`). **J.'s §5(b) approval
+  covered six named tests and does not extend to a seventh edit of them.**
+- **FINDING C20-C — an independent clone of the public repository lands on the published
+  numbers exactly, under a *different* library set.** A fresh anonymous clone, a venv
+  resolved freely from its own `requirements.txt` (**pandas 3.1.1**, fingerprint
+  `f4e33081974da285` — neither the pre-registered `856fb19ac0c4eecd` nor the container's
+  `00a12bd6aadb09f3`), and its own Energy-Charts pull (5 of 5 payload fingerprints matching
+  C1's manifest) reproduced DE-LU 2023: **8 760 LEAR/naive predictions at 0.0**, 365 fold
+  rows at 0.0, **1 094 per-day dispatch rows across 30 numeric columns at 0.0**, and C13's
+  committed per-day cash to **4.27e-07 EUR**. **Read with the three limits in
+  `docs/c20_pre_public_gate.md` §4 before using it on NOTE C17-01**: one zone, one year,
+  price-only LEAR (no LightGBM, no bootstrap); it is evidence about libraries, not about the
+  pre-registration; and it makes option (a) look cheaper, not automatic. **The holdout runner
+  still refuses and was not run.**
+- **NOTE C20-02 — DECISION REQUEST (small).** `requirements.txt` declares floors, so a reader
+  cloning today resolves pandas 3.1.1 and cannot rebuild the environment the published
+  numbers were made in with one command. Suggested fix, deliberately **not applied**: commit
+  `requirements-published.txt` with the five exact pins and point the README at it. Freezes
+  nothing.
+- **NOTE C20-01 — `gitleaks` itself did not run.** The binary downloads here but executing an
+  ad-hoc downloaded binary is refused by the environment's safety policy. The phase used
+  `detect-secrets` 1.5.0 plus a project-specific regex scan over every blob in every commit
+  (gzip decompressed) instead, and found nothing. **A human should still run
+  `gitleaks detect --source . --redact` locally** — one command, PLAN.md's named tool, a
+  second independent rule set on an already-public repo.
 - **FLAG C17-04 — NO2's 2025 Art. 14 wind forecast is mostly unusable after hourly
   aggregation.** ENTSO-E moved to a 15-minute MTU during 2025 as well, so the 2025 documents
   arrive mixed (`resolutions_seconds: 900|3600`). `coverage_ratio` is 1.0 and
@@ -12364,3 +12416,237 @@ against `1bba28a` over `config/`, `forecast/`, `dispatch/`, `data/`,
 which are data about what was fetched and which CLAUDE.md requires a fetching cycle to
 update. Not one line of code outside `backtest/run_c17_holdout.py` moved.
 
+## 2026-11-22 — C20: the pre-public gate, run 24 days after the repository went public
+
+**No 2025 number was computed and the holdout was not touched.** NOTE C17-01 is still
+unanswered — there is no entry in this file naming it — so this cycle did step 2 of the
+ordered list the 2026-11-22 C17 cycle left behind: **C20's pre-public gate instead of a
+113th wait entry.** That is a deliberate departure from PLAN.md's cycle order, taken for the
+reason FLAG C-E-01 gives (the repository has been public since 2026-10-29 with the gate
+that was meant to precede that never run), and **the human can veto it**. C17's holdout
+evaluation remains the next real cycle and remains blocked on the same one decision.
+
+Full write-up: **`docs/c20_pre_public_gate.md`** (300 lines). Artefacts:
+`backtest/results/c20_*.json` (seven files). Runner: `backtest/run_c20_gate.py` (new, 1 564
+lines, six phases). Tests: `tests/test_c20_gate.py` (new, **60 tests, all green**).
+
+### The gate passes, and it found two things first
+
+PLAN.md's five clauses, five phases, each with a `holds` in its own artefact.
+
+| phase | verdict | the number that matters |
+| --- | --- | --- |
+| `secrets` | **pass** | 0 findings over **181 commits / 806 blobs / 352 MB** decompressed; 663 `detect-secrets` findings triaged to 0 unresolved |
+| `size` | **pass** | 0 of 608 paths ever added match `data/raw/`, `*.parquet` or a real `.env`; HEAD tree 71.7 MiB, largest file 4.1 MiB, nothing near GitHub's 50 MiB warning |
+| `licence` | **pass, after two fixes** | 20 of 20 figures attributed (was 17); README now carries both required attributions (carried neither) |
+| `repro` | **pass** | an independent clone reproduces 8 760 predictions and 1 094 per-day dispatch rows at **0.0**, and C13's committed cash to **4.3e-07 EUR** |
+| `claims` | **pass** | 0 unbound numbers; the "holdout not evaluated" claim checked against `results.csv` and the ledger, not against prose |
+
+**FINDING C20-A — the README was in breach of the CC BY 4.0 attribution condition, live, for
+24 days.** It named neither Energy-Charts/Fraunhofer ISE nor ENTSO-E, and it did not say
+that MIT covers the code but not the 66 MB of derived data in `backtest/results/`. The
+attribution existed in `config/data.yaml`, in `docs/`, and baked into 17 of the 20 figures —
+everywhere except the file a reader reads. **Fixed**: a *Data sources, licence and
+attribution* section, and the gate now asserts the required tokens so it cannot quietly
+disappear again.
+
+**FINDING C20-B — three committed figures shipped with no attribution at all.** C15's
+`write_figures` never got the line the other modules have, so
+`c15_capture_vs_throughput_cost.png`, `c15_lever_effects.png` and
+`c15_friction_share_of_shortfall.png` carried none. A PNG travels on its own; a reader who
+lifts one out of `docs/figures/` has no `config/data.yaml` to consult. **Fixed**: an
+`ATTRIBUTION` constant in `backtest/run_c15_sensitivities.py` and one `fig.text` per figure,
+and the three PNGs regenerated **from the committed tables** — no number was recomputed and
+none moved.
+
+### FINDING C20-C — an independent clone lands on the published numbers exactly, under a *different* library set
+
+This is PLAN.md's "reproducibility check (fresh clone, cached-subset run)" and it is the
+strongest statement the project has made so far.
+
+A clone of the public repository, taken anonymously into a throwaway directory, with a new
+virtual environment resolved **freely from the clone's own `requirements.txt`** — which
+gives **pandas 3.1.1**, not the 3.0.6 every published number used, and
+`library_fingerprint f4e33081974da285`, neither the pre-registered `856fb19ac0c4eecd` nor
+this container's `00a12bd6aadb09f3` — and its own Energy-Charts pull of DE-LU 2019-2023
+(**5 of 5 payload fingerprints matching C1's committed manifest**), recomputed DE-LU 2023
+end to end and was compared against the committed blobs in **the clone's own git object
+store**:
+
+| artefact | rows | numeric columns | worst absolute gap |
+| --- | --- | --- | --- |
+| `c13_year_DE-LU_2023_predictions.csv.gz` (LEAR + naive walk-forward) | 8 760 | 3 | **0.0** |
+| `c13_year_DE-LU_2023_folds.csv` | 365 | 4 | **0.0** |
+| `c15_main_DE-LU_2023_daily.csv.gz` (base rung, C5/C6 rolling LP) | 1 094 | 30 | **0.0** |
+
+and cross-cycle, against C13's committed per-day cash: worst cash gap **4.27e-07 EUR**,
+worst oracle-cash gap **4.98e-08 EUR**.
+
+**What this says about NOTE C17-01, and what it does not.** A *larger* library deviation
+than the one the human is being asked to approve — a pandas **minor** version move on top of
+the same CPython patch difference — left every number bit-identical in both the forecast
+layer and the dispatch layer. That makes option (a) look cheaper than it did. It does not
+answer the question, and this cycle did not treat it as an answer: **the holdout runner
+still refuses and was not run.** Three limits, stated so nobody over-reads it: one zone, one
+year, one model class (LightGBM and the block bootstrap were not exercised, and the
+bootstrap is where a numpy RNG change would show first); it is evidence about libraries, not
+about the pre-registration, whose whole point is that an unattended cycle must not decide a
+registered environment is close enough; and the decision is still the human's, in
+`docs/c17_environment.md` §4.
+
+### NOTE C15-04's reproducibility check, re-run at full scale
+
+`check_baseline_reproduction` and `check_res_leg_reproduction` imported, not re-written, over
+the whole committed C15 ladder (**361 350 rows loaded**): **49 284 rows** against
+`c13_daily_by_year.csv.gz` at worst **5.0e-07 EUR** and **5 472 rows** against
+`c11_capture_daily_2024.csv.gz` at worst **5.0e-07 EUR**. NOTE C15-04 is discharged.
+
+### NOTE C20-01 — `gitleaks` itself did not run, and a human should run it
+
+PLAN.md names `gitleaks`. The release tarball downloads in this container (HTTP 200), but
+**executing an ad-hoc downloaded binary is refused by the environment's safety policy**, and
+working around that refusal is not something an unattended cycle should do. The phase does
+the same job with two installable, auditable scanners instead: `detect-secrets` 1.5.0 from
+PyPI over the tracked tree, and a project-specific regex scan over every blob in every
+commit (gzipped artefacts decompressed first — 108 committed artefacts are `.csv.gz`, and a
+scanner reading the compressed bytes would report this repository clean while shipping a
+key). The project-specific set is the one with teeth here: the only credentials this project
+holds are `ENTSOE_API_KEY` and `AGSI_API_KEY`, and an ENTSO-E security token is a UUID.
+**`gitleaks detect --source . --redact` is one command and a second independent rule set;
+worth running on a repository that is already public.**
+
+### NOTE C20-02 — DECISION REQUEST (small): `requirements.txt` cannot rebuild the published environment
+
+The clone's free resolution landed on pandas 3.1.1. `requirements.txt` declares floors on
+purpose — its own comment explains that pinning would freeze every future cycle — and the
+exact published set lives only in a prose comment at the bottom of that file and in
+`c16_preregistration.json`. For a public repository offering reproducibility that is a gap:
+a reader has no single command that reconstructs the environment the numbers were made in.
+**Suggested fix, not applied here** because it is C17/C18's territory and should be one
+deliberate change: commit a `requirements-published.txt` with the five exact pins and point
+the README at it. It freezes nothing and it closes the gap.
+
+### Two bugs the gate found in itself, both fixed, both now tested
+
+Worth recording because both would have produced a *confident wrong answer*, which is the
+dangerous failure mode for a checker.
+
+1. **A non-unique join key silently cartesian-joined.** C13's prediction artefact is keyed on
+   `timestamp_utc`, which the comparator's key list did not name, so it joined on
+   `market_day` alone — every hour of a day against every other hour — and reported a
+   **594.9** gap between two files that were in fact identical. The comparator now *verifies*
+   that its key identifies a row in both frames, widens it if not, and **refuses** rather
+   than answering if it still cannot.
+2. **Two missing values read as a difference.** `NA == NA` is NA, not True, so the text-column
+   comparison reported `train_from` as differing when both sides held identical values.
+
+A third, in the `.gitignore` probe: `git check-ignore -v` prints the matching rule for a
+*negation* too, so the first version called `.env.example` ignored — the one rule whose whole
+job is to be an exception. The probe now reads the leading `!`.
+
+### A bounded-subset trap worth knowing about
+
+The first fresh-clone run pulled only DE-LU 2023 and the dispatch reproduced **358 of 365
+days exactly and the first 7 not at all** (worst 295 EUR on 2023-01-05). Not a reproducibility
+failure: `terminal_mode: trailing_value` with `trailing_days: 7` marks closing inventory
+against the previous seven *complete* market days, so the first week of an evaluation year
+needs the tail of the year before it. **The minimum reproducible subset for a (zone, year)
+dispatch is that year plus the preceding year**; for the forecast layer it is the full
+training history. Recorded here because the next person to attempt a cheap reproduction will
+hit it, and because a cycle that had quoted the first run would have reported a bug in C13.
+
+### FLAG C20-01 — four tests are red in a container with no price cache, and three of them were made that way by C17's §5(b) edits. NOT fixed: fixing them is a `tests/` edit.
+
+**Full suite: 972 passed, 7 skipped, 5 failed** (10 min 26 s, this container's venv: python
+3.11.18 with the five pre-registered library versions). C17's close-out reported
+**919 / 4 / 1**. The one expected red is still
+`test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+— FLAG C17-03's own signal, which must stay red until NOTE C17-01 is answered. The other
+four are new *to this container*, and **they are not this cycle's doing**: a pristine
+`git worktree` at `7058c8b`, with none of this cycle's changes in it, fails the same five
+in 2.6 s.
+
+| test | expects | actually raised here |
+| --- | --- | --- |
+| `test_c13_regime.py::test_2025_now_passes_the_holdout_guard_in_regime_price_table` | `SealedHoldoutError` → fail, `RegimeError` → pass | `data.prices.PriceDataError` |
+| `test_c14_fundamentals.py::test_2025_now_passes_the_holdout_guard_in_fundamentals_frame` | same shape, `ExogenousDataError` | `data.prices.PriceDataError` |
+| `test_c14_fundamentals.py::test_2025_now_passes_the_holdout_guard_in_headroom_frame` | same | `data.prices.PriceDataError` |
+| `test_c15_sensitivities.py::test_dispatching_the_sealed_year_raises_before_any_path_is_built` | `(SealedHoldoutError, SensitivityError)` | `data.prices.PriceDataError` |
+
+All four for one reason: **`PriceDataError` ("no cached price files for DE-LU") is not in
+their `except` / `pytest.raises` tuple**, and `data/raw/` does not survive a container
+(NOTE C2-02). The first three are three of the six C17 updated under J.'s §5(b) approval,
+and their new docstrings claim the rewrite "holds in a container with the cache and in one
+without it" — **that claim is false as written**; it was only ever exercised in a container
+that had just fetched 2025. The fourth is C15's and has presumably been latently
+cache-dependent since C15, which also ran with a cache.
+
+**What is *not* wrong**: nothing about the seal, no leak, no number. Checked directly rather
+than inferred — `sealed_years()` is still `{2025}`, `holdout_is_unsealed()` is still `True`,
+and `assert_not_sealed({2025}, ...)` returns without raising, which is exactly the
+post-Checkpoint-C state these four tests exist to assert. They cannot get far enough to
+assert it because the price load fails first. **No 2025 number was computed.**
+
+**Not fixed, deliberately.** The repair is one line per test — add `PriceDataError` to the
+tuple, or use the project's own existing idiom, `pytest.skip("the price cache is not present
+in this working tree")`, which `test_c14_fundamentals.py:701` and
+`test_c17_preflight.py:156/169` already use for precisely this. But it is an edit under
+`tests/`, and CLAUDE.md is explicit that one needs a FLAG and a stop for human review first.
+J.'s §5(b) approval covered the six specific tests listed in the 2026-11-22 entry and does
+not extend to a seventh edit of them. **This is that FLAG.** It is also the second time this
+family has gone red for a container-state reason (FLAG C17-02 was the first, in the opposite
+direction), which is the argument for the `skip` idiom over widening the `except`: a test
+whose verdict depends on whether a gitignored directory happens to be populated is not
+asserting what it says it asserts.
+
+### What was changed, and what deliberately was not
+
+Changed: `README.md` (the attribution section, and the status block, which said the gate had
+not run and now says it has and what it found), `backtest/run_c15_sensitivities.py` (ten
+lines: the `ATTRIBUTION` constant and three `fig.text` calls), the three C15 figures,
+`.gitignore` (`.pytest_cache/`, which the scan found as untracked working-tree junk). New:
+the runner, the test file, `docs/c20_pre_public_gate.md`, seven `c20_*.json` artefacts.
+
+**Not changed: no result, no metric, no model, no battery parameter, no config, no data
+contract, nothing under `tests/` that existed before this cycle, and nothing in
+`results.csv`.** The gate imports no `append_rows` and defines no `ResultRow`, and a test
+asserts that statically — a measurement phase that grew into a producer of result rows would
+be a quiet way to put an unreviewed number into the store. `tests/test_c20_gate.py` is a new
+file for new code, which is every previous cycle's practice and not a `tests/` edit under
+CLAUDE.md's rule.
+
+### The artefact-size decision NOTE C15-04 handed C20
+
+**Decided: no — keep every artefact exactly as the runner writes it.** Normalising C15's
+rung-invariant forecast-shape columns would save ~40% of its ~37 MB, and the four reasons not
+to are recorded in `c20_repo_size.json` rather than only here: the repo is nowhere near a real
+limit (71.7 MiB tree against a 1 GiB recommendation, largest file 4.1 MiB); a committed
+artefact that does not match what the runner writes is worse than a large one; rewriting 51
+artefacts would invalidate the reproduction evidence built on them, including FINDING C20-C;
+and it is a destructive rewrite of published numbers to save ~25 MB a reader will never
+notice. Revisit if the tree passes ~500 MiB or a single artefact approaches 50 MiB.
+
+### Repo state
+
+Container arrived with `HEAD` *detached* at `7058c8b` and local `master` stale 16 commits
+behind — **32 recurrences out of 39 containers**. C14's recipe (`git checkout master` then
+`git merge --ff-only origin/master`) applied and worked first time; no history rewritten or
+discarded. The clone was also **shallow at 50 commits**, which C20 cannot work with, so
+`git fetch --unshallow` was run first (181 commits). Every history phase refuses a shallow
+clone rather than answering on a third of it, and that refusal is tested. `data/raw/` absent
+on arrival (NOTE C2-02, 27th recurrence); the fresh clone's five-file DE-LU pull is the only
+download this cycle made.
+
+### What the next cycle should do
+
+1. **Check whether the human answered NOTE C17-01** (an entry in this file naming it). If
+   yes, act on it: under (a) or (c) run `python -m backtest.run_c17_holdout --phase evaluate`
+   **once, whole**, record the UTC timestamp and git SHA here, regenerate `c17_preflight.json`
+   in the environment it evaluated in, then do C17's remaining outputs and stop.
+2. **If not, this is now a wait.** C20 is done; there is no second unblocked cycle to
+   substitute. Append a one-line wait entry and stop — no push notification, per the standing
+   instruction about repeat pings. Do **not** start C18: the write-up cannot be drafted around
+   a holdout number that does not exist.
+3. If the human answers **NOTE C20-02** with "yes, commit the pins", that is a five-minute job
+   (`requirements-published.txt` + one README line) and can ride along with whatever cycle
+   comes next.
