@@ -12356,7 +12356,11 @@ file (`tests/test_c17_evaluation.py`, 31 tests), one new document
 (`docs/c17_environment.md`), six tests updated under J.'s §5(b) approval plus two
 raw-cache-arm redirections, a `requirements.txt` note, a two-line `README.md` correction, the
 regenerated exogenous manifest and contract report, and the rehearsal artefacts. **No
-`config/*.yaml`, no model, no battery parameter, no metric definition, and nothing under
-`forecast/`, `dispatch/`, `data/` or any earlier runner was changed** — `git diff --stat`
-over those paths against `1bba28a` is empty.
+`config/*.yaml`, no model, no battery parameter, no metric definition, and no code under
+`forecast/`, `dispatch/`, `data/` or any earlier runner was changed.** `git diff --stat`
+against `1bba28a` over `config/`, `forecast/`, `dispatch/`, `data/`,
+`backtest/{walk_forward,metrics,bootstrap,results_store}.py` and every runner C3-C16 returns
+**only the five files under `data/manifest/`** — the download record and contract report,
+which are data about what was fetched and which CLAUDE.md requires a fetching cycle to
+update. Not one line of code outside `backtest/run_c17_holdout.py` moved.
 
