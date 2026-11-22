@@ -535,16 +535,30 @@ def test_the_rehearsal_ran_on_the_visible_validation_year():
     assert report["window"]["last_market_day"] < "2025-01-01"
 
 
-def test_the_rehearsal_reproduces_the_published_2024_capture_ratios():
-    """The strongest available check that this runner is the same experiment:
-    its 2024 headline must land on the numbers C11/C12 published, which
-    ``c16_preregistration.json`` recorded while the holdout was still sealed.
+#: Per-metric tolerance for the reproduction check, set from the precision the
+#: pre-registration stored each baseline at rather than from what the run
+#: happened to achieve. The baseline keeps capture and the Spearman to 6
+#: decimals and the cash to 2, so these are "equal, to the digits that were
+#: written down". Observed worst deviations across the nine zones were 5e-07,
+#: 5e-07, 5e-05 and 0.005 respectively — one to two orders inside these bounds.
+REPRODUCTION_TOLERANCE: dict[str, float] = {
+    "capture_rolled_oracle_cash": 1e-5,
+    "within_day_spearman_mean": 1e-5,
+    "mae_on_dispatched_hours": 1e-3,
+    "dispatch_cash_eur_per_mw_year": 0.05,
+}
 
-    The tolerance is 0.005 of a capture ratio, not equality: C11 dispatched a
-    nine-curve Tier-A intersection and C17 dispatches a three-curve one, so the
-    common-day basis is not always the identical day set (PROGRESS.md's
-    ``scope`` note). A disagreement larger than that would mean the two runs
-    are not the same experiment."""
+
+def test_the_rehearsal_reproduces_the_published_2024_numbers():
+    """The strongest available check that this runner is the same experiment.
+
+    Its 2024 headline must land on the numbers C11/C12 published, which
+    ``c16_preregistration.json`` recorded **while the holdout was still
+    sealed** — so the target cannot have been chosen after seeing the result.
+    All four baseline metrics are checked in all nine zones, not just the
+    capture ratio: a runner that agreed on capture while disagreeing on the
+    cash or the within-day ordering would not be the same experiment either.
+    """
     report = _rehearsal_report()
     baseline = c17.load_preregistration()["baseline_2024_for_comparison"]
     checked = 0
@@ -552,7 +566,11 @@ def test_the_rehearsal_reproduces_the_published_2024_capture_ratios():
         want = baseline.get(zone)
         if not want:
             continue
-        got = metrics["capture_rolled_oracle_cash"]
-        assert got == pytest.approx(want["capture_rolled_oracle_cash"], abs=0.005), zone
-        checked += 1
-    assert checked >= 1
+        for metric, tolerance in REPRODUCTION_TOLERANCE.items():
+            if metric not in want:
+                continue
+            assert metrics[metric] == pytest.approx(
+                want[metric], abs=tolerance
+            ), f"{zone}/{metric}"
+            checked += 1
+    assert checked >= 4

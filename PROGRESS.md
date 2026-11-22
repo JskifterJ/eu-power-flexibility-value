@@ -12272,3 +12272,64 @@ runner refuses by itself; do not work around it.
    shallow 50-commit one.
 3. Do **not** start C18: the write-up cannot be drafted around a holdout number that does
    not exist yet.
+
+### 2026-11-22 — C17 addendum: the nine-zone rehearsal finished, and it reproduces all 36 published 2024 cells
+
+The rehearsal promised above completed at **2026-11-22T04:04:31Z**: all nine zones through
+compute -> dispatch -> analyse -> ingest in one `--phase evaluate --year 2024` process,
+**0 invariant flags**, and the ingest phase correctly appending **nothing** (1 206 rows were
+built and declined, because the store's 2024 rows are C11's and C12's).
+
+**All 36 (zone, metric) cells reproduce the baseline `c16_preregistration.json` recorded
+while the holdout was still sealed**, to the precision that baseline was stored at:
+
+| zone | capture | EUR/MW/yr | MAE | rMAE | within-day Spearman |
+| --- | --- | --- | --- | --- | --- |
+| DE-LU | 0.9187 | 68 179 | 22.89 | 0.699 | 0.8109 |
+| ES | 0.9109 | 42 407 | 17.84 | 0.653 | 0.8354 |
+| NO2 | 0.6146 | 15 994 | 13.66 | 0.644 | 0.5781 |
+| FR | 0.8526 | 46 777 | 17.87 | 0.645 | 0.8073 |
+| NL | 0.9031 | 68 650 | 21.46 | 0.719 | 0.8300 |
+| BE | 0.9044 | 56 055 | 19.37 | 0.689 | 0.8329 |
+| IT-North | 0.9042 | 37 799 | 9.54 | 0.689 | 0.8852 |
+| DK1 | 0.8358 | 53 884 | 25.42 | 0.675 | 0.7062 |
+| PL | 0.8839 | 68 029 | 20.24 | 0.679 | 0.8135 |
+
+Worst absolute deviation across the nine zones, per metric: **capture 5.0e-07**, **within-day
+Spearman 4.4e-07**, **MAE 4.7e-05**, **cash 0.0046 EUR/MW/yr**. Every one of those is the
+rounding of the stored baseline, not a disagreement
+(`backtest/results/c17_rehearsal_2024_vs_2024.csv` has all 36 rows). The committed test now
+checks **all four metrics in all nine zones** against tolerances set from the baseline's own
+stored precision (1e-5 / 1e-5 / 1e-3 / 0.05), not from what this run happened to achieve.
+
+Two details worth having on the record, because they are what makes the reproduction
+meaningful rather than circular:
+
+* The cross-zone bootstrap basis is **365 days and identical across all nine zones**, which
+  is independently C12's finding about 2024 — so C17's three-curve intersection and C11's
+  nine-curve one coincide here, and the `scope` caveat in the status block does not bite in
+  this year. It may in a year where it does; the runner reports the basis rather than
+  assuming it.
+* Nothing was re-fitted to get there and nothing was tuned: the forecasts came from C4's
+  committed `LearSpec` through C3's harness, and the only inputs were an independent
+  Energy-Charts re-pull whose 63 `payload_sha256` all match C1's manifest.
+
+**FINDING C17-A — the holdout runner is the same experiment as C10-C15, demonstrated rather
+than asserted.** A runner written in this cycle, in a fresh container, off an independent
+price pull, lands on 36 of 36 published numbers. Whatever the 2025 numbers turn out to be,
+they will be comparable to the 2024 ones **as numbers** — the remaining comparability
+question is the library one, which is exactly FLAG C17-03 and nothing else.
+
+**One artefact imperfection, stated rather than hidden.** The nine `c17_rehearsal_*_compute.json`
+summaries were written by the runner as it stood when the background walk-forward started
+(02:45Z); the `leakage_guards` provenance block was added to that summary later in the same
+cycle, so **none of the nine carries it**. The nine are consistent with each other and with
+every number above; they are one additive field behind the current code. The runs themselves
+had `check_leakage=True` — `run_walk_forward`'s unchanged default, which raises rather than
+warns on both the train and test matrix of every fold — so the block records what was in
+force, it just was not written down. Re-running all nine to add a descriptive field to a
+rehearsal was judged a worse use of the cycle than saying this; the holdout run will carry it.
+
+**Still no 2025 number.** The rehearsal is the visible validation year, its artefacts are
+named `c17_rehearsal_*` so they cannot be mistaken for holdout ones, and the holdout
+evaluation remains blocked on NOTE C17-01.
