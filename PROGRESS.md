@@ -572,6 +572,12 @@
   leakage assertions and C4's skill score read exactly the code they read before. A *new*
   file under `tests/` follows C11's precedent and is not a flag-and-stop event; editing a
   **pre-existing** test still is.
+- **Full suite after C17: 919 passed, 4 skipped, 1 failed — and the one failure is
+  FLAG C17-03's, deliberately.**
+  `test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+  is a true statement about an environment this container cannot provide (python 3.11.18, not
+  the pre-registered 3.11.17). It is the blocker's own signal: a green suite here would mean
+  the gate had been edited away. Everything else is green, FLAG C17-02's eight included.
 - **Full suite green after C15: 827 passed, 0 failed** (708 before, plus C15's 119).
 - **Repo-state note:** the detached-HEAD trap recurred in C15 — the container arrived
   detached at `c7ffea5` with local `master` stale **24** commits behind. **30 recurrences
@@ -12333,3 +12339,24 @@ rehearsal was judged a worse use of the cycle than saying this; the holdout run 
 **Still no 2025 number.** The rehearsal is the visible validation year, its artefacts are
 named `c17_rehearsal_*` so they cannot be mistaken for holdout ones, and the holdout
 evaluation remains blocked on NOTE C17-01.
+
+### 2026-11-22 — C17 close-out: the suite, and exactly one red test
+
+**919 passed, 4 skipped, 1 failed** (8 min 43 s, this container's venv: python 3.11.18 with
+the five pre-registered library versions). The single failure is
+`tests/test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+— **FLAG C17-03's own signal, and it must stay red until NOTE C17-01 is answered.** A green
+suite here would mean somebody had edited the fingerprint gate away rather than cleared it.
+FLAG C17-02's eight tests are all green, and so is everything else.
+
+**What this cycle touched, for the next cycle's `git diff --stat`:** one runner extended
+(`backtest/run_c17_holdout.py`, +1 400 lines: the preflight refactored into
+`collect_preflight` so the evaluation gates on it, plus the five new phases), one new test
+file (`tests/test_c17_evaluation.py`, 31 tests), one new document
+(`docs/c17_environment.md`), six tests updated under J.'s §5(b) approval plus two
+raw-cache-arm redirections, a `requirements.txt` note, a two-line `README.md` correction, the
+regenerated exogenous manifest and contract report, and the rehearsal artefacts. **No
+`config/*.yaml`, no model, no battery parameter, no metric definition, and nothing under
+`forecast/`, `dispatch/`, `data/` or any earlier runner was changed** — `git diff --stat`
+over those paths against `1bba28a` is empty.
+
