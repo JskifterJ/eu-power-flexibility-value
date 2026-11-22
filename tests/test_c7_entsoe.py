@@ -542,25 +542,45 @@ def test_a_2025_timestamp_parses_once_the_holdout_is_unsealed(monkeypatch):
     assert len(frame) == 2
 
 
-def test_fetching_2025_now_passes_the_holdout_guard():
-    """Was test_fetching_a_sealed_year_raises_before_any_request. The holdout
-    guard (checked first, before exogenous_years, caching, or the token) no
-    longer refuses 2025. What's left is this local environment genuinely having
-    no ENTSOE_API_KEY set (api_token() is called before any network request,
-    per data/entsoe.py's fetch_year) — MissingCredential, not SealedHoldoutError,
-    is the proof the guard passed; CLAUDE.md's own instruction for a missing
-    credential is to flag and continue rather than block, which is exactly what
-    this environment difference is."""
-    with pytest.raises(ec.MissingCredential, match="ENTSOE_API_KEY"):
-        ec.fetch_year("DE-LU", LOAD_DOC, 2025)
+def test_fetching_2025_now_passes_the_holdout_guard(temp_cache_config):
+    """Was test_fetching_a_sealed_year_raises_before_any_request.
+
+    The holdout guard is checked first — before ``exogenous_years``, the cache
+    or the token — and no longer refuses 2025.
+
+    Updated 2026-11-22 under J.'s §5(b) approval. The old assertion was
+    ``MissingCredential``, which was the next thing reached in a container with
+    no ``ENTSOE_API_KEY``; a container that has the key reaches further, so
+    pinning that error made the test a statement about the environment. It now
+    runs against an empty temp cache and a session that raises if it is ever
+    used, so it asserts both halves of the claim in any container: the seal does
+    not refuse 2025, **and no request leaves** — the refusal comes from the
+    session, which only the request stage touches.
+    """
+    class RefusingSession:
+        def get(self, *args, **kwargs):  # pragma: no cover - must never be used
+            raise AssertionError("a test must not make a real ENTSO-E request")
+
+    with pytest.raises(AssertionError, match="must not make a real ENTSO-E request"):
+        ec.fetch_year(
+            "DE-LU", LOAD_DOC, 2025, temp_cache_config, session=RefusingSession()
+        )
 
 
 def test_reading_a_cached_2025_year_now_passes_the_holdout_guard():
-    """Was test_reading_a_cached_sealed_year_raises. No 2025 ENTSO-E file has
-    ever been cached (C17 hasn't run), so past the now-passing holdout guard
-    this correctly reaches 'no such file', not 'sealed'."""
-    with pytest.raises(FileNotFoundError):
+    """Was test_reading_a_cached_sealed_year_raises.
+
+    Updated 2026-11-22 under J.'s §5(b) approval. The old assertion was
+    ``FileNotFoundError``, true only while no 2025 ENTSO-E file had ever been
+    cached; C17 has now cached one, so the claim is asserted directly: reading
+    2025 is not refused by the seal.
+    """
+    try:
         ec.read_cached_year("DE-LU", LOAD_DOC, 2025)
+    except SealedHoldoutError as exc:  # the regression this test exists for
+        pytest.fail(f"the holdout guard still refuses 2025 after the unseal: {exc}")
+    except FileNotFoundError:
+        pass  # nothing cached in this container — not the seal
 
 
 def test_a_year_before_the_declared_vintage_window_is_refused():

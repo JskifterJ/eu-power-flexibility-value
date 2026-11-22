@@ -65,6 +65,7 @@ from backtest.run_c13_regime import (
     unpaired_difference,
 )
 from backtest.run_c3_naive import RESULTS_DIR
+from data.holdout import SealedHoldoutError
 from data.manifest import MANIFEST_CSV
 
 RESULTS = Path(RESULTS_DIR)
@@ -396,12 +397,23 @@ def test_the_cutover_flag_says_every_evaluated_row_is_pre_cutover():
 
 
 def test_2025_now_passes_the_holdout_guard_in_regime_price_table():
-    """Was test_the_regime_table_refuses_a_sealed_year. Same pattern as
-    test_2025_now_passes_the_holdout_guard_in_load_daily_by_year above: the
-    guard passes, and the next real check — no cached 2025 price series — is
-    what's reached instead."""
-    with pytest.raises(RegimeError, match="2025.*no hourly price"):
+    """Was test_the_regime_table_refuses_a_sealed_year.
+
+    Updated 2026-11-22 under J.'s §5(b) approval. The claim this test exists to
+    make is about the **seal**: after Checkpoint C, 2025 is no longer refused
+    here. It used to make that claim by asserting the *next* error downstream —
+    ``RegimeError "no hourly price"`` — which was only reachable while no 2025
+    price file had ever been cached. C17 fetched 2025, so that branch is gone
+    and asserting it turned the test into a statement about the container's
+    cache. The seal claim is asserted directly instead, which holds in a
+    container with the cache and in one without it.
+    """
+    try:
         regime_price_table(["DE-LU"], [2025])
+    except SealedHoldoutError as exc:  # the regression this test exists for
+        pytest.fail(f"the holdout guard still refuses 2025 after the unseal: {exc}")
+    except RegimeError:
+        pass  # a downstream check (e.g. no cached 2025 prices); not the seal
 
 
 # ---------------------------------------------------------------------------

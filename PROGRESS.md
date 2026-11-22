@@ -2,32 +2,91 @@
 
 ## Current status
 
-- **Next cycle to run:** **C17 — UNBLOCKED (J. approved §5(a)+(b) on 2026-11-20; J. also asked
-  that scheduled cycles keep building this).** Work through these in order, one or more per
-  cycle, logging each to this file; do not skip ahead and do not stop at "wait":
-  1. **Write the evaluation phase** of `backtest/run_c17_holdout.py` (today only
-     `--phase preflight` exists). It must implement exactly `c16_preregistration.json`: frozen
-     specs, commit-then-settle (solve on forecast, freeze, value at realised), the oracle >=
-     forecast per-day and naive <= forecast on-average assertions, one append to `results.csv`.
-     Test it on 2024 first (visible); it must refuse to run the 2025 phase twice.
-  2. **Environment:** run only in an environment matching the pre-registered fingerprint
-     `856fb19ac0c4eecd` (Python 3.11.17, numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1,
-     scipy 1.17.1, lightgbm 4.7.0). The Windows venv is 3.14.5/numpy 2.5.3/scipy 1.18.1 and does
-     NOT match: there, do steps 1 and 3 only and flag, do not evaluate.
-  3. **Fetch** the 6 refused ENTSO-E 2025 documents via `python -m data.fetch_exogenous`
-     (needs `ENTSOE_API_KEY`; check the manifest first, never re-download cached data), then run
-     `--phase preflight` and confirm `status` is no longer BLOCKED.
-  4. **Only then run the 2025 evaluation once, whole.** PLAN.md stop rule: no model, feature,
-     hyperparameter, battery parameter or metric definition may change after the first 2025
-     number is seen; a change that looks necessary is a finding, and any re-run is labelled a
-     second evaluation. Record the timestamp. Then do C17's remaining outputs (`results.csv`,
-     README rewrite, figures) and stop; do not start C18.
-  Any test that goes red where `data/raw/` holds 2025 data (c13/c14/c16-probe, listed in
-  `docs/c17_blocker.md` §5b) is covered by J.'s §5(b) approval to update for the post-unseal
-  state; log each edit. Any other `tests/` or leakage-assertion edit still needs a FLAG and stop.
-  No 2025 number has been computed as of 2026-11-20.
-- **FLAG C17-01 — `data/entsoe.py`'s sealed-timestamp check never asks whether the human
-  unsealed the holdout, so the whole Tier-A 2025 exogenous pull is refused.** `sealed_years()`
+- **Next cycle to run:** **C17 evaluation — written, tested, rehearsed, and BLOCKED on one
+  thing only: the environment.** Steps 1 and 3 of the 2026-11-20 list are **done** (the
+  evaluation phase exists and reproduces the published 2024 numbers on a rehearsal; all 24
+  ENTSO-E documents including the 6 refused 2025 ones are fetched). Step 2 is a hard blocker:
+  **CPython 3.11.17 cannot be installed in a cloud container**, so `library_fingerprint()`
+  comes back `00a12bd6aadb09f3` instead of the pre-registered `856fb19ac0c4eecd`, and
+  `--phase evaluate --year 2025` refuses. **See `docs/c17_environment.md` §4 and NOTE C17-01 —
+  that decision is the only thing standing between here and the holdout number.**
+  What the next cycle does, in order:
+  1. **Check whether the human answered NOTE C17-01** (an entry in this file naming it). If
+     yes: under option (a) or (c), run `python -m backtest.run_c17_holdout --phase evaluate`
+     **once, whole** (it refuses `--zones` narrowing and refuses a second run by itself),
+     record the UTC timestamp and git SHA here, regenerate `c17_preflight.json` in the
+     environment it evaluated in, then do C17's remaining outputs (the ingest phase writes
+     `results.csv`; then the README rewrite and figures) and stop.
+  2. **If not answered, do C20's pre-public gate rather than a wait entry** — gitleaks, repo
+     size / raw-data, licence + attribution, fresh-clone reproducibility (NOTE C15-04: reuse
+     `check_baseline_reproduction`, do not start fresh), README-claims alignment. It is
+     unblocked, computes no 2025 number, and **FLAG C-E-01 makes it overdue** (the repo has
+     been public since 2026-10-29 with the gate never run). This is a deliberate departure
+     from PLAN.md's cycle order for that reason; the human can veto it. C20 needs a **full**
+     clone, not the shallow 50-commit one containers arrive with.
+  3. **Do not start C18**, and do not relax the fingerprint gate in code to get past it.
+  Standing permissions, unchanged: J. approved §5(a) (applied 2026-11-20) and §5(b) (six test
+  updates applied 2026-11-22, each logged in the 2026-11-22 entry). **Any other `tests/` or
+  leakage-assertion edit still needs a FLAG and a stop.**
+  **No 2025 forecast, dispatch, capture ratio or metric has been computed as of 2026-11-22.**
+- **FLAG C17-03 — the pre-registered environment cannot be built in a cloud container, so
+  the once-only evaluation cannot run as registered.** `c16_preregistration.json` pins
+  `library_fingerprint 856fb19ac0c4eecd`, which hashes the version dict **including the
+  CPython patch version**: python 3.11.17 + numpy 2.4.6 + pandas 3.0.6 + scikit-learn 1.9.1
+  + scipy 1.17.1 + lightgbm 4.7.0. The five libraries install exactly; **3.11.17 does not
+  exist here.** The image ships 3.11.18 (`-> 00a12bd6aadb09f3`), `uv python install 3.11.17`
+  has no such download (the 3.11 line stops at .15 `-> e330d89eba746dd9`), python.org is
+  refused by the network policy, and this session's GitHub scope excludes the CPython tag.
+  Every scheduled cycle gets the same image, so **no future cloud cycle clears this gate
+  either.** The gate is working as designed and was not relaxed: `--phase preflight` reports
+  exactly one standing blocker, `library_fingerprint_moved`, and `--phase evaluate --year
+  2025` refuses before computing anything. **Decision: NOTE C17-01; write-up:
+  `docs/c17_environment.md`.** One test is red because of it and **must stay red** —
+  `test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+  is a true statement about an environment this container cannot provide, and editing it
+  would delete the blocker rather than fix it.
+- **NOTE C17-01 — DECISION REQUEST, and the only thing blocking the holdout number.** May
+  the single pre-registered evaluation run under CPython **3.11.18** instead of 3.11.17,
+  with the five numerical libraries at exactly their pinned versions? **(a) Approve the
+  deviation (recommended)** — every library that can move a number is identical, the
+  difference is one CPython patch release, and the cost is that the 2025 rows would carry
+  `library_fingerprint 00a12bd6aadb09f3` and C18 would have to say so. **(b) Run it where
+  3.11.17 exists** (`python:3.11.17` image or a local interpreter + `uv pip install` of the
+  five pins; the Windows checkout at 3.14.5 is a *larger* deviation, not a smaller one).
+  **(c) Re-pin the pre-registration** — uncontaminated, because no 2025 number has been
+  computed, but it rewrites a Checkpoint-C artefact after the unseal and should be a
+  deliberate human edit with its own entry here. Full reasoning in
+  `docs/c17_environment.md` §4.
+- **The holdout runner, for whoever runs it: `python -m backtest.run_c17_holdout --phase
+  evaluate`.** Phases `compute | dispatch | analyse | ingest` also run one at a time;
+  `--year 2024` is the rehearsal (writes `c17_rehearsal_*`, appends nothing). It enforces
+  four things itself, so a cycle does not have to remember them: **once** (committed ledger
+  `backtest/results/c17_holdout_run_ledger.json`, **no override flag**, a crash between
+  phases resumes rather than restarting or blocking), **whole** (`--zones` cannot narrow the
+  nine), **in the registered environment** (the preflight's own conjunction, fingerprint
+  included), and **nothing 15-minute in any number** (the price series is truncated at the
+  cutover *before* the feature build; the window, the predicted hours and the dispatched days
+  are each re-checked against 2025-09-30). It imports C4's LEAR, C3's walk-forward, C5/C6's
+  dispatch, C11's `pooled_capture`, C12's metric layer and C13's table builders rather than
+  re-deriving them, and tests assert `DAILY_COLUMNS`, `STORE_METRICS` and `STORE_KEY` equal
+  to C13's — which is what makes a 2025 number joinable to a 2020-2024 one.
+  `tests/test_c17_evaluation.py` is 31 tests, each gate tested by making it fail.
+- **FLAG C17-04 — NO2's 2025 Art. 14 wind forecast is mostly unusable after hourly
+  aggregation.** ENTSO-E moved to a 15-minute MTU during 2025 as well, so the 2025 documents
+  arrive mixed (`resolutions_seconds: 900|3600`). `coverage_ratio` is 1.0 and
+  `n_gap_intervals` 0 — nothing is missing natively — but the hourly aggregator refuses to
+  average a UTC hour its sub-hourly intervals do not tile exactly, leaving **18 784 NaN hours
+  of 2025** in NO2's `wind_forecast_da_mw` (DE-LU: 4, ES: 96). The NaNs are a deliberate
+  refusal to partially average, not a hole. **Costs nothing in the pre-registered headline**
+  (price-only); it would cost the Tier-A exogenous ladder for NO2, which NOTE C8-01 already
+  closed as not having a reliable positive value in any zone, year or model class.
+- **FLAG C17-01 — CLOSED 2026-11-22.** The §5(a) one-call fix was applied 2026-11-20 and this
+  cycle proved it on the live API: all 24 ENTSO-E documents fetched, 0 flagged, **including
+  the 6 2025 ones that had been refused 6 times of 6**; `entsoe_parse_guard_probe` now parses
+  its synthetic A65 instead of raising, and the preflight's exogenous path reads `reachable`.
+  Original text follows.
+- **FLAG C17-01 (as raised) — `data/entsoe.py`'s sealed-timestamp check never asks whether the
+  human unsealed the holdout, so the whole Tier-A 2025 exogenous pull is refused.** `sealed_years()`
   is the permanent declaration in `config/data.yaml` and still reads `{2025}` by design;
   `holdout_is_unsealed()` is the approval, and `parse_document` consults only the first.
   Right before Checkpoint C ("contains a sealed year" and "leaked past the requested
@@ -39,8 +98,17 @@
   API key was set there. Proposed fix (not applied): route the hit through
   `assert_not_sealed`, exactly as the two sibling checks in `data/prices.py:120` and
   `data/exogenous.py:275` already do.
-- **FLAG C17-02 — seven tests are red and six of them are correctly obsolete, not broken.**
-  One is FLAG C17-01's own regression test; the other six assert a pre-fetch or
+- **FLAG C17-02 — CLOSED 2026-11-22.** All eight tests of that family are green. Six were
+  updated under J.'s §5(b) approval (each listed in the 2026-11-22 entry, each now asserting
+  *the seal does not refuse 2025* instead of a downstream error that depended on the
+  container's cache); two more in `test_c16_checkpoint.py` had their raw-cache arm pointed at
+  the controlled temp directory they already used, and the fact they stopped being able to
+  assert — the real post-unseal scan refuses and names what it found — is asserted in the new
+  `tests/test_c17_evaluation.py` instead. **No seal or leakage assertion was weakened: each
+  updated test still fails loudly on `SealedHoldoutError`.** The one red test left is
+  FLAG C17-03's, which is not of this family and must stay red. Original text follows.
+- **FLAG C17-02 (as raised) — seven tests are red and six of them are correctly obsolete, not
+  broken.** One is FLAG C17-01's own regression test; the other six assert a pre-fetch or
   pre-approval state that this cycle legitimately changed (2025 prices are now cached and
   in the download record, and the seal is open). They are the same family the Checkpoint C
   session rewrote across nine files, and they could only go red once a real 2025 fetch
@@ -439,7 +507,16 @@
   C13 is the regime analysis. **NOTE C8-01 stays RE-OPENED** and is handed to **C14**,
   which must re-pull those series for its own chapter — fold the 2023 ladder in there or
   say why not.
-- **Sealed holdout (2025):** SEALED. Guard verified armed in C15 after the work:
+- **Sealed holdout (2025): UNSEALED by J. at Checkpoint C on 2026-10-12, and NOT YET
+  EVALUATED.** As of 2026-11-22 the 2025 data is fetched and cached — nine Energy-Charts
+  price files (all nine `payload_sha256` identical to C1's manifest) and six ENTSO-E Tier-A
+  documents — the manifests record it, and **no 2025 forecast, dispatch schedule, capture
+  ratio or error metric exists.** `results.csv` holds 14 265 rows over 2020-2024 and zero
+  rows whose `evaluation_years` mentions 2025. The guard still works and still refuses every
+  *other* sealed year: `sealed_years()` reads `{2025}` by design and
+  `holdout_is_unsealed()` is what overrides it. The once-only evaluation is blocked on
+  FLAG C17-03 / NOTE C17-01. The C15-era verification of the armed seal follows, as history.
+- **Sealed holdout (2025), as recorded at C15:** SEALED. Guard verified armed in C15 after the work:
   marker-alone-on-a-line count **0**, `holdout_is_unsealed()` = `False`, `sealed_years()`
   = `{2025}`, `assert_not_sealed(2025)` raises `SealedHoldoutError`, **no `*2025*` file
   anywhere under `data/`**, the price cache holds exactly **2019-2024 in every one of the
@@ -453,7 +530,11 @@
   `main_curves` has **no artefact mapping for a sealed year** and raises before a path is
   built, `dispatch_cell` calls `assert_not_sealed` first, and two tests pin both. No 2025
   data has been fetched, loaded, dispatched or computed against at any point in C2-C15.
-- **Config hash:** **`515d4e8d98887256`** — unchanged from C8. C13, C14 and C15 modified
+- **Config hash: `99005aeccae76c70` since Checkpoint C** — the one pre-registered field
+  allowed to move, and `docs/checkpoint_c.md` §4(b) predicted it by name: the approval added
+  2025 to `fetch_years`, which is a config edit. C17 changed no `config/*.yaml`. The
+  pre-C-approval value and what it covered follow.
+- **Config hash (pre-Checkpoint C):** **`515d4e8d98887256`** — unchanged from C8. C13, C14 and C15 modified
   no `config/*.yaml`, **including C15, whose FINDING C15-D is an argument for changing
   `config/battery.yaml` and which deliberately changed nothing** (NOTE C15-01). C15's
   library fingerprint is **`856fb19ac0c4eecd`**, identical to C10's through C14's (python
@@ -11930,3 +12011,264 @@ the fix.
   manifest dir. The c13/c14/c16-probe tests pass here and will go red wherever `data/raw/` holds 2025
   data; not edited yet.
 - **Not done:** the 6 refused ENTSO-E 2025 documents were not re-fetched, and the evaluation was not run.
+
+## 2026-11-22 — C17: the evaluation is written, tested and rehearsed; one blocker left, and it is the container
+
+**No 2025 forecast, dispatch schedule, capture ratio or error metric was computed. The
+single pre-registered evaluation did not run.** What this cycle did was steps 1 and 3 of the
+ordered list the 2026-11-20 approval left for scheduled cycles, and step 2 — the environment
+— turned out to be a hard blocker that needs the human. That is the one thing to read if you
+read nothing else: **`docs/c17_environment.md`, §4.**
+
+### Step 1 — the evaluation phase exists (`backtest/run_c17_holdout.py`, +1 150 lines)
+
+`--phase preflight` was all the module had. It now has `compute`, `dispatch`, `analyse`,
+`ingest` and `evaluate` (which runs all four in one process), plus `--year`, so the
+pre-registered run is a command rather than a plan. It implements
+`c16_preregistration.json` as written: the nine-zone comparable arm (C4's committed
+`LearSpec`, expanding window from 2019), the same-hour-last-week floor, the
+perfect-foresight oracle, 273 market days 2025-01-01..2025-09-30, commit-then-settle through
+C5/C6's rolling LP, C11's `pooled_capture`, C12's metric layer and the paired
+moving-block bootstrap at blocks 1/7/14, 10 000 replicates, seed 20261009, and **one**
+append to `results.csv`.
+
+**It re-implements nothing.** C4's LEAR, C3's `run_walk_forward`, C5/C6's dispatch and
+`assert_settlement_is_not_a_readback`, C11's `pooled_capture` / `same_start_oracle` /
+`capture_frame` / `beats_naive`, C12's `point_metrics` / `curve_replicates` / `Basis`, and
+C13's `curve_days_by_year` / `point_table` / `year_replicates` / `interval_rows` are
+**imported**. `DAILY_COLUMNS`, `STORE_METRICS` and `STORE_KEY` are asserted equal to C13's
+by test. That is what makes a 2025 capture ratio the same statistic as the 2024 one it will
+be read against, instead of a near neighbour of it — the property C15 bought at 54 756 rows
+and C17 should not have to buy again.
+
+Four things are enforced rather than trusted, each tested by making it fail:
+
+1. **It runs once.** `backtest/results/c17_holdout_run_ledger.json` is committed, because
+   the container is not. A `completed` holdout entry makes `--phase evaluate --year 2025`
+   refuse outright. **There is no override flag** — a test asserts that no CLI argument
+   contains "force", "second" or "again" — because a second evaluation is the human's
+   decision and has to be labelled as one. A crash *between* phases leaves the entry open
+   and resumes, stamping the resumption and the phases already finished; nothing already
+   computed is recomputed, so a resume is the same evaluation, not a second one.
+2. **It runs whole.** `--zones` may not narrow the pre-registered nine for the holdout year.
+   A cycle that evaluated three zones and stopped would have spent the once-only evaluation
+   on a third of the question.
+3. **It runs in the registered environment.** The gate is `collect_preflight`'s own
+   conjunction — the preflight function was refactored so the evaluation gates on *exactly*
+   what the preflight reports, not on a drifting second copy. `library_fingerprint_moved` is
+   one of the five gated blockers, and a test pins that line of source.
+4. **Nothing 15-minute reaches a number.** The price series is truncated at the cutover
+   **before** the feature build (so no quarter-hour row can reach a lag, a rolling mean or a
+   target), the pre-cutover segment is asserted hourly, the realised series is truncated the
+   same way, and the window, the predicted hours and the dispatched days are each re-checked
+   against 2025-09-30. A non-hourly row inside the window raises; it is never resampled.
+
+`--year 2024` is the rehearsal: the identical path on the visible validation year, writing
+`c17_rehearsal_*` artefacts that cannot be confused with holdout ones and **appending
+nothing** to the store (the 2024 rows are C11's and C12's; re-writing them under a new run
+id would put two rows with different provenance behind one number).
+
+### Step 1, continued — the rehearsal reproduces the published 2024 numbers exactly
+
+The rehearsal is not a smoke test. `c16_preregistration.json` recorded a four-metric 2024
+baseline per zone **while the holdout was still sealed**, and the rehearsal's own 2024
+headline is compared against it by a committed runner
+(`backtest/results/c17_rehearsal_2024_vs_2024.csv`). DE-LU, the whole way through compute →
+dispatch → analyse:
+
+| metric | C17 rehearsal 2024 | pre-registered 2024 | delta |
+| --- | --- | --- | --- |
+| `capture_rolled_oracle_cash` | 0.9186911992 | 0.918691 | 2.0e-07 |
+| `dispatch_cash_eur_per_mw_year` | 68 178.88217 | 68 178.88 | 0.0022 EUR |
+| `mae_on_dispatched_hours` | 22.88738959 | 22.8874 | -1.0e-05 |
+| `within_day_spearman_mean` | 0.8108983307 | 0.810898 | 3.3e-07 |
+
+Every delta is the rounding of the committed baseline, not a disagreement. A runner that did
+not exist when those numbers were published reproduces them to the digit, off an independent
+price re-pull, in a fresh container — which is the strongest available evidence that the
+holdout evaluation would be the same experiment as the ones it is read against. All three
+curves pass every invariant, 0 flags, oracle >= LEAR >= naive pooled (74 213 / 68 179 /
+62 869 EUR/MW/yr).
+
+ES's walk-forward also completed inside this cycle (naive MAE 27.316, LEAR MAE 17.866,
+rMAE 0.6540 pooled over all hours; the pre-registered 17.839 is the dispatched-hours
+figure, which is the analyse phase's). **The remaining seven zones were still computing when
+this entry was written**; the nine-zone rehearsal, its cross-zone paired bootstrap and the
+nine-zone comparison against the pre-registered baseline land in this cycle's second commit,
+with an addendum below. Nothing about the blocker depends on them.
+
+### Step 3 — the fetch, and FLAG C17-01 closed in practice
+
+* **Prices: 63 (zone, year) files re-pulled, 0 flagged, and all 63 `payload_sha256` identical
+  to C1's committed manifest** (`verify_price_cache`: `n_matching: 63`, `holds: true`). The
+  nine 2025 files reproduce the rows the previous C17 cycle recorded, so `prices_manifest.csv`
+  needed no regeneration. NOTE C2-02's 26th recurrence.
+* **ENTSO-E: all 24 (zone, document, year) documents fetched, 0 flagged — including the six
+  2025 ones FLAG C17-01 had refused six times of six.** The §5(a) fix works on the live API,
+  not only against the synthetic probe: the preflight's `entsoe_parse_guard_probe` now parses
+  its three-point A65 document instead of raising, and the preflight's `exogenous path` reads
+  **reachable**. **FLAG C17-01 is closed.**
+* `exogenous_manifest.{csv,json}` regenerated: 27 -> **36** rows, the nine new ones being the
+  2025 Tier-A series. The 27 pre-existing rows differ **only** in `gzip_bytes` (by a handful
+  of bytes) and `fetched_at_utc` — every data column, `payload_sha256` included, is identical.
+  That is NOTE C2-01's distinction, holding again.
+* `exogenous_contract_report.{csv,json}` rebuilt: **all exogenous data contracts hold**,
+  2022-2025, every series `ok=True`.
+* `contract_report.csv` (prices) is **byte-identical** to the committed one; only the `.json`'s
+  `generated_at_utc` and `git_sha` moved. It still reports `ok=False` with 100 violations per
+  zone, and that is the committed, expected state: the violations are the post-cutover
+  15-minute days counted against a 24-row expectation, with `n_resolution_changes: 1` and
+  **`n_cutover_violations: 0`** — the cutover is exactly where PLAN.md says it is.
+
+### Step 2 — FLAG C17-03: the pre-registered environment cannot be built in a cloud container
+
+`c16_preregistration.json` pins `library_fingerprint 856fb19ac0c4eecd`, which is
+`sha256` over the version dict **including the CPython patch version**: python **3.11.17**,
+numpy 2.4.6, pandas 3.0.6, scikit-learn 1.9.1, scipy 1.17.1, lightgbm 4.7.0.
+
+The five numerical libraries install at exactly those versions here. **CPython 3.11.17 does
+not exist in this container and cannot be obtained.** The system interpreter is
+`3.11.18 (main, Oct 26 2026) [GCC 13.3.0]`; `uv python install 3.11.17` answers `No download
+found for request: cpython-3.11.17-linux-x86_64-gnu`; `uv python list --all-versions` offers
+3.11.15 and below on the 3.11 line and **no .16 or .17**; a source build is out because
+python.org is refused by the network policy (`403 (agent proxy: no rule or network setting
+allows this host)`) and this session's GitHub access is scoped to this repository, so the
+CPython git tag is not reachable either.
+
+```
+python 3.11.18 + the five pins -> 00a12bd6aadb09f3   (this container)
+python 3.11.17 + the five pins -> 856fb19ac0c4eecd   (pre-registered)
+python 3.11.15 + the five pins -> e330d89eba746dd9
+```
+
+So `--phase preflight` reports **exactly one standing blocker,
+`library_fingerprint_moved`**, and `--phase evaluate --year 2025` refuses on it, loudly,
+before computing anything. That refusal is the design working: the fingerprint gate exists
+because a 2025 capture ratio under different libraries is not comparable to the 2024 one it
+is read against, and an unattended cycle must not be the thing that decides a pre-registered
+environment is close enough. **Every scheduled cycle gets a fresh container from the same
+image, so no future cloud cycle clears this gate either** without a decision.
+
+Written up with the evidence and three ways to answer in **`docs/c17_environment.md`**.
+Everything else in the preflight is green: unseal `True`, 15 of 15 frozen specs agree,
+9 of 9 zones at 273 hourly market days ending 2025-09-30, download record complete,
+exogenous path reachable.
+
+### NOTE C17-01 — DECISION REQUEST (the only thing blocking the holdout)
+
+**May the single pre-registered evaluation run under CPython 3.11.18 instead of 3.11.17,
+with the five numerical libraries at exactly their pinned versions?**
+
+**(a) Approve the deviation (recommended).** Every library that can move a number is
+identical; the difference is one CPython patch release. The cost is that it has to be
+*stated*: the 2025 rows would carry `library_fingerprint 00a12bd6aadb09f3`, and C18 has to
+say the holdout ran on a patch-newer interpreter than the 2024 baseline. A footnote a reader
+can check is the only acceptable version of this, which is why the gate is built so it
+cannot be done quietly.
+**(b) Run it where 3.11.17 exists** (a `python:3.11.17` image or a local interpreter, plus
+`uv pip install` of the five pins; the command is
+`python -m backtest.run_c17_holdout --phase evaluate`). Clean, if it is cheap for you. Note
+the Windows checkout at 3.14.5 is a *larger* deviation than (a), not a smaller one.
+**(c) Re-pin the pre-registration.** Uncontaminated, because **no 2025 number has been
+computed** and so nothing has been seen that could motivate the choice — but it rewrites a
+Checkpoint-C artefact after the unseal and should be a deliberate human edit with its own
+entry here, not an agent's.
+
+### Test edits — six made under J.'s §5(b) approval, each logged, each in the same direction
+
+All six asserted a **pre-fetch container state** that this cycle's own fetch legitimately
+changed; each now asserts the claim it was written to make — *the seal no longer refuses
+2025* — in a way that holds whether or not the container has the cache. None weakens a seal
+or leakage assertion: each still fails loudly on `SealedHoldoutError`, which is the
+regression it exists for.
+
+| test | was asserting | now asserts |
+| --- | --- | --- |
+| `test_c13_regime.py::test_2025_now_passes_the_holdout_guard_in_regime_price_table` | `RegimeError "no hourly price"` | not refused by the seal; a downstream `RegimeError` is allowed |
+| `test_c14_fundamentals.py::test_2025_now_passes_the_holdout_guard_in_fundamentals_frame` | `ExogenousDataError "no cached ENTSO-E"` | same shape |
+| `test_c14_fundamentals.py::test_2025_now_passes_the_holdout_guard_in_headroom_frame` | same | same shape |
+| `test_c7_entsoe.py::test_fetching_2025_now_passes_the_holdout_guard` | `MissingCredential` (true only with no API key) | same shape |
+| `test_c7_entsoe.py::test_reading_a_cached_2025_year_now_passes_the_holdout_guard` | `FileNotFoundError` (true only with no 2025 cache) | same shape |
+| `test_c16_checkpoint.py::test_entry_point_probes_now_pass_the_unsealed_guard` | one specific post-unseal refusal message | a `CheckpointError` for either of the two post-unseal reasons, and never a report claiming the seal holds |
+
+Two more in `test_c16_checkpoint.py` —
+`test_the_download_record_scan_is_clean_for_the_pre_holdout_years` and
+`test_manifest_scan_is_explicit_that_an_absent_raw_cache_is_not_evidence` — were already on a
+temp manifest directory, but `manifest_scan` **also** scans `REPO_ROOT/data/raw`, which this
+cycle's 2025 pull fills, so the real tree refuses whatever directory they hand it. Both now
+point the raw-cache arm at the same controlled directory (`monkeypatch` on `c16.REPO_ROOT`),
+and the fact they stopped being able to assert — *the real post-unseal scan refuses and names
+what it found* — is asserted in the new file instead, where it belongs. `run_c16_checkpoint.py
+--phase verify` cannot pass again, by design: it verifies a seal that has been deliberately
+opened.
+
+**One test is red and stays red: `test_c17_preflight.py::test_the_library_fingerprint_must
+_match_the_one_every_2024_number_used`.** It is not obsolete and it is not broken — it is a
+true statement about an environment this container cannot provide, and it is the signal
+FLAG C17-03 is made of. Editing it would delete the blocker rather than fix it. **It was not
+touched.**
+
+### FLAG C17-04 — NO2's 2025 Art. 14 wind forecast is mostly unusable after hourly aggregation
+
+ENTSO-E moved to a 15-minute MTU during 2025 too, so the 2025 documents arrive mixed
+(`resolutions_seconds: 900|3600`). `coverage_ratio` is 1.0 and `n_gap_intervals` is 0 —
+nothing is missing natively — but the hourly aggregator refuses to average a UTC hour its
+sub-hourly intervals do not tile exactly, and for NO2 that leaves **18 784 NaN hours of
+2025** in `wind_forecast_da_mw` (DE-LU: 4, ES: 96). The NaNs are a deliberate refusal to
+partially average, not a hole.
+
+**What it costs: nothing in the pre-registered headline**, which is price-only. It would cost
+the Tier-A exogenous ladder for NO2 — and NOTE C8-01 is closed with "the honest exogenous
+block does not have a reliable positive value, in either model class, either year, any
+Tier-A zone", so that ladder is not load-bearing for any claim C18 may make. Recorded so a
+later cycle reading NO2's exogenous columns knows why they are thin instead of discovering
+it as a surprise.
+
+### Two committed preflight artefacts, deliberately
+
+`c17_preflight.json` is left exactly as the blocked cycle wrote it — a test pins what that
+cycle found, and overwriting it would erase the finding rather than date it.
+`c17_preflight_2026-11-22_after_the_entsoe_fix.json` is the current state. When NOTE C17-01
+is answered, the evaluating cycle should regenerate the canonical `c17_preflight.json` in the
+environment it actually evaluates in.
+
+### One README correction, not the C17 rewrite
+
+`README.md`'s first line said **"repository is private during the build"**. It has been
+public since 2026-10-29 (FLAG C-E-01), so that sentence was false on a public page. It was
+corrected — with the correction itself visible, saying what it used to say and why — and two
+sentences were added to the disclosure section naming the two things the process has not
+delivered as designed (the early publication, and the un-evaluated holdout with its reason).
+**This is not C17's README rewrite**, which turns the file into the findings document and
+needs a holdout number that does not exist yet. Nothing else in the file was touched; no
+result or claim was added.
+
+### Repo state
+
+Container arrived with `HEAD` *detached* at `1bba28a` and local `master` stale 9 commits
+behind at `637368e`; `git fetch origin master` moved `origin/master` to `1bba28a`, so
+`HEAD` = `origin/master`, and C14's safer recipe (`git checkout master` then
+`git merge --ff-only origin/master`) applied and worked first time. **31 recurrences out of
+38 containers.** No history rewritten or discarded. `data/raw/` absent on arrival, so both
+sources were a full fresh pull (NOTE C2-02).
+
+### What the next cycle should do
+
+The holdout evaluation is **blocked on NOTE C17-01 / `docs/c17_environment.md` §4** and
+must not run in a container whose `library_fingerprint` is not `856fb19ac0c4eecd`. The
+runner refuses by itself; do not work around it.
+
+1. **Check whether the human answered** (a PROGRESS.md entry naming NOTE C17-01). If yes,
+   act on it: under (a) or (c), run `--phase evaluate` *once, whole*, record the UTC
+   timestamp and the git SHA here, then do C17's remaining outputs (`results.csv` is written
+   by the ingest phase; then the README rewrite and figures) and stop.
+2. **If not, do C20's pre-public gate instead of a wait entry** — `gitleaks` secret scan,
+   repo size / raw-data check, licence + attribution check, reproducibility check (fresh
+   clone, cached-subset run; NOTE C15-04 says reuse `check_baseline_reproduction` rather
+   than starting fresh), README-claims alignment. It is unblocked, it computes no 2025
+   number, and **FLAG C-E-01 makes it overdue**: the repo has been public since 2026-10-29
+   with the pre-public gate never run. This is a deliberate departure from PLAN.md's cycle
+   order, for that reason, and the human can veto it. C20 needs a **full** clone, not this
+   shallow 50-commit one.
+3. Do **not** start C18: the write-up cannot be drafted around a holdout number that does
+   not exist yet.

@@ -150,3 +150,20 @@ lightgbm>=4.3
 # The floors above are deliberately left as floors: pinning them in this file
 # would freeze every future cycle, and the constraint is specific to runs whose
 # numbers must be comparable to the published ones.
+#
+# 2026-11-22 — and that pin is now the blocker, which is worth recording here
+# rather than only in PROGRESS.md, because this file is where the next person to
+# build the environment will look. The five numerical libraries install at
+# exactly those versions in the cloud container:
+#
+#   uv pip install numpy==2.4.6 pandas==3.0.6 scikit-learn==1.9.1 \
+#                  scipy==1.17.1 lightgbm==4.7.0
+#
+# CPython 3.11.17 does not. The container ships 3.11.18, `uv python install
+# 3.11.17` has no such download (the 3.11 line stops at .15), python.org is
+# refused by the network policy, and the fingerprint covers the patch version,
+# so 3.11.18 hashes to 00a12bd6aadb09f3 instead. The holdout therefore cannot
+# be evaluated from a scheduled cloud cycle as pre-registered. The decision this
+# needs — approve the one-patch-release deviation, run it on 3.11.17 elsewhere,
+# or re-pin — is NOTE C17-01, written up in docs/c17_environment.md §4. Do not
+# relax the gate in code to get past it.

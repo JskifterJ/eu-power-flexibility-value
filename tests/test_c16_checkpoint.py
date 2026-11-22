@@ -187,15 +187,29 @@ def test_guard_census_raises_when_a_required_module_loses_its_guard(tmp_path: Pa
 
 
 def test_entry_point_probes_now_pass_the_unsealed_guard():
-    """Was test_every_entry_point_refuses_a_2025_request. Each probe's session
-    object still raises on any real use (checkpoint_c.md: 'a probe that finds
-    its guard missing still cannot download a byte of the holdout'), so a probe
-    that now gets past the (correctly, legitimately open) guard hits that
-    controlled trap instead of SealedHoldoutError — run_probes() reports that as
-    refused=False and re-raises it as a CheckpointError rather than returning a
-    report, which is what this now asserts instead of a per-probe loop."""
-    with pytest.raises(c16.CheckpointError, match="guard it was testing did not fire"):
+    """Was test_every_entry_point_refuses_a_2025_request.
+
+    The seal is open by the human's approval, so these probes — which exist to
+    prove a *closed* seal — must fail, and C16's own `--phase verify` cannot
+    pass again. That is by design (``docs/c17_blocker.md`` §5b).
+
+    Updated 2026-11-22 under J.'s §5(b) approval. The precise refusal message
+    depends on how far a probe gets, which depends on the container: with no
+    2025 file cached, ``fetch_year`` reaches the deliberately-trapped session
+    ("the guard it was testing did not fire"); with C17's 2025 pull cached it
+    returns the cached path and never touches the session ("did NOT refuse").
+    Both are the same fact. Pinning one of them made this a test about the
+    cache, so what is asserted now is the fact: a CheckpointError, for one of
+    the two post-unseal reasons, and never a report claiming the seal holds.
+    """
+    assert holdout_is_unsealed(), "this test describes the post-unseal state"
+    with pytest.raises(c16.CheckpointError) as caught:
         c16._probe_report()
+    message = str(caught.value)
+    assert (
+        "did NOT refuse" in message
+        or "guard it was testing did not fire" in message
+    ), message
 
 
 def test_the_probe_session_cannot_reach_the_network():
@@ -366,7 +380,17 @@ def test_the_download_record_now_names_2025_and_nothing_else_sealed():
     assert "year: [2025]" in str(exc.value)
 
 
-def test_the_download_record_scan_is_clean_for_the_pre_holdout_years(tmp_path: Path):
+def test_the_download_record_scan_is_clean_for_the_pre_holdout_years(
+    tmp_path: Path, monkeypatch
+):
+    """Updated 2026-11-22 under J.'s §5(b) approval: ``manifest_scan`` also
+    scans ``REPO_ROOT/data/raw``, which C17's legitimate 2025 pull now fills,
+    so the scan refuses on the real tree whatever manifest directory it is
+    handed. The claim here is about a *clean* download record, so the raw-cache
+    arm is pointed at the same controlled directory as the manifest arm. That
+    the real tree now refuses is asserted in tests/test_c17_evaluation.py,
+    where it belongs."""
+    monkeypatch.setattr(c16, "REPO_ROOT", tmp_path)
     pd.DataFrame(
         {"zone": ["DE-LU"] * 3, "year": [2022, 2023, 2024],
          "first_ts_utc": ["2022-01-01T00:00:00+00:00", "2023-01-01T00:00:00+00:00",
@@ -399,10 +423,18 @@ def test_manifest_scan_finds_a_sealed_coverage_timestamp(tmp_path: Path):
         c16.manifest_scan(tmp_path)
 
 
-def test_manifest_scan_is_explicit_that_an_absent_raw_cache_is_not_evidence(tmp_path: Path):
+def test_manifest_scan_is_explicit_that_an_absent_raw_cache_is_not_evidence(
+    tmp_path: Path, monkeypatch
+):
     """`data/raw/` is gitignored, so zero raw hits must not read as verified.
     Updated 2026-11-20 (C17 blocker 5(b)): run on a clean temp manifest dir,
-    because the real record now names 2025 and the real scan refuses it."""
+    because the real record now names 2025 and the real scan refuses it.
+    Updated again 2026-11-22 under the same approval: the raw-cache arm reads
+    ``REPO_ROOT/data/raw``, which C17's 2025 pull now fills, so it is pointed
+    at the same controlled directory. The claim is unchanged — the report must
+    *say* whether a raw cache was there, so that zero hits cannot be read as
+    verification."""
+    monkeypatch.setattr(c16, "REPO_ROOT", tmp_path)
     pd.DataFrame(
         {"zone": ["DE-LU"], "year": [2024],
          "first_ts_utc": ["2024-01-01T00:00:00+00:00"],
@@ -410,7 +442,8 @@ def test_manifest_scan_is_explicit_that_an_absent_raw_cache_is_not_evidence(tmp_
     ).to_csv(tmp_path / "prices_manifest.csv", index=False)
     report = c16.manifest_scan(tmp_path)
     assert "raw_cache_present" in report
-    assert report["raw_cache_present"] == (REPO_ROOT / "data" / "raw").exists()
+    assert report["raw_cache_present"] == (tmp_path / "data" / "raw").exists()
+    assert report["raw_cache_present"] is False
 
 
 # ---------------------------------------------------------------------------

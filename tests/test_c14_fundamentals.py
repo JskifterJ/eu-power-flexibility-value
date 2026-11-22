@@ -79,6 +79,7 @@ from data.exogenous import (
     WIND_COLUMN,
     ExogenousDataError,
 )
+from data.holdout import SealedHoldoutError
 
 RESULTS = Path(RESULTS_DIR)
 FUNDAMENTALS = RESULTS / "c14_fundamentals_summary.json"
@@ -591,18 +592,34 @@ def test_the_declared_years_stop_before_the_holdout():
 
 def test_2025_now_passes_the_holdout_guard_in_fundamentals_frame():
     """Was test_a_fundamentals_frame_refuses_a_sealed_year_before_touching_a_path.
-    2025 was unsealed at Checkpoint C (2026-10-12); past the now-passing guard
-    this correctly reaches the next real check — no cached ENTSO-E exogenous
-    data for 2025 (C17 hasn't fetched it yet) — rather than succeeding outright.
+
+    Updated 2026-11-22 under J.'s §5(b) approval. 2025 was unsealed at
+    Checkpoint C (2026-10-12), and the claim this test exists to make is about
+    the **seal**: the guard no longer refuses 2025 before a path is built. It
+    used to make that claim by asserting the next error downstream (``no cached
+    ENTSO-E``), which was only raised while C17 had not yet fetched the Tier-A
+    2025 documents. It has now fetched them, so that branch is unreachable in a
+    container holding the cache, and asserting it would make this a test about
+    the cache rather than about the guard. The seal claim is asserted directly
+    instead, and holds either way.
     """
-    with pytest.raises(ExogenousDataError, match="no cached ENTSO-E"):
+    try:
         fundamentals_frame("DE-LU", [2025])
+    except SealedHoldoutError as exc:  # the regression this test exists for
+        pytest.fail(f"the holdout guard still refuses 2025 after the unseal: {exc}")
+    except ExogenousDataError:
+        pass  # a downstream check (e.g. no cached 2025 exogenous data)
 
 
 def test_2025_now_passes_the_holdout_guard_in_headroom_frame():
-    """Was test_a_headroom_frame_refuses_a_sealed_year_before_touching_a_path."""
-    with pytest.raises(ExogenousDataError, match="no cached ENTSO-E"):
+    """Was test_a_headroom_frame_refuses_a_sealed_year_before_touching_a_path.
+    Updated 2026-11-22 under J.'s §5(b) approval, for the reason above."""
+    try:
         headroom_frame("DE-LU", [2024, 2025])
+    except SealedHoldoutError as exc:  # the regression this test exists for
+        pytest.fail(f"the holdout guard still refuses 2025 after the unseal: {exc}")
+    except ExogenousDataError:
+        pass  # a downstream check (e.g. no cached 2025 exogenous data)
 
 
 def test_no_committed_c14_artefact_names_a_sealed_market_day():
