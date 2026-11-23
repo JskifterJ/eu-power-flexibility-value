@@ -315,6 +315,25 @@ def spec_agreement(prereg: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+ENV_APPROVAL = "c17_environment_approval.json"
+
+
+def approved_environment_deviation(live_fp: str) -> dict[str, Any]:
+    """NOTE C17-01 option (a): a human-approved, exactly-named fingerprint.
+
+    Not a relaxation: the live fingerprint must equal the one fingerprint J.
+    approved (CPython 3.11.18 + the five pinned libraries). Anything else --
+    another patch, another library version -- still blocks.
+    """
+    path = RESULTS_DIR / ENV_APPROVAL
+    if not path.exists():
+        return {"approved": False, "reason": f"{ENV_APPROVAL} absent"}
+    rec = json.loads(path.read_text(encoding="utf-8"))
+    ok = live_fp == rec["approved_fingerprint"]
+    return {"approved": ok, "record": rec,
+            "reason": None if ok else "live fingerprint is not the approved one"}
+
+
 def provenance(prereg: dict[str, Any]) -> dict[str, Any]:
     """Library fingerprint and config hash against the pre-registered ones.
 
@@ -332,6 +351,7 @@ def provenance(prereg: dict[str, Any]) -> dict[str, Any]:
         "library_fingerprint_live": live_fp,
         "library_fingerprint_preregistered": want_fp,
         "library_fingerprint_matches": live_fp == want_fp,
+        "library_fingerprint_approved_deviation": approved_environment_deviation(live_fp),
         "config_hash_live": live_cfg,
         "config_hash_preregistered": want_cfg,
         "config_hash_matches": live_cfg == want_cfg,
@@ -681,6 +701,9 @@ def collect_preflight(
             "all_zones_match_the_preregistered_window"
         ],
     }
+    # NOTE C17-01 (a): only the one human-approved fingerprint clears this blocker.
+    if prov["library_fingerprint_approved_deviation"]["approved"]:
+        blockers["library_fingerprint_moved"] = False
     standing = sorted(name for name, hit in blockers.items() if hit)
     if verbose:
         for name in standing:

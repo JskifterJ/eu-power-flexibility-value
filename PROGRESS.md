@@ -2,7 +2,7 @@
 
 ## Current status
 
-- **Next cycle to run:** **AWAITING HUMAN — C17 BLOCKED on NOTE C17-01, and there is no
+- **Next cycle to run:** **C17 — UNBLOCKED 2026-11-23 (NOTE C17-01 answered (a), see the HUMAN APPROVAL entry at the bottom; run the evaluation once, in a CPython 3.11.18 cloud container, not on the 3.14.5 Windows checkout). Superseded text follows: ~~AWAITING HUMAN — C17 BLOCKED on NOTE C17-01, and there is no
   longer a second unblocked cycle to substitute.** The evaluation phase exists, is tested,
   and reproduces the published 2024 numbers on a nine-zone rehearsal; all 24 ENTSO-E
   documents are fetched. The one blocker is the environment: **CPython 3.11.17 cannot be
@@ -12761,3 +12761,21 @@ download this cycle made.
   **~41.3 days** since the C17 cycle (2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+## 2026-11-23 — HUMAN APPROVAL: NOTE C17-01 option (a) (J.)
+
+- J. approved running the single pre-registered 2025 evaluation under CPython **3.11.18**
+  (five libraries at their exact pins), per `docs/c17_environment.md` §4(a). The pre-registration
+  was **not** edited; the gate was **not** loosened in general.
+- Applied: `backtest/results/c17_environment_approval.json` names the one approved fingerprint
+  `00a12bd6aadb09f3`; `run_c17_holdout.collect_preflight` clears `library_fingerprint_moved`
+  only when the live fingerprint equals it. Any other interpreter/library set still blocks. The
+  source line pinned by `test_c17_evaluation.py` is unchanged.
+- **FLAG C17-04 (needs J.):** `test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+  asserts a raw match to `856fb19ac0c4eecd` and stays red by design; I did not edit `tests/`.
+  Say if it should be updated to accept the approved deviation.
+- Next scheduled cycle: run `python -m backtest.run_c17_holdout --phase evaluate` once, whole;
+  record timestamp + SHA; regenerate `c17_preflight.json`; ingest; README + figures; stop.
+  C18 disclosure: holdout ran on a patch-newer CPython than the 2024 baseline.
+- No 2025 number has been computed in this session (local Python is 3.14.5; evaluation not run).
+
