@@ -725,6 +725,7 @@ FIGURE_OWNERS: tuple[tuple[str, str], ...] = (
     ("c6_", "backtest/run_c6_curves.py"),
     ("c14_", "backtest/run_c14_fundamentals.py"),
     ("c15_", "backtest/run_c15_sensitivities.py"),
+    ("c17_", "backtest/run_c17_figures.py"),
 )
 
 
@@ -1194,11 +1195,22 @@ def _compare_to_committed(
 CLAIM_EXEMPT: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("iso_date", re.compile(r"\b20\d{2}-\d{2}-\d{2}\b")),
     ("calendar_year", re.compile(r"\b(?:19|20)\d{2}\b")),
+    # Before `cycle_reference`, and that order is load-bearing: the rules are
+    # applied in sequence and each masks what it matched, so "cycle C5" would
+    # otherwise consume the "C5" of "FLAG C5-01" and leave a bare "01" behind.
+    ("flag_reference",
+     re.compile(r"(?i)\b(?:FLAG|FINDING|NOTE)\s+C-?[A-Z]?\d{0,2}-\d{2}\b")),
     ("cycle_reference", re.compile(r"(?i)\b(?:cycle|c)\s?\d{1,2}\b")),
     ("licence_version", re.compile(r"\bCC BY 4\.0\b|Attribution 4\.0")),
     ("legal_article", re.compile(r"\bArt\.\s?\d{1,3}\b")),
     ("markdown_file", re.compile(r"\b[A-Za-z_0-9]+\.(?:md|csv|json|yaml|py)\b")),
     ("url", re.compile(r"https?://\S+")),
+    # Added by C17's README rewrite. Each names something the repository
+    # refers to rather than something it measured, which is what this table
+    # is for. They are deliberately narrow: none of them would exempt a
+    # sentence of the form "the battery captures 91.9% of the value".
+    ("market_time_unit", re.compile(r"\b15-minute\b")),
+    ("section_reference", re.compile(r"§\s?\d{1,2}\b")),
 )
 
 #: A number in the README that *is* a claim may stand only if it is bound to a
@@ -1211,6 +1223,47 @@ README_BINDINGS: tuple[dict[str, Any], ...] = (
         "pattern": re.compile(r"no secret in any of the ([\d,]+) commits"),
         "artefact": "c20_secret_scan.json",
         "field": "history_scan.n_commits",
+    },
+    # C17's rewrite made the README a findings document, so its headline
+    # numbers are now claims. Each is bound to a field of `c17_summary.json`,
+    # which the summary runner writes already rounded to the string the
+    # sentence may use — the artefact decides what the prose says, and a
+    # reworded sentence fails the gate rather than drifting from the number.
+    {
+        "name": "holdout_capture_min",
+        "pattern": re.compile(r"between (0\.\d+) \(NO2\)"),
+        "artefact": "c17_summary.json",
+        "field": "readme_display.capture_min",
+    },
+    {
+        "name": "holdout_capture_max",
+        "pattern": re.compile(r"and (0\.\d+) \(ES\) of the"),
+        "artefact": "c17_summary.json",
+        "field": "readme_display.capture_max",
+    },
+    {
+        "name": "holdout_lost_min_eur_per_mw_year",
+        "pattern": re.compile(r"costing ([\d,]+) to [\d,]+ EUR/MW/yr"),
+        "artefact": "c17_summary.json",
+        "field": "readme_display.lost_min_eur_per_mw_year",
+    },
+    {
+        "name": "holdout_lost_max_eur_per_mw_year",
+        "pattern": re.compile(r"costing [\d,]+ to ([\d,]+) EUR/MW/yr"),
+        "artefact": "c17_summary.json",
+        "field": "readme_display.lost_max_eur_per_mw_year",
+    },
+    {
+        "name": "holdout_market_days",
+        "pattern": re.compile(r"once, on\s+([\d,]+) market days"),
+        "artefact": "c17_summary.json",
+        "field": "readme_display.n_market_days",
+    },
+    {
+        "name": "results_store_rows",
+        "pattern": re.compile(r"\(([\d,]+) rows across seven runs\)"),
+        "artefact": "c17_summary.json",
+        "field": "readme_display.n_rows_in_results_csv",
     },
 )
 
@@ -1348,6 +1401,19 @@ def _factual_claim_checks(readme: str) -> dict[str, Any]:
     says_not_evaluated = bool(
         re.search(r"(?i)holdout[^.]{0,120}(has still not been|has not been) evaluated", flat)
     )
+    # C17 ran the evaluation, so the claim this check was written around has
+    # flipped. The check flips with it rather than being deleted: once the
+    # ledger records a completed holdout run and the store carries 2025 rows,
+    # a README that does not say so — or that still says the opposite — is the
+    # same alignment failure in the other direction. Stated as its own claim
+    # below so both directions are reported, and so a reader can see which one
+    # was in force.
+    says_evaluated = bool(
+        re.search(
+            r"(?i)(sealed|holdout)[^.]{0,200}evaluated (exactly |)once",
+            flat,
+        )
+    )
     store_years: list[str] = []
     if RESULTS_PATH.exists():
         frame = read_results()
@@ -1365,9 +1431,38 @@ def _factual_claim_checks(readme: str) -> dict[str, Any]:
             "evaluation_years_in_results_csv": store_years,
             "results_csv_has_2025": "2025" in store_years,
             "holdout_ledger_has_a_completed_run": completed,
-            "holds": bool(
-                says_not_evaluated and "2025" not in store_years and not completed
+            # Was: the README must assert this *and* the store must agree.
+            # That formulation could only ever hold before the evaluation, so
+            # after C17 it would fail the whole phase for a reason that is no
+            # longer a defect. What it was actually guarding — a README that
+            # claims the holdout is unevaluated while the store says otherwise
+            # — is preserved exactly, and the obligation to *state* the status
+            # moves to the paired check below, which is in force now.
+            "holds": not bool(
+                says_not_evaluated and ("2025" in store_years or completed)
             ),
+            "evidence": [RESULTS_PATH.name, ledger_path.name],
+        }
+    )
+    holdout_done = bool("2025" in store_years and completed)
+    checks.append(
+        {
+            "claim": "the 2025 holdout has been evaluated, exactly once",
+            "asserted_in_readme": says_evaluated,
+            "evaluation_years_in_results_csv": store_years,
+            "results_csv_has_2025": "2025" in store_years,
+            "holdout_ledger_has_a_completed_run": completed,
+            # Only one of this check and the one above can hold at a time, and
+            # which one depends on the store and the ledger rather than on the
+            # prose. Before the evaluation this is vacuous; after it, it is the
+            # one with teeth: a README that stayed silent, or that still said
+            # the holdout was unevaluated, fails here.
+            "holds": bool(
+                (says_evaluated and not says_not_evaluated)
+                if holdout_done
+                else not says_evaluated
+            ),
+            "in_force": holdout_done,
             "evidence": [RESULTS_PATH.name, ledger_path.name],
         }
     )

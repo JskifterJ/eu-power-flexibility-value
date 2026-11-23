@@ -179,8 +179,8 @@ def plot_capture_by_year(out_dir: Path) -> Path:
             "evaluation's ingest phase has not run"
         )
 
-    fig, ax = plt.subplots(figsize=(7.6, 4.4))
-    ax.axvspan(HOLDOUT_YEAR - 0.5, HOLDOUT_YEAR + 0.5, color="#f0efe6", zorder=0)
+    fig, ax = plt.subplots(figsize=(7.6, 4.6))
+    ax.axvspan(HOLDOUT_YEAR - 0.4, HOLDOUT_YEAR + 0.45, color="#f0efe6", zorder=0)
     for zone in zones:
         sub = cells[cells["zone"] == zone].sort_values("year")
         visible = sub[sub["year"] != HOLDOUT_YEAR]
@@ -200,22 +200,38 @@ def plot_capture_by_year(out_dir: Path) -> Path:
     ax.set_xlabel("evaluation year")
     ax.set_ylabel("capture ratio (settled / rolled oracle cash)")
     ax.grid(alpha=0.25, lw=0.5)
+    # NO2 2020 is the thin-regime cell (FLAG C13-01): its capture is −0.52, and
+    # on a shared axis it flattens every other line into one band. The axis is
+    # clipped and the off-scale cells are named rather than dropped, exactly as
+    # C15's figures handle the same cell — a panel must not look like it has
+    # fewer zones than it has.
+    floor = 0.40
+    ax.set_ylim(floor, 1.02)
+    off_scale = cells[cells["value"] < floor]
+    if not off_scale.empty:
+        named = ", ".join(
+            f"{row['zone']} {int(row['year'])} ({row['value']:.2f})"
+            for _, row in off_scale.sort_values(["year", "zone"]).iterrows()
+        )
+        ax.annotate(f"below the axis: {named}", xy=(0.015, 0.035),
+                    xycoords="axes fraction", fontsize=7.5, color="#4a4a45")
     ax.annotate(
-        f"{HOLDOUT_YEAR}: sealed holdout,\nevaluated once (273 days,\nends at the "
-        f"15-min cutover)",
-        xy=(HOLDOUT_YEAR, ax.get_ylim()[0]), xytext=(-4, 8),
+        f"{HOLDOUT_YEAR}: sealed holdout, evaluated once\n"
+        f"(273 days, ends at the 15-minute cutover)",
+        xy=(HOLDOUT_YEAR + 0.4, floor + 0.02), xytext=(0, 0),
         textcoords="offset points", ha="right", va="bottom", fontsize=7.5,
         color="#4a4a45",
     )
-    ax.legend(ncol=5, fontsize=7.5, frameon=False, loc="lower center",
-              bbox_to_anchor=(0.5, -0.30))
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, ncol=9, fontsize=7.5, frameon=False,
+               loc="lower center", bbox_to_anchor=(0.5, 0.015))
     fig.suptitle(
         "C17: the captured share of perfect-foresight value, nine zones, "
         "2020-2025\n(the comparable LEAR on price and calendar features; NO2 in "
         "black; hollow markers are the out-of-sample year)",
         fontsize=9)
-    fig.tight_layout(rect=(0, 0.06, 1, 0.90))
-    fig.text(0.005, -0.04, ATTRIBUTION, fontsize=7, color="#5a5a55")
+    fig.tight_layout(rect=(0, 0.08, 1, 0.94))
+    fig.text(0.005, -0.012, ATTRIBUTION, fontsize=7, color="#5a5a55")
     path = out_dir / "c17_capture_by_year.png"
     fig.savefig(path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -267,7 +283,8 @@ def plot_holdout_vs_baseline(out_dir: Path) -> Path:
     ax.invert_yaxis()
     ax.set_xlabel("capture ratio")
     ax.grid(alpha=0.25, lw=0.5, axis="x")
-    ax.legend(fontsize=7.5, frameon=False, loc="lower left")
+    ax.legend(fontsize=7.5, frameon=False, loc="lower left",
+              bbox_to_anchor=(0.0, 1.0), ncol=2, borderaxespad=0.4)
 
     ax = axes[1]
     delta = np.array(held_cash) - np.array(want_cash)
@@ -310,17 +327,34 @@ def plot_headroom_out_of_sample(out_dir: Path) -> Path:
         raise FigureError("no 2025 cells: the ingest phase has not run")
 
     fig, ax = plt.subplots(figsize=(6.8, 4.6))
+    # The visible years are named from the data, not assumed: the store carries
+    # no 2024 error_over_headroom row, because C11/C12 measured 2024 before C13
+    # defined the metric. A label reading "2020-2024" would be a claim about a
+    # year that is not on the chart.
+    visible_years = sorted(int(y) for y in visible["year"].unique())
+    spans = f"{visible_years[0]}-{visible_years[-1]}" if visible_years else "none"
+    # Years that have a capture cell but no headroom cell — 2024, as it
+    # happens, and a reader comparing this against FINDING C13-D's 44 cells
+    # should be told so rather than left to count.
+    missing = sorted(
+        {int(y) for y in capture["year"].unique()}
+        - {int(y) for y in cells["year"].unique()}
+    )
     ax.scatter(visible["value_headroom"], visible["value_capture"], s=22,
                color="#b9b9b2", edgecolor="none",
-               label=f"2020-2024 ({len(visible)} cells, visible)")
+               label=f"{spans} ({len(visible)} cells, visible)")
     for _, row in held.iterrows():
         colour = "black" if row["zone"] == OUTLIER_ZONE else "#1f4e79"
         ax.scatter(row["value_headroom"], row["value_capture"], s=52,
                    facecolor="white", edgecolor=colour, linewidth=1.8, zorder=5)
-        ax.annotate(str(row["zone"]),
+    # Only the zone every cross-zone finding here has to be read twice around is
+    # named: nine labels on nine clustered points is less legible, not more.
+    outlier = held[held["zone"] == OUTLIER_ZONE]
+    for _, row in outlier.iterrows():
+        ax.annotate(f"{OUTLIER_ZONE} {HOLDOUT_YEAR}",
                     xy=(row["value_headroom"], row["value_capture"]),
-                    xytext=(5, 3), textcoords="offset points", fontsize=7.5,
-                    color=colour)
+                    xytext=(7, -2), textcoords="offset points", fontsize=7.5,
+                    color="black")
     ax.scatter([], [], s=52, facecolor="white", edgecolor="#1f4e79", linewidth=1.8,
                label=f"{HOLDOUT_YEAR} ({len(held)} cells, out of sample)")
 
@@ -338,11 +372,32 @@ def plot_headroom_out_of_sample(out_dir: Path) -> Path:
     ax.set_xlabel("error_over_headroom  (pooled MAE / mean realised daily spread)")
     ax.set_ylabel("capture ratio")
     ax.grid(alpha=0.25, lw=0.5)
-    ax.legend(fontsize=7.5, frameon=False, loc="upper right")
-    ax.annotate(
-        f"Spearman rho: {rho_visible:+.3f} over the visible cells, "
-        f"{rho_held:+.3f} within 2025",
-        xy=(0.02, 0.03), xycoords="axes fraction", fontsize=7.5, color="#4a4a45")
+    # Same clipping convention as the capture figure: NO2 2020 is the
+    # thin-regime cell and is named rather than dropped.
+    floor = 0.40
+    ax.set_ylim(floor, 1.02)
+    off_scale = cells[cells["value_capture"] < floor]
+    ax.legend(fontsize=7.5, frameon=False, loc="lower left")
+    notes = [
+        f"Spearman rho: {rho_visible:+.3f} over the {len(usable)} visible cells, "
+        f"{rho_held:+.3f} within the nine of {HOLDOUT_YEAR} alone"
+    ]
+    if missing:
+        notes.append(
+            "no "
+            + "/".join(str(y) for y in missing)
+            + " cell: error_over_headroom postdates those rows in the store"
+        )
+    if not off_scale.empty:
+        notes.append(
+            "below the axis: "
+            + ", ".join(
+                f"{row['zone']} {int(row['year'])} ({row['value_capture']:.2f})"
+                for _, row in off_scale.sort_values(["year", "zone"]).iterrows()
+            )
+        )
+    ax.annotate("\n".join(notes), xy=(0.985, 0.975), xycoords="axes fraction",
+                ha="right", va="top", fontsize=7.5, color="#4a4a45")
     fig.suptitle(
         "C17: the one cross-regime relationship that survived five years, tested "
         "on a sixth it never saw\n(FINDING C13-D: capture falls as forecast error "
