@@ -2,7 +2,29 @@
 
 ## Current status
 
-- **Next cycle to run:** **C18 — the write-up draft.** C17 is DONE: the sealed 2025 holdout
+- **Next cycle to run:** **C19 — CHECKPOINT D.** This is the checkpoint-*request* cycle, not
+  a wait: PLAN.md C19 is "stop, push-notify, wait for human to read the write-up, verify the
+  surprising finding isn't a bug, and hand-check three numbers in the table", and nobody has
+  asked for that review yet. So C19 **runs**: verify `docs/writeup.md` is unchanged and that
+  `tests/test_c18_writeup.py` is green, append the Checkpoint-D entry naming the write-up, the
+  surprising finding (§4) and three hand-checkable numbers with the artefact each comes from,
+  send **one** push notification, commit, push, **stop**. Do **not** read it as
+  "AWAITING HUMAN" — that state begins only once C19 has sent the request, and the 114 wait
+  entries above are what happens when a cycle mistakes a request for a wait.
+  **C18 is DONE:** `docs/writeup.md` is the write-up draft PLAN.md asks for (executive
+  summary, method, results, the surprising finding, Limits, the "what a desk would
+  additionally need" page, provenance), and `tests/test_c18_writeup.py` (99 tests, new file)
+  **re-derives its headline numbers from the committed artefacts** rather than trusting the
+  prose — the holdout table and the per-year table are checked cell by cell against
+  `c17_holdout_2025_metrics.csv` and `c13_per_year_metrics.csv`, §4's 9/9/9/9/7 direction
+  counts are recomputed from `c17_like_for_like.csv`, and the required labels of NOTE C12-03,
+  NOTE C13-01, NOTE C14-02, NOTE C14-06, NOTE C15-01/02/03 and the holdout's own §5 are each
+  asserted present, with five forbidden claims asserted absent. **No number was computed this
+  cycle, no model or battery was run, and nothing under `tests/` that existed before was
+  touched.** One new decision request: **NOTE C18-01** (the draft is ~5 200 words / ~8 rendered
+  pages against PLAN.md's 4-6 plus the desk page — which section gets cut is a human call).
+  **FLAG C17-05 stays open and is still for the human**, not for a cycle to fix.
+  Superseded text follows: ~~C18 — the write-up draft.~~ C17 is DONE: the sealed 2025 holdout
   was evaluated **once**, on **2026-11-23 between 10:17:59Z and 11:23:13Z**, at git SHA
   `1c19eb0`, under the environment J. approved (CPython 3.11.18, five pinned libraries,
   fingerprint `00a12bd6aadb09f3`). Nine zones, 273 market days, **0 invariant flags**,
@@ -43,6 +65,13 @@
   updates applied 2026-11-22, each logged in the 2026-11-22 entry). **Any other `tests/` or
   leakage-assertion edit still needs a FLAG and a stop.**
   **No 2025 forecast, dispatch, capture ratio or metric has been computed as of 2026-11-22.**
+- **NOTE C18-01 — DECISION REQUEST (small, for Checkpoint D).** The write-up draft runs
+  **~5 200 words including five tables, about eight rendered pages**, against PLAN.md C18's
+  "4-6 pages" plus the desk page. It was already cut twice; what remains is either a result or
+  a label an earlier cycle made mandatory, so cutting further trades away something a previous
+  cycle deliberately required. Three candidates, in the order I would cut them, are in the
+  2026-11-23 C18 entry. **Nothing was cut on my own authority beyond those two passes**, and
+  the document's preamble states its length and points at this note.
 - **FLAG C17-03 — the pre-registered environment cannot be built in a cloud container, so
   the once-only evaluation cannot run as registered.** `c16_preregistration.json` pins
   `library_fingerprint 856fb19ac0c4eecd`, which hashes the version dict **including the
@@ -13020,3 +13049,151 @@ was needed, because the pre-registered headline arm is price-only.
 
 **The 2025 holdout is UNSEALED and has now been evaluated, exactly once, at
 2026-11-23T10:17:59Z–11:23:13Z, SHA `1c19eb0`.**
+
+
+## 2026-11-23 — C18: the write-up draft, with its numbers bound to the artefacts
+
+**PLAN.md C18 delivered: `docs/writeup.md`.** The draft the project exists to produce — a
+reader who has never seen the repository can get the result, the method, the one surprising
+finding, what it does not establish, and what a desk would need on top. **No number was
+computed in this cycle.** Every figure in the document comes from an artefact an earlier cycle
+committed, and the cycle's second deliverable is the machinery that checks that claim.
+
+### What the document says, and where each claim is pinned
+
+Seven sections, in PLAN.md's order:
+
+1. **Executive summary** (one page) — the out-of-sample answer (capture 0.7572 NO2 to 0.9504
+   ES, 3 496 to 11 293 EUR/MW/yr given up to forecast error), then the four results worth a
+   desk's attention: most of the theoretical value is capturable and the residual is **not**
+   friction (~3% of the shortfall); error *relative to headroom* predicts capture where MAE
+   does not (ρ = −0.738 against −0.015); the asset spec dominates the market friction
+   (duration +25 094 EUR/MW/yr); and NO2 is last on capture and on ordering in all six years.
+2. **Method** — data, the three forecasts, the leakage tripwires written before the models,
+   the battery and the commit-then-settle LP with its two invariants, the bootstrap, and the
+   sealed-holdout protocol including the once/whole/registered-environment/no-15-minute gates.
+3. **Results** — §3.1 the holdout table, §3.2 the six-year nine-zone capture grid, §3.3 the
+   model comparison with its three mandatory labels and the exogenous/leak result, §3.4 the
+   fundamentals chapter, §3.5 the sensitivity ladder in EUR/MW/yr.
+4. **The surprising finding** — the forecast got absolutely worse in 9 of 9 zones and
+   economically better in 7, with the seasonal like-for-like correction applied and the Q4
+   term quantified (median −1.04pp).
+5. **Limits** — every item PLAN.md C18 names (Art. 14 vintage, day-ahead only, no ancillary
+   services, no per-zone grid fees, price-taker, no reservoir data, hourly aggregation and the
+   cutover, zone structural breaks), plus FLAG C5-01, FINDING C15-D as a stated limitation,
+   FLAG C13-01, FLAG C14-01, FLAG C17-04, the CPython deviation, FLAG C-E-01 and FLAG C17-05.
+6. **What a desk would additionally need** (one page) — revenue stack and stacking rules,
+   forward-curve construction and marking, risk limits and price impact, credit/collateral/
+   clearing, REMIT/MAR/EMIR/MiFID II, asset and operational reality, model operations, and the
+   four things this project would do next in priority order.
+7. **Provenance** — both required data attributions, the append-only store, the method docs.
+
+**The labels earlier cycles made mandatory are all carried, each once:** the eight-zone
+capture band as **not established** and FINDING C11-D as **undetermined** and FINDING C10-A as
+**indistinguishable from constant** (NOTE C12-03); 2024 as **the most favourable of the five
+visible years** and a one-year band as **not a regime effect** (NOTE C13-01); the merit order
+as a **DE-LU/ES fact** and a crisis year degrading every fundamental (NOTE C14-02); **no
+exogenous gain claim** at all, with the block reported as a leak measurement and a
+fundamentals input (NOTE C14-06); levers quoted **in EUR/MW/yr** and "friction costs money" ≠
+"friction explains the shortfall" (NOTE C15-02); the asset-spec-over-friction ordering (NOTE
+C15-03); FINDING C15-D as a limitation with NOTE C15-01 named as open (option (a), unchanged);
+and the holdout's own §5 list — unpaired comparison, the expanding-window confound, the band,
+price-only, FLAG C5-01 and PLAN.md's limits.
+
+### The second deliverable: `tests/test_c18_writeup.py` (new file, 99 tests)
+
+A prose document cannot fail loudly on its own, so it was given a gate. Three families:
+
+- **Numbers re-derived, not trusted.** §3.1's holdout table and §3.2's per-year grid are
+  parsed out of the markdown and compared **cell by cell** against
+  `c17_holdout_2025_metrics.csv` and `c13_per_year_metrics.csv` — which catches two zones'
+  rows being swapped, something a "is this number somewhere in the text" check cannot.
+  §4's 9/9/9/9/7 direction counts and the "six of nine zones" and NO2 "+11.7pp" claims are
+  **recomputed** from `c17_like_for_like.csv`; the lever table from `c15_lever_summary.csv`;
+  the naive floor band from the holdout's own naive rows; §7's row count from `results.csv`;
+  and the evaluation date against `c17_holdout_run_ledger.json`.
+- **PLAN.md C18's required sections and named limits** are each asserted present, as are the
+  desk page's named items (position limits, curve construction, credit lines, REMIT).
+- **The required labels above** are asserted present and **five forbidden claims** asserted
+  absent — an established eight-zone band, an exogenous improvement, and any description of a
+  second holdout evaluation.
+
+The gate was **tested by making it fail**, this repo's convention: changing one digit of ES's
+capture in §3.1 turns
+`test_the_holdout_table_rows_are_not_transposed_between_zones[ES]` red and nothing else, and
+the document was restored from a copy, not from git. The helper flattens whitespace before
+matching so that **re-wrapping a paragraph is not a test failure** while changing a number is.
+
+### Suite state — 9 red, all nine pre-existing and each already flagged
+
+**1 082 passed, 9 failed, 10 skipped** (the 99 new tests are all green). The nine red are
+exactly the three documented families, and **none of them is this cycle's doing** — this cycle
+added one document and one new test file and touched nothing else:
+
+- **FLAG C17-05's four**, correctly obsolete: `test_c16_checkpoint.py`'s
+  `test_no_committed_artefact_carries_a_2025_row`,
+  `test_the_results_store_has_never_held_a_sealed_year` and
+  `test_artefact_scan_allows_the_structural_2025_dates`, plus `test_c20_gate.py`'s
+  `test_the_readme_claim_that_the_holdout_is_unevaluated_is_checked_against_the_store`. They
+  assert a pre-evaluation world (no 2025 row in any committed artefact; a README saying the
+  holdout is unevaluated) that the approved evaluation legitimately ended. Confirmed red for
+  that reason and no other: the checkpoint runner's error names the 2025 holdout artefacts and
+  `results.csv`'s 1 206 rows, and the gate check is `asserted_in_readme is False`.
+- **FLAG C20-01's four**, the container's missing price cache: `test_c13_regime.py` and
+  `test_c14_fundamentals.py`'s three holdout-guard tests and
+  `test_c15_sensitivities.py::test_dispatching_the_sealed_year_raises_before_any_path_is_built`
+  — `data/raw/` does not survive a container (NOTE C2-02, **31st recurrence**) and
+  `PriceDataError` is not in their `except` tuple. This cycle needed no prices, so the cache
+  was **not** re-pulled.
+- **FLAG C17-03's one**, which must stay red: `test_c17_preflight.py`'s library-fingerprint
+  test. A true statement about an environment this container cannot provide.
+
+**Nothing under `tests/` that existed before this cycle was edited**, and no `tests/` repair
+was attempted for any of the nine. A green suite here would mean a tripwire had been deleted.
+
+### NOTE C18-01 — DECISION REQUEST (small, for Checkpoint D)
+
+**The draft is longer than PLAN.md's budget: ~5 200 words including five tables, about eight
+rendered pages, against "4-6 pages" plus the desk page.** It was cut twice (a 6 122-word first
+pass, then a method and limits compression) and what is left is either a result or a label an
+earlier cycle made mandatory, so further cutting trades away something a previous cycle
+deliberately required. The three candidates, in the order I would cut them: **(a)** compress
+§3.3's three labels into one paragraph and drop the model-comparison table, pointing at
+`docs/metrics_layer.md` (−~350 words, costs the reader the evidence for "rank on the Spearman");
+**(b)** cut §3.4's fundamentals section to three sentences (−~250, costs NOTE C14-02's and
+NOTE C14-03's mechanism); **(c)** move §5's build-process bullets to the README, which already
+carries them (−~250, costs the self-disclosure its own section). **Nothing was cut on my own
+authority beyond the two passes above**, and the document's own preamble states the length and
+points here.
+
+### Repo state
+
+Container arrived **detached** at `50d5540` with local `master` 26 commits behind — **31
+recurrences out of 38 containers** (NOTE C2-02's sibling trap). `master` was a strict ancestor
+of `HEAD` and `HEAD` equalled `origin/master` exactly after a fetch, so C14's safe recipe
+applied first time: `git checkout master` then `git merge --ff-only origin/master`. No history
+rewritten. A `.venv` was created and `requirements.txt` installed unchanged (**no dependency
+was added** — the new test file uses only `csv`, `gzip`, `json`, `re` and `pathlib`, so it
+runs without pandas); the free resolution landed on pandas 3.1.1, which is NOTE C20-02's point
+and did not matter here because nothing was recomputed. `ENTSOE_API_KEY` is set; **no network
+request was made**. `data/raw/` absent on arrival and deliberately not re-pulled.
+
+### What the next cycle does
+
+1. **C19 — CHECKPOINT D. Run it; it is the request, not the wait.** Verify `docs/writeup.md`
+   and `tests/test_c18_writeup.py` are as committed here and that the 99 tests are green, then
+   append the Checkpoint-D entry PLAN.md asks for: the write-up to read, the surprising finding
+   to verify (§4, and the thing to check is that the like-for-like correction is real — the
+   committed `c17_like_for_like.csv` and `backtest/run_c17_summary.py` are the whole of it),
+   and **three numbers to hand-check with the artefact each comes from**. Send **one** push
+   notification, commit, push, **stop**.
+2. **Do not start C20's work** — it is done (`docs/c20_pre_public_gate.md`, 2026-11-22) — and
+   do not start C21, which is human-only.
+3. **FLAG C17-05 and NOTE C18-01 and NOTE C15-01 and NOTE C20-02 are for the human.** Do not
+   fix a red test, cut a write-up section, change `config/battery.yaml` or commit
+   `requirements-published.txt` without an approval entry in this file naming it.
+4. **Do not re-run the holdout.** The ledger refuses it and a second evaluation is a human's
+   decision that has to be labelled as one.
+
+**The 2025 holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z, SHA
+`1c19eb0`. C18 computed no number against it or any other year.**
