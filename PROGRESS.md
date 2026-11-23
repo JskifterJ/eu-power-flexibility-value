@@ -12714,3 +12714,50 @@ download this cycle made.
   **~40.9 days** since the C17 cycle (2026-10-12T18:53Z).
 
 **The 2025 holdout is UNSEALED and has not yet been evaluated.**
+
+### 2026-11-23T02:12Z — C17-blocked wait (114th)
+
+- Checked; still waiting. "Next cycle to run" still reads **AWAITING HUMAN — C17 BLOCKED**, so
+  this cycle verified state, appended this entry and stopped. **Nothing fetched, nothing
+  computed** — no 2025 forecast, dispatch, capture ratio or metric, and no API request of any
+  kind. No push notification (repeat ping for the same wait).
+- **NOTE C17-01 is still unanswered** (may the single pre-registered evaluation run under
+  CPython 3.11.18 instead of 3.11.17 — options (a)/(b)/(c) in `docs/c17_environment.md` §4).
+  The newest `## HUMAN APPROVAL` header in this file is still **2026-11-20 (§5(a) + §5(b),
+  J.)**, both already applied; all 217 `C17-01` hits are the request, the closed `FLAG C17-01`
+  thread or wait entries quoting it. **NOTE C20-02** (commit `requirements-published.txt` with
+  the five exact pins) likewise has no answer, so that ride-along job was **not** done.
+- **Nothing has changed since the 113th wait.** Container arrived with `HEAD` *detached* at
+  `b6ba4e5` (the 113th wait's own commit) and the stale local `master` label 8 commits behind
+  at `637368e`; `git fetch origin` moved `origin/master` 637368e..b6ba4e5, so
+  `HEAD` = `origin/master` = `b6ba4e5`, `git status` clean, **0** modified and **0** untracked
+  paths — which is what proves every file checked below is byte-identical to HEAD. **No human
+  commit has landed** (last three commits all authored by Claude, newest 2026-11-22T18:12Z).
+  `master` was fast-forwarded onto HEAD (C14's recipe); no history rewritten or discarded.
+  Detached-HEAD arrival is now **34 of 41 containers** (NOTE C2-02's sibling). The clone is
+  again **shallow at 50 commits**; not unshallowed, because no history phase ran this cycle.
+- **FLAG C17-03 still stands, for exactly the recorded reason.** This container's interpreter
+  is **CPython 3.11.18**, not the pre-registered 3.11.17, so `--phase evaluate --year 2025`
+  would refuse on the library fingerprint before computing anything. **Nothing was installed
+  and no venv was created this cycle.** The gate was **not** relaxed, and
+  `test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+  **must stay red** until NOTE C17-01 is answered.
+- **No 2025 number exists.** `backtest/results/results.csv` **14 265** rows + header over 27
+  columns, **0** rows whose `evaluation_years` mentions 2025 (the blunt any-cell count is 13,
+  all digit substrings in the numeric `value` column, not a 2025 evaluation).
+  `prices_manifest.csv` 63 rows + header, 9 per year for 2019–2025. `exogenous_manifest.csv`
+  **36** rows + header, `year` ∈ {2022: 9, 2023: 9, 2024: 9, **2025: 9**} — the legitimate
+  post-§5(a) Tier-A exogenous pull, the *input* the once-only evaluation will consume, not a
+  metric. Checked with `python3 -I`; no venv/pandas in this container, so `verify_append_only()`
+  was not re-run (row/field/column counts were). `data/raw/` absent on arrival (NOTE C2-02,
+  29th recurrence); **no download of any kind was made this cycle.** `ENTSOE_API_KEY` set
+  (36 chars).
+- **`tests/` untouched:** 22 `.py` files in `tests/`, **0** modified against HEAD, 0 untracked.
+- **C18 was not started** and the fingerprint gate was not touched in code. **C20's fallback is
+  spent** (`docs/c20_pre_public_gate.md`, 2026-11-22), so there was no second unblocked cycle
+  to substitute — this cycle is a wait by design, not by omission. The gate was **not** re-run,
+  so the README's commit-count claim needs no refresh.
+- **Still waiting on the human for NOTE C17-01.** The one hundred and fourteen waits now span
+  **~41.3 days** since the C17 cycle (2026-10-12T18:53Z).
+
+**The 2025 holdout is UNSEALED and has not yet been evaluated.**
