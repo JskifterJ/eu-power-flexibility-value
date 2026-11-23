@@ -111,7 +111,10 @@ def test_the_library_fingerprint_must_match_the_one_every_2024_number_used(prere
     """A 2025 number under different libraries is not comparable to its baseline."""
     report = c17.provenance(prereg)
     assert report["library_fingerprint_live"] == library_fingerprint()
-    assert report["library_fingerprint_matches"], report["library_versions"]
+    # Updated 2026-11-23 (C17-04, J. approved): NOTE C17-01 option (a) admits the one
+    # named fingerprint in c17_environment_approval.json; any other still fails.
+    approved = report["library_fingerprint_approved_deviation"]["approved"]
+    assert report["library_fingerprint_matches"] or approved, report["library_versions"]
 
 
 def test_the_config_hash_is_allowed_to_move_and_says_why(prereg):

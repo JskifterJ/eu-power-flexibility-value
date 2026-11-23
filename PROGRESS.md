@@ -12779,3 +12779,11 @@ download this cycle made.
   C18 disclosure: holdout ran on a patch-newer CPython than the 2024 baseline.
 - No 2025 number has been computed in this session (local Python is 3.14.5; evaluation not run).
 
+### 2026-11-23 — FLAG C17-04 resolved (J. approved the test edit)
+
+- J. asked for `test_c17_preflight.py::test_the_library_fingerprint_must_match_the_one_every_2024_number_used`
+  to accept the approved deviation. Edited that one assertion only: it now passes on a raw match
+  to `856fb19ac0c4eecd` **or** a live fingerprint equal to the approved `00a12bd6aadb09f3`
+  (`library_fingerprint_approved_deviation.approved`). Any other fingerprint still fails.
+  No other test touched.
+
