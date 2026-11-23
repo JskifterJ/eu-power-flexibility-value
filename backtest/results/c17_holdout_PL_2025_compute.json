@@ -1,0 +1,150 @@
+{
+  "cycle": "C17",
+  "phase": "compute",
+  "is_the_sealed_holdout": true,
+  "generated_at_utc": "2026-11-23T11:21:55+00:00",
+  "git_sha": "d78605ef7aa9576ae0acda92f929461fb51f1542",
+  "config_hash": "99005aeccae76c70",
+  "libraries": {
+    "python": "3.11.18",
+    "numpy": "2.4.6",
+    "pandas": "3.0.6",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.17.1",
+    "lightgbm": "4.7.0"
+  },
+  "library_fingerprint": "00a12bd6aadb09f3",
+  "zone": "PL",
+  "tier": "B",
+  "regime": "coal-dominated",
+  "evaluation_years": [
+    2025
+  ],
+  "train_from": "2019-01-01",
+  "walk_forward_spec": {
+    "refit_every_days": 1,
+    "min_train_days": 365,
+    "train_window_days": null
+  },
+  "lear_spec": {
+    "selector": "aic",
+    "hour_key": "local",
+    "hour_column": "hour_of_day_local",
+    "nan_policy": "decline",
+    "cv_splits": 5,
+    "cv_alphas": 50,
+    "max_iter": 20000,
+    "min_fit_rows": 120,
+    "vst": true
+  },
+  "price_series": {
+    "zone": "PL",
+    "years": [
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ],
+    "n_points": 67995,
+    "n_duplicate_timestamps": 0,
+    "first_ts_utc": "2018-12-31T23:00:00+00:00",
+    "last_ts_utc": "2025-12-31T22:45:00+00:00"
+  },
+  "feature_build": {
+    "zone": "PL",
+    "n_rows": 59159,
+    "first_target_utc": "2018-12-31T23:00:00+00:00",
+    "last_target_utc": "2025-09-30T21:00:00+00:00",
+    "price_columns": [
+      "price_lag_24h",
+      "price_lag_48h",
+      "price_lag_72h",
+      "price_lag_168h",
+      "price_daily_mean_lag_24h",
+      "price_daily_min_lag_24h",
+      "price_daily_max_lag_24h"
+    ],
+    "calendar_columns": [
+      "hour_of_day_local",
+      "hour_of_day_utc",
+      "day_of_week",
+      "is_weekend",
+      "month"
+    ],
+    "deferred_columns": [
+      "is_public_holiday"
+    ],
+    "daily_aggregate_source": {
+      "price_daily_mean_lag_24h": "latest fully public UTC calendar day (mean); e.g. target 2025-09-30T21:00:00+00:00 -> UTC day 2025-09-28 (NOTE C3-01)",
+      "price_daily_min_lag_24h": "latest fully public UTC calendar day (min); e.g. target 2025-09-30T21:00:00+00:00 -> UTC day 2025-09-28 (NOTE C3-01)",
+      "price_daily_max_lag_24h": "latest fully public UTC calendar day (max); e.g. target 2025-09-30T21:00:00+00:00 -> UTC day 2025-09-28 (NOTE C3-01)"
+    },
+    "n_incomplete_utc_days": 2,
+    "mask": {
+      "total_masked": 6,
+      "masked_per_column": {
+        "price_lag_24h": 6
+      },
+      "first_masked_per_column": {
+        "price_lag_24h": "2019-10-27T22:00:00+00:00"
+      }
+    }
+  },
+  "n_rows": 59159,
+  "n_evaluation_days": 273,
+  "first_day": "2025-01-01",
+  "last_day": "2025-09-30",
+  "window_ends_before_the_sdac_cutover": true,
+  "scores": {
+    "naive_last_week": {
+      "n": 6551,
+      "n_scored": 6551,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 29.866034,
+      "rmse": 44.549278,
+      "bias": -0.172152
+    },
+    "lear_price_only": {
+      "n": 6551,
+      "n_scored": 6551,
+      "n_missing_prediction": 0,
+      "coverage": 1.0,
+      "mae": 21.649801,
+      "rmse": 32.056595,
+      "bias": 0.977103
+    }
+  },
+  "rmae_vs_naive": 0.724897,
+  "n_folds": 273,
+  "walk_forward": {
+    "model": "lear",
+    "zone": "PL",
+    "spec": {
+      "refit_every_days": 1,
+      "min_train_days": 365,
+      "train_window_days": null
+    },
+    "n_folds": 273,
+    "n_rows": 6551,
+    "n_predicted": 6551,
+    "first_target_day": "2025-01-01",
+    "last_target_day": "2025-09-30",
+    "n_skipped_days": 0,
+    "skipped_days": [],
+    "skipped_reason": {}
+  },
+  "leakage_guards": {
+    "check_leakage": true,
+    "what_ran": "run_walk_forward's default: forecast.leakage.assert_no_leakage on the train AND test matrix of every fold (every feature's max timestamp against that row's gate closure), plus _assert_training_targets_were_public (every training target published before the fold's gate closure). Both raise rather than warn, so a summary that exists at all is a run in which they held.",
+    "n_folds_checked": 273,
+    "preregistered_assertions_covered": [
+      "every feature's max timestamp precedes its row's gate closure",
+      "every training target was published before the fold's gate closure"
+    ]
+  },
+  "note": "the pre-registered headline arm: C4's committed LearSpec on price and calendar features, expanding window over the whole cached history, against the same-hour-last-week floor. Identical configuration to the nine-zone comparable arm every C10-C15 cross-zone number is built on."
+}
