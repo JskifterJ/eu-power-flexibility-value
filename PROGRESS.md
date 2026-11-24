@@ -2,7 +2,37 @@
 
 ## Current status
 
-- **Next cycle to run:** **C19 — CHECKPOINT D.** This is the checkpoint-*request* cycle, not
+- **Next cycle to run:** **AWAITING HUMAN — CHECKPOINT D requested 2026-11-24.** C19 ran
+  today and did PLAN.md C19's own job, which is to *ask*: `docs/writeup.md` and
+  `tests/test_c18_writeup.py` were verified byte-identical to the C18 commit `ecd1d44`, the
+  99 gate tests are green, the surprising finding's own runner reproduces its committed table
+  exactly, three hand-checkable numbers are named below with a one-line command each, and one
+  push notification was sent. **The next cycle does not re-send it.** If this file does not
+  yet record a human answer to Checkpoint D, append a one-line wait entry and stop — **no push
+  notification**, because re-pinging the same wait is what produced the 114 wait entries
+  below. There is **no unblocked fallback cycle left**: C20 is done (2026-11-22) and C21 is
+  human-only by PLAN.md and by CLAUDE.md's never-make-it-public rule. Do **not** start C20 or
+  C21 work, do not re-run the holdout (the ledger refuses it and a second evaluation is a
+  human's labelled decision), do not fix a red test, do not cut a write-up section, do not
+  change `config/battery.yaml`, and do not commit `requirements-published.txt` — each of
+  those needs an approval entry in this file naming it.
+  **What Checkpoint D is waiting on, in PLAN.md's own words:** read the write-up, verify the
+  surprising finding isn't a bug, and hand-check three numbers in the table. The 2026-11-24
+  C19 entry at the bottom of this file is the request, with the three numbers, their commands,
+  and the five open decisions it travels with.
+  **Open for the human, carried unchanged into Checkpoint D:** **NOTE C18-01** (the draft is
+  ~5 200 words / ~8 rendered pages against PLAN.md's 4-6 plus the desk page — which section
+  gets cut is a human call; three ranked candidates in the 2026-11-23 C18 entry),
+  **FLAG C17-05** (four correctly-obsolete tests, one line each), **FLAG C20-01** (four tests
+  red for the container's missing price cache), **NOTE C15-01** (keep the `trailing_value`
+  end-of-day mark — option (a) recommended and already carried as a limitation in §5),
+  **NOTE C20-02** (commit `requirements-published.txt` with the five exact pins),
+  **NOTE C20-01** (`gitleaks` itself still wants one local run), **FLAG C17-03/NOTE C17-01**
+  (answered (a); the CPython 3.11.18 deviation is disclosed in §5), and **FLAG C-E-01** (the
+  repo has been public since 2026-10-29, outside Checkpoint E).
+  **The 2025 holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z,
+  SHA `1c19eb0`. C19 computed no number against it or any other year.**
+  Superseded text follows: ~~C19 — CHECKPOINT D.~~ This is the checkpoint-*request* cycle, not
   a wait: PLAN.md C19 is "stop, push-notify, wait for human to read the write-up, verify the
   surprising finding isn't a bug, and hand-check three numbers in the table", and nobody has
   asked for that review yet. So C19 **runs**: verify `docs/writeup.md` is unchanged and that
@@ -13197,3 +13227,152 @@ request was made**. `data/raw/` absent on arrival and deliberately not re-pulled
 
 **The 2025 holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z, SHA
 `1c19eb0`. C18 computed no number against it or any other year.**
+
+
+## 2026-11-24 — C19: CHECKPOINT D — the write-up is ready for human review
+
+**This is the request, not a wait.** PLAN.md C19 is "stop, push-notify, wait for human to read
+the write-up, verify the surprising finding isn't a bug, and hand-check three numbers in the
+table". Nobody had been asked yet, so this cycle asked. **No number was computed, no model or
+battery was run, nothing under `tests/` was touched, and no file in the repository changed
+except this one.**
+
+### What is ready for review
+
+**`docs/writeup.md`** — 5 211 words, seven sections, PLAN.md C18's order: executive summary,
+method, results (§3.1 holdout table, §3.2 the six-year nine-zone grid, §3.3 model comparison,
+§3.4 fundamentals, §3.5 the sensitivity ladder), **the surprising finding (§4)**, Limits (§5),
+what a desk would additionally need (§6), provenance (§7).
+
+**Verified unchanged since C18**, not assumed: `docs/writeup.md`
+(`sha256 d689a9c1…baf3b9a8`) and `tests/test_c18_writeup.py` (`sha256 aab4510d…138f31a4`) are
+byte-identical to their blobs at commit `ecd1d44`, `git log` shows the write-up introduced in
+exactly that one commit, and `git diff HEAD` over both is empty. The gate is green:
+**99 passed in 0.30s**.
+
+### The surprising finding to verify (§4), and what the whole of it is
+
+**The forecast got absolutely worse in all nine zones and economically better in seven.**
+Pooled MAE rose in 9 of 9 zones against 2024; `error_over_headroom` (MAE ÷ mean realised daily
+spread) fell in 9 of 9; the within-day Spearman rose in 9 of 9; capture rose in 7 of 9.
+
+The thing to check is that the **like-for-like correction is real**, because the holdout is 273
+days ending 2025-09-30 while the visible years are full calendar years. The whole of that
+correction is two committed things — `backtest/results/c17_like_for_like.csv` and
+`backtest/run_c17_summary.py` — and the module recomputes nothing: it re-aggregates C13's
+`c13_daily_by_year.csv.gz` and the evaluation's own `c17_holdout_<ZONE>_2025_daily.csv.gz`,
+refits no model and writes no row to the store.
+
+**It reproduces here.** `python -m backtest.run_c17_summary` was re-run this cycle in a fresh
+container (CPython 3.11.18, a free resolution landing on **pandas 3.1.1** — NOTE C20-02's
+point, and immaterial because nothing is fitted). It printed, on the Jan–Sep like-for-like
+basis, exactly §4's table — MAE up 9 of 9, spread up 9 of 9, `error_over_headroom` up in **0**
+of 9, Spearman up 9 of 9, capture up 7 of 9, and "above every visible year: **6** of 9", which
+is §4's "six of nine". `c17_like_for_like.csv` came back **byte-identical** to the committed
+file; `c17_summary.json` differed in its two provenance lines only (`generated_at_utc`,
+`git_sha`) with every number identical, and was **restored with `git checkout --`** so the C17
+artefact keeps its own stamp.
+
+### Three numbers to hand-check, each with the artefact it comes from
+
+Each was re-derived from the artefact this cycle, independently of the gate tests, with the
+command shown. Run from the repository root; stdlib only, no pandas needed.
+
+**1. `docs/writeup.md` §3.1 top row and §1: ES captures 0.9504, giving up 3 496 EUR/MW/yr.**
+Artefact: `backtest/results/c17_holdout_2025_metrics.csv`, row (`ES`, `lear_full_history`,
+`scope=common_hours`). Returns `0.9504 3496 273`.
+
+```
+python -c "import csv;r=[x for x in csv.DictReader(open('backtest/results/c17_holdout_2025_metrics.csv')) if x['zone']=='ES' and x['curve']=='lear_full_history' and x['scope']=='common_hours'][0];print(round(float(r['capture_rolled_oracle_cash']),4), round(float(r['eur_per_mw_year_lost_vs_oracle'])), r['n_days'])"
+```
+
+**2. `docs/writeup.md` §4: NO2's capture rose +11.7pp while its MAE got worse.** Artefact:
+`backtest/results/c17_like_for_like.csv`, `basis=jan_sep_only`. Returns
+`0.6399 -> 0.7572 = 11.7 pp ; MAE 11.33 -> 15.66` — the finding in one line, in the zone where
+it is largest.
+
+```
+python -c "import csv;d={(x['zone'],x['year'],x['basis']):x for x in csv.DictReader(open('backtest/results/c17_like_for_like.csv'))};f=lambda y,k:float(d[('NO2',y,'jan_sep_only')][k]);print(round(f('2024','capture'),4),'->',round(f('2025','capture'),4),'=',round(100*(f('2025','capture')-f('2024','capture')),1),'pp ; MAE',round(f('2024','pooled_mae_eur_per_mwh'),2),'->',round(f('2025','pooled_mae_eur_per_mwh'),2))"
+```
+
+**3. `docs/writeup.md` §1 result 3 and §3.5: 2 h → 4 h duration is worth +25 094 EUR/MW/yr.**
+Artefact: `backtest/results/c15_lever_summary.csv`, row (`main`, `lear_full_history`,
+`duration`). Returns `25094 45 1.61` — the mean effect, the number of (zone, year) cells, and
+the capture move in pp. This is the number behind "the asset spec dominates the market
+friction", so it is the one worth checking against §3.5's ladder.
+
+```
+python -c "import csv;r=[x for x in csv.DictReader(open('backtest/results/c15_lever_summary.csv')) if x['leg']=='main' and x['curve']=='lear_full_history' and x['lever']=='duration'][0];print(round(float(r['mean_delta_eur_per_mw_year'])), r['n_cells'], round(float(r['mean_delta_capture_pp']),2))"
+```
+
+### The protocol, re-verified from the artefacts rather than from the prose
+
+- **Evaluated once.** `c17_holdout_run_ledger.json` holds exactly **one** 2025 entry, status
+  `completed`, `2026-11-23T10:17:59Z → 11:23:13Z`, SHA `1c19eb0`, fingerprint
+  `00a12bd6aadb09f3`, all four phases, `invariant_flags 0`.
+- **CLAUDE.md's LP invariants hold on the holdout.** Recomputed this cycle from
+  `c17_holdout_2025_metrics.csv`: `naive ≤ forecast ≤ oracle` on settled cash in **9 of 9**
+  zones, and `c17_holdout_2025_invariant_flags.json` carries `"flags": []`. The per-day oracle
+  bound was asserted by the evaluation itself.
+
+### Suite state — 1 082 passed, 9 failed, 10 skipped, unchanged from C18
+
+The full suite was re-run (357s). **The same nine red, each already flagged, none new, none
+this cycle's doing** — this cycle changed one file and it is this one:
+
+- **FLAG C17-05's four** (`test_c16_checkpoint.py`'s three, `test_c20_gate.py`'s one) —
+  correctly obsolete: they assert a pre-evaluation world the approved evaluation ended.
+- **FLAG C20-01's four** (`test_c13_regime.py`, `test_c14_fundamentals.py` ×2,
+  `test_c15_sensitivities.py`) — `data/raw/` does not survive a container (NOTE C2-02) and
+  `PriceDataError` is not in their `except` tuple. No price cache was pulled this cycle;
+  nothing needed one.
+- **FLAG C17-03's one** (`test_c17_preflight.py`'s library fingerprint) — **must stay red**.
+
+**No `tests/` repair was attempted for any of the nine.** A green suite here would mean a
+tripwire had been deleted rather than cleared.
+
+The five test files that read this file were then re-run **after** this entry was appended, in
+case a Checkpoint-D entry full of 2025 dates tripped a scan: **276 passed, 4 failed, 5
+skipped** — FLAG C17-05's four and nothing else. `sealed_years()` is still `{2025}`,
+`holdout_is_unsealed()` is still `True` and `assert_not_sealed({2025}, ...)` still returns, so
+the post-Checkpoint-C state survived the edit.
+
+### The five open decisions this request travels with
+
+**NOTE C18-01** is the one Checkpoint D itself has to settle: the draft is ~5 200 words /
+~8 rendered pages against PLAN.md's 4–6 plus the desk page, it was already cut twice, and what
+remains is either a result or a label an earlier cycle made mandatory — so the three ranked
+cut candidates in the 2026-11-23 C18 entry are a human call, and nothing was cut on my own
+authority. The other four, unchanged and each described in full above in this file:
+**FLAG C17-05**, **FLAG C20-01**, **NOTE C15-01** (option (a), recommended, already carried as
+a §5 limitation), **NOTE C20-02** and **NOTE C20-01**. **FLAG C-E-01** stands: the repo has
+been public since 2026-10-29, outside Checkpoint E.
+
+### Repo state
+
+Container arrived on `master`, **not detached** for once, with `HEAD == master ==
+origin/master == ecd1d44` and a clean tree — **no git recovery was needed**, which makes this
+container one of the 8 of 39 to arrive that way (NOTE C2-02's sibling trap hit 31 of the
+previous 38). `data/raw/` was absent on arrival as always (**NOTE C2-02, 32nd recurrence**). A `.venv` was created and
+`requirements.txt` installed unchanged; **no dependency was added**. The free resolution landed
+on pandas 3.1.1 / numpy 2.4.6 / scikit-learn 1.9.1 / scipy 1.17.1 / lightgbm 4.7.0 under
+CPython 3.11.18. `ENTSOE_API_KEY` is set (36 chars); **no network request was made** and
+`data/raw/` was deliberately not re-pulled. One push notification sent, per PLAN.md's
+checkpoint procedure.
+
+### What the next cycle does
+
+1. **Nothing, unless a human has answered.** Checkpoint D is now **AWAITING HUMAN**. Append a
+   one-line wait entry and stop. **No push notification** — the standing instruction is not to
+   re-ping the same wait, and the 114 wait entries in this file are what ignoring it looks
+   like.
+2. **There is no fallback work left.** C20 is done (2026-11-22, `docs/c20_pre_public_gate.md`)
+   and C21 is human-only. Do not invent a C22.
+3. **Do not act on any of the five open decisions without an approval entry in this file
+   naming it** — that includes fixing a red test, cutting a write-up section, changing
+   `config/battery.yaml` and committing `requirements-published.txt`.
+4. **Do not re-run the holdout.** The ledger refuses it and a second evaluation is a human's
+   decision that has to be labelled as one.
+
+**The 2025 holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z, SHA
+`1c19eb0`. C19 computed no number against it or any other year.**
