@@ -13391,3 +13391,19 @@ checkpoint procedure.
   touched, and none of the five open decisions (NOTE C18-01, FLAG C17-05, FLAG C20-01,
   NOTE C15-01, NOTE C20-01/02) was acted on. The 2025 holdout remains evaluated exactly once,
   at 2026-11-23T10:17:59Z–11:23:13Z, SHA `1c19eb0`.
+
+## 2026-11-24 — Checkpoint-D wait (2nd)
+
+- Checked; still waiting. "Next cycle to run" reads **AWAITING HUMAN — CHECKPOINT D requested
+  2026-11-24**, and this file still records no human answer to it, so per the standing
+  instruction no new work was started and **no push notification was sent** (C19 already sent
+  the one request). Verified unchanged: container arrived detached at `a0b243d`, reattached to
+  `master` and fast-forwarded so `HEAD == master == origin/master == a0b243d` with a clean
+  tree; `git fetch` brought nothing beyond C19's wait commit; `docs/writeup.md` and
+  `tests/test_c18_writeup.py` are byte-identical to C18's `ecd1d44` (empty diff), and the only
+  file touched between `ecd1d44` and `HEAD` is `PROGRESS.md`. No model, battery, LP or metric
+  was run, no number was computed against 2025 or any other year, nothing under `tests/` was
+  touched, no dependency was installed, no network data was pulled, and none of the five open
+  decisions (NOTE C18-01, FLAG C17-05, FLAG C20-01, NOTE C15-01, NOTE C20-01/02) was acted on.
+  The 2025 holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z, SHA
+  `1c19eb0`.
