@@ -13376,3 +13376,18 @@ checkpoint procedure.
 
 **The 2025 holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z, SHA
 `1c19eb0`. C19 computed no number against it or any other year.**
+
+## 2026-11-24 — Checkpoint-D wait (1st)
+
+- Checked; still waiting. "Next cycle to run" reads **AWAITING HUMAN — CHECKPOINT D requested
+  2026-11-24**, and this file records no human answer to it, so per the standing instruction
+  no new work was started and **no push notification was sent** (C19 already sent the one
+  request; re-pinging the same wait is what produced the 114 C17 wait entries above). Verified
+  unchanged: container arrived detached at `72c108d`, reattached to `master` and
+  fast-forwarded so `HEAD == master == origin/master == 72c108d` with a clean tree;
+  `docs/writeup.md` and `tests/test_c18_writeup.py` are byte-identical to C18's `ecd1d44`
+  (empty diff); C19's commit touched `PROGRESS.md` only. No model, battery, LP or metric was
+  run, no number was computed against 2025 or any other year, nothing under `tests/` was
+  touched, and none of the five open decisions (NOTE C18-01, FLAG C17-05, FLAG C20-01,
+  NOTE C15-01, NOTE C20-01/02) was acted on. The 2025 holdout remains evaluated exactly once,
+  at 2026-11-23T10:17:59Z–11:23:13Z, SHA `1c19eb0`.
