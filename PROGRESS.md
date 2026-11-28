@@ -13609,3 +13609,25 @@ checkpoint procedure.
   (NOTE C18-01, FLAG C17-05, FLAG C20-01, NOTE C15-01, NOTE C20-01/02) was acted on. The 2025
   holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z, SHA `1c19eb0`.
   There is still no unblocked fallback cycle: C20 is done (2026-11-22) and C21 is human-only.
+
+## 2026-11-28 — Checkpoint-D wait (13th)
+
+- Checked; still waiting. "Next cycle to run" reads **AWAITING HUMAN — CHECKPOINT D requested
+  2026-11-24**, and this file still records no human answer to it (the last human-approval
+  entry remains 2026-11-23: FLAG C17-04 / NOTE C17-01 option (a)), so per the standing
+  instruction no new work was started and **no push notification was sent** (C19 already sent
+  the one request). Verified unchanged at 2026-11-28T10:11:11Z: the container arrived detached
+  at `18beb53` with a clean tree and local `master` stale at `14a0a0d`; `git fetch origin`
+  brought C19's 4th–12th wait commits, after which `master` was checked out and fast-forwarded
+  to `origin/master`, so `HEAD == master == origin/master == 18beb53` with a clean tree. Every
+  commit between C18's `ecd1d44` and `HEAD` is an agent wait/request commit (all thirteen
+  authored `Claude <noreply@anthropic.com>`), none of them a human answer. The only file
+  touched between `ecd1d44` and `HEAD` is `PROGRESS.md`; `docs/writeup.md`, `tests/`,
+  `data/manifest/`, `config/` and `backtest/results/` are byte-identical to `ecd1d44` (empty
+  diff). `backtest/results/c17_holdout_run_ledger.json` is untouched — still last written by
+  `8de1f36`, sha256 `2e08cb2e1bedf33c…c622d79`. No model, battery, LP or metric was run, no
+  number was computed against 2025 or any other year, nothing under `tests/` was touched, no
+  dependency was installed, no network data was pulled, and none of the five open decisions
+  (NOTE C18-01, FLAG C17-05, FLAG C20-01, NOTE C15-01, NOTE C20-01/02) was acted on. The 2025
+  holdout remains evaluated exactly once, at 2026-11-23T10:17:59Z–11:23:13Z, SHA `1c19eb0`.
+  There is still no unblocked fallback cycle: C20 is done (2026-11-22) and C21 is human-only.
